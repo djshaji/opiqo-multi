@@ -1,4 +1,6 @@
-# opiqo-multi
+# opiqo Guitar Multi Effects Pedal for Android
+
+<img width="256" height="256" alt="logo" src="https://github.com/user-attachments/assets/7d71d06e-968d-41aa-9aac-ce96d500d65b" />
 
 A professional-grade **Guitar Multi-Effects Processor** for Android that hosts and runs **LV2 plugins**. Transform your mobile device into a powerful audio processing studio with real-time effects using industry-standard LV2 plugin format.
 
