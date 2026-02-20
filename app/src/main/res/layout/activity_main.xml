@@ -5,7 +5,63 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/material_dynamic_tertiary90"
     tools:context=".MainActivity">
+
+    <LinearLayout
+        android:gravity="center"
+        android:padding="5dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/topbar"
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:background="@color/material_dynamic_tertiary90"
+            android:layout_margin="5dp"
+            android:fontFamily="@font/anta"
+            android:textStyle="bold"
+            android:id="@+id/switcher1"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:text="2"
+            android:fontFamily="@font/anta"
+            android:textStyle="bold"
+            android:id="@+id/switcher2"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:fontFamily="@font/anta"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:id="@+id/switcher3"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4"
+            android:layout_margin="5dp"
+            android:fontFamily="@font/anta"
+            android:textStyle="bold"
+            android:id="@+id/switcher4"/>
+
+    </LinearLayout>
+
+    <ImageView
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/logo"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:id="@+id/logo"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -26,9 +82,27 @@
             android:text="Power" />
         <ToggleButton
             android:id="@+id/onoff"
+            android:drawableLeft="@drawable/baseline_power_settings_new_24"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"/>
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:id="@+id/input_spinner"/>
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:id="@+id/output_spinner"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableRight="@drawable/outline_settings_24"
+            android:id="@+id/settings_button"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
