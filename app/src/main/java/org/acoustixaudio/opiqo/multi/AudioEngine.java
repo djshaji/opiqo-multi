@@ -9,7 +9,11 @@ public class AudioEngine {
     static native boolean isAAudioRecommended();
     static native boolean setAPI(int apiType);
     static native boolean setEffectOn(boolean isEffectOn);
-    static native void setValue ( int index, float value);
+    static native void setValue ( int plugin, int index, float value);
+    static native int addPlugin (int position, String uri) ;
+    static native void deletePlugin (int plugin);
+    static native String getPluginInfo ();
+    static native void initPlugins (String lv2Path);
     static native void setRecordingDeviceId(int deviceId);
     static native void setPlaybackDeviceId(int deviceId);
     static native void delete();

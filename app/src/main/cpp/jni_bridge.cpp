@@ -183,7 +183,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_test(JNIEnv *env, jclass clazz, j
     LV2Plugin * lv2Plugin = new LV2Plugin(world, "http://guitarix.sourceforge.net/plugins/gx_sloopyblue_#_sloopyblue_", 48000., 4096);
     lv2Plugin->initialize();
     lv2Plugin->start();
-    engine -> plugin = lv2Plugin ;
+    engine -> plugin1 = lv2Plugin ;
     lv2Plugin->getControl("GAIN")->setValue(0.f);
     lv2Plugin->getControl("VOLUME")->setValue(0.f);
     lv2Plugin->getControl("TONE")->setValue(0.f);
@@ -260,7 +260,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setCacheDir(JNIEnv *env, jclass c
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass clazz, jint index,
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass clazz, jint p, jint index,
                                                               jfloat value) {
     if (engine == nullptr) {
         LOGE(
@@ -269,21 +269,230 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
         return;
     }
 
-    switch (index) {
-        case 0:
-            engine->plugin->ports_.at(2).control = value;
-            break;
+    LV2Plugin * plugin = nullptr ;
+    switch (p) {
         case 1:
-            engine->plugin->ports_.at(3).control = value;
+            plugin = engine->plugin1;
             break;
         case 2:
-            engine->plugin->ports_.at(4).control = value;
+            plugin = engine->plugin2;
             break;
         case 3:
-            engine->plugin->ports_.at(5).control = value;
+            plugin = engine->plugin3;
+            break;
+        case 4:
+            plugin = engine->plugin4;
+            break;
+        default:
+            LOGE("Unknown plugin index %d", p);
+            return;
+    }
+
+    switch (index) {
+        case 0:
+            plugin->ports_.at(2).control = value;
+            break;
+        case 1:
+            plugin->ports_.at(3).control = value;
+            break;
+        case 2:
+            plugin->ports_.at(4).control = value;
+            break;
+        case 3:
+            plugin->ports_.at(5).control = value;
             break;
         default:
             LOGE("Unknown control index %d", index);
+
+    }
+
+
+}
+
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass clazz, jint position,
+                                                         jstring uri) {
+
+    LV2Plugin * plugin = nullptr ;
+    switch (position) {
+        case 1:
+            plugin = engine->plugin1;
+            engine ->plugin1 = nullptr;
+            break;
+        case 2:
+            plugin = engine->plugin2;
+            engine ->plugin2 = nullptr;
+            break;
+        case 3:
+            plugin = engine->plugin3;
+            engine ->plugin3 = nullptr;
+            break;
+        case 4:
+            plugin = engine->plugin4;
+            engine ->plugin4 = nullptr;
+            break;
+        default:
+            LOGE("Unknown plugin index %d", position);
+            return -1;
+    }
+
+    if (plugin != nullptr) {
+        plugin ->closePlugin();
+        free(plugin);
+    }
+
+    plugin = new LV2Plugin(engine -> world, env->GetStringUTFChars(uri, nullptr), engine -> sampleRate, 4096);
+    if ( !plugin->initialize()) {
+        LOGE("Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
+        free ((void*)env->GetStringUTFChars(uri, nullptr));
+        return -1;
+    } else {
+        plugin->start();
+        LOGD("Successfully added plugin %s at position %d", env->GetStringUTFChars(uri, nullptr), position);
+        LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
+
+    }
+
+    switch (position) {
+        case 1:
+            engine->plugin1 = plugin;
+            break;
+        case 2:
+            engine->plugin2 = plugin;
+            break;
+        case 3:
+            engine->plugin3 = plugin;
+            break;
+        case 4:
+            engine->plugin4 = plugin;
+            break;
+        default:
+            LOGE("Unknown plugin index %d", position);
+            return -1;
+    }
+
+    free ((void*)env->GetStringUTFChars(uri, nullptr));
+    return 0 ;
+}
+
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass clazz,
+                                                           jstring dir) {
+    std::string path;
+    if (dir != nullptr) {
+        const char* cstr = env->GetStringUTFChars(dir, nullptr);
+        if (cstr) {
+            path.assign(cstr);
+            env->ReleaseStringUTFChars(dir, cstr);
+        }
+    } else {
+        LOGE("[test] path is null");
+        return ;
+    }
+
+    engine -> world = lilv_world_new();
+    LOGD ("[test] LV2 path set to %s", path.c_str());
+
+    LilvNode* lv2_path = lilv_new_string(engine -> world, path.c_str());
+    lilv_world_set_option(engine -> world, LILV_OPTION_LV2_PATH, lv2_path);
+    lilv_node_free(lv2_path);
+
+    lilv_world_load_all(engine -> world);
+
+    engine -> plugins = lilv_world_get_all_plugins(engine -> world);
+    engine -> pluginInfo = {} ;
+
+    LILV_FOREACH (plugins, i, engine -> plugins) {
+        const LilvPlugin* p = lilv_plugins_get(engine -> plugins, i);
+        LOGD("[plugin] %s\n", lilv_node_as_uri(lilv_plugin_get_uri(p)));
+        json pluginInfo = {
+                {"name", lilv_node_as_string(lilv_plugin_get_name(p))},
+                {"uri", lilv_node_as_string(lilv_plugin_get_uri(p))},
+                {"author", lilv_node_as_string(lilv_plugin_get_author_name(p))},
+                {"ports", lilv_plugin_get_num_ports(p)}};
+
+        pluginInfo["port"] = {};
+        for (int i = 0 ; i < lilv_plugin_get_num_ports(p); i++) {
+            const LilvPort* port = lilv_plugin_get_port_by_index(p, i);
+//            LOGD ("[test] Port %d: %s\n", i, lilv_node_as_string(lilv_port_get_symbol(p, port)));
+            pluginInfo ["port"][i] = {};
+            pluginInfo ["port"][i]["index"] = i ;
+            pluginInfo ["port"][i]["name"] = lilv_node_as_string(lilv_port_get_symbol(p, port));
+            if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__AudioPort))) {
+                pluginInfo["port"][i]["type"] = "audio";
+            }
+            else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__ControlPort))) {
+                pluginInfo["port"][i]["type"] = "control";
+                LilvNode * def = lilv_new_float(engine -> world, 0.0f);
+                LilvNode * min = lilv_new_float(engine -> world, 0.0f);
+                LilvNode * max = lilv_new_float(engine -> world, 0.0f);
+                lilv_port_get_range(p, port, reinterpret_cast<LilvNode **>(&def),
+                                    reinterpret_cast<LilvNode **>(&min),
+                                    reinterpret_cast<LilvNode **>(&max));
+                pluginInfo["port"][i]["min"] = lilv_node_as_float(min) ;
+                pluginInfo["port"][i]["max"] = lilv_node_as_string(max);
+                pluginInfo["port"][i]["default"] = lilv_node_as_string(def);
+
+            }
+            else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_ATOM__AtomPort)))
+                pluginInfo ["port"] [i] ["type"] = "atom";
+        }
+
+        engine->pluginInfo [pluginInfo["uri"]] = pluginInfo;
+    }
+
+//    LOGD("[plugininfo] %s", engine -> pluginInfo.dump(4).c_str());
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPluginInfo(JNIEnv *env, jclass clazz) {
+    if (engine == nullptr) {
+        LOGE(
+                "Engine is null, you must call createEngine before calling this "
+                "method");
+        return env->NewStringUTF("{}");
+    }
+
+    return env->NewStringUTF(to_string (engine -> pluginInfo).c_str());
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass clazz,
+                                                            jint plugin) {
+    switch (plugin) {
+        case 1:
+            if (engine->plugin1) {
+                engine->plugin1 = nullptr;
+                engine->plugin1->closePlugin();
+                free(engine->plugin1);
+            }
+            break;
+        case 2:
+            if (engine->plugin2) {
+                engine->plugin2 = nullptr;
+                engine->plugin2->closePlugin();
+                free(engine->plugin2);
+            }
+            break ;
+        case 3:
+            if (engine->plugin3) {
+                engine->plugin3 = nullptr;
+                engine->plugin3->closePlugin();
+                free(engine->plugin3);
+            }
+            break ;
+        case 4:
+            if (engine->plugin4) {
+                engine->plugin4 = nullptr;
+                engine->plugin4->closePlugin();
+                free(engine->plugin4);
+            }
 
     }
 }

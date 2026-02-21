@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.CompoundButton;
+import android.widget.ScrollView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -18,7 +20,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.util.Iterator;
+
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
+
     static {
         System.loadLibrary("multi");
     }
@@ -27,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private ToggleButton onOff;
     private Context context;
 
+    public JSONObject pluginInfo;
+    ScrollView pluginUIContainer1, pluginUIContainer2, pluginUIContainer3, pluginUIContainer4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +54,37 @@ public class MainActivity extends AppCompatActivity {
 
         // Request record audio permission if not already granted
         requestRecordAudioPermission();
+        pluginUIContainer1 = findViewById(R.id.plugin1);
+
+        String path = getFilesDir() + "/lv2";
+        Log.d(TAG, "onCreate: [lv2 path] " + path);
+        copyAssetsToFiles("lv2");
 
         AudioEngine.create();
+        AudioEngine.initPlugins(path);
+        try {
+            pluginInfo = new JSONObject(AudioEngine.getPluginInfo());
+//            Log.d(TAG, "onCreate: [plugin info] " + pluginInfo.toString(2));
+
+            Iterator<String> keys = pluginInfo.keys();
+            String plugin = null;
+            while(keys.hasNext()) {
+                String key = keys.next();
+                plugin = key;
+                if (pluginInfo.get(key) instanceof JSONObject) {
+//                    Log.d(TAG, "onCreate: [plugin] + " + key + " : " + pluginInfo.getJSONObject(key).toString(2));
+                }
+            }
+
+            AudioEngine.addPlugin(1, plugin);
+            UI ui = new UI(context, pluginInfo.getJSONObject(plugin).toString(), 1);
+            pluginUIContainer1.addView(ui);
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+
         onOff = findViewById(R.id.onoff);
         onOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -88,4 +129,45 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    private String copyAssetsToFiles(String assetDir) {
+        File baseDir = getFilesDir();
+        try {
+            copyAssetDir(getAssets(), assetDir, baseDir);
+        } catch (java.io.IOException e) {
+            Log.e(TAG, "copyAssetsToFiles failed", e);
+        }
+
+        return baseDir.getAbsolutePath();
+    }
+
+    private void copyAssetDir(android.content.res.AssetManager am, String assetPath, File outDir) throws java.io.IOException {
+        String[] list = am.list(assetPath);
+        if (list == null || list.length == 0) {
+            // It's a file
+            String name = assetPath.contains("/") ? assetPath.substring(assetPath.lastIndexOf('/') + 1) : assetPath;
+            File outFile = new File(outDir, name);
+            try (java.io.InputStream in = am.open(assetPath);
+                 java.io.OutputStream out = new java.io.FileOutputStream(outFile)) {
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = in.read(buf)) != -1) {
+                    out.write(buf, 0, r);
+                }
+            }
+        } else {
+            // It's a directory
+            File targetDir = outDir;
+            if (!assetPath.isEmpty()) {
+                String name = assetPath.contains("/") ? assetPath.substring(assetPath.lastIndexOf('/') + 1) : assetPath;
+                targetDir = new File(outDir, name);
+                if (!targetDir.exists()) targetDir.mkdirs();
+            }
+            for (String name : list) {
+                String child = assetPath.isEmpty() ? name : assetPath + "/" + name;
+                copyAssetDir(am, child, targetDir);
+            }
+        }
+    }
+
 }

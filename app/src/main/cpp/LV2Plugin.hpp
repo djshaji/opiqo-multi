@@ -968,7 +968,7 @@ private:
     }
 
     void stop_worker() {
-        if (!host_worker_.running.exchange(false))
+        if (! host_worker_.iface || !host_worker_.running.exchange(false))
             return;
 
         if (host_worker_.worker_thread.joinable())

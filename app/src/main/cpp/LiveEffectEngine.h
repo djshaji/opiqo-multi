@@ -22,6 +22,9 @@
 #include <string>
 #include <thread>
 #include "FullDuplexPass.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 class LiveEffectEngine : public oboe::AudioStreamCallback {
 public:
@@ -53,8 +56,19 @@ public:
 
     std::string cacheDir ;
     std::unique_ptr<FullDuplexPass> mDuplexStream;
-    LV2Plugin * plugin = nullptr;
+    LV2Plugin * plugin1 = nullptr;
+    LV2Plugin * plugin2 = nullptr;
+    LV2Plugin * plugin3 = nullptr;
+    LV2Plugin * plugin4 = nullptr;
     LilvInstance *instance = nullptr;
+    LilvWorld * world = nullptr;
+    const LilvPlugins * plugins = nullptr;
+    json pluginInfo;
+    std::shared_ptr<oboe::AudioStream> mRecordingStream;
+    std::shared_ptr<oboe::AudioStream> mPlayStream;
+    int32_t sampleRate = oboe::DefaultStreamValues::SampleRate ;
+
+
 private:
     bool              mIsEffectOn = false;
     int32_t           mRecordingDeviceId = oboe::kUnspecified;
@@ -64,10 +78,6 @@ private:
     int32_t           mSampleRate = oboe::kUnspecified;
     const int32_t     mInputChannelCount = oboe::ChannelCount::Stereo;
     const int32_t     mOutputChannelCount = oboe::ChannelCount::Stereo;
-
-    std::shared_ptr<oboe::AudioStream> mRecordingStream;
-    std::shared_ptr<oboe::AudioStream> mPlayStream;
-
     oboe::Result openStreams();
 
     void closeStreams();

@@ -87,6 +87,7 @@ oboe::Result  LiveEffectEngine::openStreams() {
     } else {
         // The input stream needs to run at the same sample rate as the output.
         mSampleRate = mPlayStream->getSampleRate();
+        sampleRate = mSampleRate ;
     }
     warnIfNotLowLatency(mPlayStream);
 
@@ -100,7 +101,10 @@ oboe::Result  LiveEffectEngine::openStreams() {
     warnIfNotLowLatency(mRecordingStream);
 
     mDuplexStream = std::make_unique<FullDuplexPass>();
-    mDuplexStream -> plugin = plugin ;
+    mDuplexStream -> plugin1 = plugin1 ;
+    mDuplexStream -> plugin2 = plugin2 ;
+    mDuplexStream -> plugin3 = plugin3 ;
+    mDuplexStream -> plugin4 = plugin4 ;
     mDuplexStream->instance = instance ;
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
