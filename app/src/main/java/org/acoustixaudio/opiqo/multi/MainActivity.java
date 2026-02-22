@@ -1,15 +1,22 @@
 package org.acoustixaudio.opiqo.multi;
 
+import static android.view.View.GONE;
+
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -26,6 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,7 +48,10 @@ public class MainActivity extends AppCompatActivity {
     private Context context;
 
     public JSONObject pluginInfo;
+    ArrayList <String> pluginNames;
+    ArrayList <String> pluginUris;
     ScrollView pluginUIContainer1, pluginUIContainer2, pluginUIContainer3, pluginUIContainer4;
+    private CollectionFragment collectionFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,13 +65,19 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        pluginNames = new ArrayList<>();
+        pluginUris = new ArrayList<>();
+
         // Request record audio permission if not already granted
         requestRecordAudioPermission();
         pluginUIContainer1 = findViewById(R.id.plugin_container);
         FrameLayout pager_layout = findViewById(R.id.pager_container);
+
+        collectionFragment = new CollectionFragment(this);
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.pager_container, new CollectionFragment())
+                .replace(R.id.pager_container, collectionFragment)
                 .commit();
+
         String path = getFilesDir() + "/lv2";
         Log.d(TAG, "onCreate: [lv2 path] " + path);
         copyAssetsToFiles("lv2");
@@ -76,14 +93,13 @@ public class MainActivity extends AppCompatActivity {
             while(keys.hasNext()) {
                 String key = keys.next();
                 plugin = key;
+                pluginUris.add(pluginInfo.getJSONObject(key).getString("uri"));
+                pluginNames.add(pluginInfo.getJSONObject(key).getString("name"));
                 if (pluginInfo.get(key) instanceof JSONObject) {
 //                    Log.d(TAG, "onCreate: [plugin] + " + key + " : " + pluginInfo.getJSONObject(key).toString(2));
                 }
             }
 
-            AudioEngine.addPlugin(1, plugin);
-            UI ui = new UI(context, pluginInfo.getJSONObject(plugin).toString(), 1);
-//            pluginUIContainer1.addView(ui);
 
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -175,4 +191,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void showAddPluginDialog(View root, TextView add, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        CharSequence [] pluginNamesArray = pluginNames.toArray(new CharSequence[0]);
+        builder.setTitle("Add Plugin")
+                .setItems(pluginNamesArray, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // The 'which' argument contains the index position of the selected item.
+                        String pluginUri = pluginUris.get(which);
+                        AudioEngine.addPlugin(position, pluginUri);
+                        UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
+                        pluginUI.add = add;
+
+                        LinearLayout layout = (LinearLayout) root;
+                        layout.removeAllViews();
+
+                        layout.addView(pluginUI);
+                        add.setVisibility(GONE);
+                    }
+                });
+
+        builder.show();
+    }
 }

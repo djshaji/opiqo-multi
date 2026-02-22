@@ -14,6 +14,14 @@ import androidx.fragment.app.Fragment;
 // object in the collection.
 public class ObjectFragment extends Fragment {
     public static final String ARG_OBJECT = "object";
+    public MainActivity mainActivity;
+    TextView add = null;
+    View root = null;
+    int position;
+
+    public ObjectFragment(MainActivity _mainActivity) {
+        mainActivity = _mainActivity;
+    }
 
     @Nullable
     @Override
@@ -27,5 +35,19 @@ public class ObjectFragment extends Fragment {
         Bundle args = getArguments();
         ((TextView) view.findViewById(R.id.text1))
                 .setText(Integer.toString(args.getInt(ARG_OBJECT)));
+        add = view.findViewById(R.id.add);
+        position = args.getInt(ARG_OBJECT);
+        add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addPluginDialog();
+            }
+        });
+
+        root = view.findViewById(R.id.plugin_box);
+    }
+
+    void addPluginDialog () {
+        mainActivity.showAddPluginDialog(root, add, position);
     }
 }

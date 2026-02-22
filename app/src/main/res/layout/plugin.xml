@@ -8,6 +8,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <LinearLayout
+            android:background="@drawable/semitrans"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/text1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/plugin_box">
+
+        </LinearLayout>
         <TextView
             android:textAlignment="center"
             android:fontFamily="@font/anta"
@@ -17,5 +27,15 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             android:id="@+id/text1"/>
+        <TextView
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/add"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:textAlignment="center"
+            android:textSize="220dp"
+            android:text="+"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

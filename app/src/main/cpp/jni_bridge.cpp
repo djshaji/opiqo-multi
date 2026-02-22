@@ -288,23 +288,24 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
             return;
     }
 
-    switch (index) {
-        case 0:
-            plugin->ports_.at(2).control = value;
-            break;
-        case 1:
-            plugin->ports_.at(3).control = value;
-            break;
-        case 2:
-            plugin->ports_.at(4).control = value;
-            break;
-        case 3:
-            plugin->ports_.at(5).control = value;
-            break;
-        default:
-            LOGE("Unknown control index %d", index);
-
-    }
+    plugin->ports_.at (index).control = value;
+//    switch (index) {
+//        case 0:
+//            plugin->ports_.at(2).control = value;
+//            break;
+//        case 1:
+//            plugin->ports_.at(3).control = value;
+//            break;
+//        case 2:
+//            plugin->ports_.at(4).control = value;
+//            break;
+//        case 3:
+//            plugin->ports_.at(5).control = value;
+//            break;
+//        default:
+//            LOGE("Unknown control index %d", index);
+//
+//    }
 
 
 }

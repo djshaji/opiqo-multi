@@ -3,6 +3,7 @@ package org.acoustixaudio.opiqo.multi;
 import android.content.Context;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -22,6 +23,7 @@ public class UI extends LinearLayout {
     JSONObject pluginInfo;
     Context context;
     static final String TAG = "UI";
+    public View add = null ;
 
     public UI(Context _context, String _pluginInfo, int _position) {
         super(_context);
@@ -99,6 +101,9 @@ public class UI extends LinearLayout {
         del.setText("Delete");
         del.setOnClickListener(v -> {
             AudioEngine.deletePlugin(position);
+            if (add != null)
+                 add.setVisibility(View.VISIBLE);
+
             ((LinearLayout) getParent()).removeView(this);
         });
 
