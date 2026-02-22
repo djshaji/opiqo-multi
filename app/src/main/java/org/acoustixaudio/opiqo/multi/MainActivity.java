@@ -7,6 +7,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -54,8 +56,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Request record audio permission if not already granted
         requestRecordAudioPermission();
-        pluginUIContainer1 = findViewById(R.id.plugin1);
-
+        pluginUIContainer1 = findViewById(R.id.plugin_container);
+        FrameLayout pager_layout = findViewById(R.id.pager_container);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.pager_container, new CollectionFragment())
+                .commit();
         String path = getFilesDir() + "/lv2";
         Log.d(TAG, "onCreate: [lv2 path] " + path);
         copyAssetsToFiles("lv2");
@@ -78,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
             AudioEngine.addPlugin(1, plugin);
             UI ui = new UI(context, pluginInfo.getJSONObject(plugin).toString(), 1);
-            pluginUIContainer1.addView(ui);
+//            pluginUIContainer1.addView(ui);
 
         } catch (JSONException e) {
             throw new RuntimeException(e);

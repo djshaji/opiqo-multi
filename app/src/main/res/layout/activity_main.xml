@@ -9,6 +9,7 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:visibility="gone"
         android:gravity="center"
         android:padding="5dp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -54,14 +55,23 @@
 
     </LinearLayout>
 
+    <FrameLayout
+        app:layout_constraintTop_toTopOf="parent"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:id="@+id/pager_container"
+        app:layout_constraintBottom_toTopOf="@id/control_bar"/>
     <ScrollView
+        android:visibility="gone"
         android:layout_margin="10dp"
         android:padding="10dp"
         android:background="@drawable/semitrans"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:id="@+id/plugin1"
+        android:id="@+id/plugin_container"
         app:layout_constraintBottom_toTopOf="@id/control_bar"
         app:layout_constraintTop_toBottomOf="@id/topbar"/>
 
