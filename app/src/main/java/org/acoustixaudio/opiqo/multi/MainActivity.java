@@ -200,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
                         // The 'which' argument contains the index position of the selected item.
                         String pluginUri = pluginUris.get(which);
                         AudioEngine.addPlugin(position, pluginUri);
+                        Log.d(TAG, "[add plugin]: " + position + ":" + pluginUri);
                         UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
                         pluginUI.add = add;
 

@@ -289,6 +289,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
     }
 
     plugin->ports_.at (index).control = value;
+//    LOGD("[setValue] Set plugin %d port %d to value %f", p, index, value);
 //    switch (index) {
 //        case 0:
 //            plugin->ports_.at(2).control = value;
