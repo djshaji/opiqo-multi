@@ -8,10 +8,12 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -28,6 +30,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.oboe.samples.audio_device.AudioDeviceListEntry;
+import com.google.oboe.samples.audio_device.AudioDeviceSpinner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList <String> pluginUris;
     ScrollView pluginUIContainer1, pluginUIContainer2, pluginUIContainer3, pluginUIContainer4;
     private CollectionFragment collectionFragment;
+    private AudioDeviceSpinner playbackDeviceSpinner, recordingDeviceSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +70,39 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+
+        recordingDeviceSpinner = findViewById(R.id.recording_devices_spinner);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            recordingDeviceSpinner.setDirectionType(AudioManager.GET_DEVICES_INPUTS);
+            recordingDeviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    AudioEngine.setRecordingDeviceId(getRecordingDeviceId());
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+                    // Do nothing
+                }
+            });
+        }
+
+        playbackDeviceSpinner = findViewById(R.id.playback_devices_spinner);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            playbackDeviceSpinner.setDirectionType(AudioManager.GET_DEVICES_OUTPUTS);
+            playbackDeviceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    AudioEngine.setPlaybackDeviceId(getPlaybackDeviceId());
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+                    // Do nothing
+                }
+            });
+        }
 
         pluginNames = new ArrayList<>();
         pluginUris = new ArrayList<>();
@@ -214,4 +253,14 @@ public class MainActivity extends AppCompatActivity {
 
         builder.show();
     }
+
+
+    private int getRecordingDeviceId(){
+        return ((AudioDeviceListEntry)recordingDeviceSpinner.getSelectedItem()).getId();
+    }
+
+    private int getPlaybackDeviceId(){
+        return ((AudioDeviceListEntry)playbackDeviceSpinner.getSelectedItem()).getId();
+    }
+
 }

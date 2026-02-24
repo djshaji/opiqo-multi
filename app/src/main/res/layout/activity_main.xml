@@ -92,38 +92,88 @@
         android:padding="10dp"
         app:layout_constraintLeft_toLeftOf="parent"
         android:background="@color/material_dynamic_primary90"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/anta"
-            android:textStyle="bold"
-            android:textSize="24dp"
-            android:text="Power" />
-        <ToggleButton
-            android:id="@+id/onoff"
-            android:drawableLeft="@drawable/baseline_power_settings_new_24"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/anta"
+                android:textStyle="bold"
+                android:textSize="24dp"
+                android:text="Power" />
+            <ToggleButton
+                android:id="@+id/onoff"
+                android:drawableLeft="@drawable/baseline_power_settings_new_24"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <com.google.android.material.slider.Slider
+                    android:layout_width="wrap_content"
+                    android:id="@+id/volume_slider"
+                    android:layout_margin="0dp"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    android:layout_margin="0dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Volume"
+                    android:fontFamily="@font/anta"
+                    android:textAlignment="center"/>
+            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableRight="@drawable/outline_settings_24"
+                android:id="@+id/settings_button"/>
 
-        <Spinner
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_weight="1"
-            android:id="@+id/input_spinner"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta"
+                    android:text="Input Device"/>
+                <com.google.oboe.samples.audio_device.AudioDeviceSpinner
+                    android:id="@+id/recording_devices_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp" />
+            </LinearLayout>
 
-        <Spinner
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:id="@+id/output_spinner"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableRight="@drawable/outline_settings_24"
-            android:id="@+id/settings_button"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/anta"
+                    android:text="Output Device"/>
+
+                <com.google.oboe.samples.audio_device.AudioDeviceSpinner
+                    android:id="@+id/playback_devices_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp" />
+
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
