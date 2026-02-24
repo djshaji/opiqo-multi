@@ -42,20 +42,21 @@ public:
 
         // It is possible that there may be fewer input than output samples.
         int32_t samplesToProcess = std::min(numInputSamples, numOutputSamples);
-        for (int32_t i = 0; i < samplesToProcess; i++) {
+//        for (int32_t i = 0; i < samplesToProcess; i++) {
 //            *outputFloats++ = *inputFloats++ * 0.95; // do some arbitrary processing
 //             inputFloats += samplesPerFrame;
 //             outputFloats += samplesPerFrame;
-        }
+//        }
 
+        memcpy(outputFloats, inputFloats, samplesToProcess * sizeof(float));
         if (plugin1)
-            plugin1->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
+            plugin1->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
         if (plugin2)
-            plugin2->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
+            plugin2->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
         if (plugin3)
-            plugin3->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
+            plugin3->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
         if (plugin4)
-            plugin4->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
+            plugin4->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
 
 //        lilv_instance_connect_port(instance, 0, const_cast<float *>(outputFloats));
 //        lilv_instance_connect_port(instance, 1, (void *) inputFloats);

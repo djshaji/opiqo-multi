@@ -322,18 +322,26 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
         case 1:
             plugin = engine->plugin1;
             engine ->plugin1 = nullptr;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin1 = nullptr;
             break;
         case 2:
             plugin = engine->plugin2;
             engine ->plugin2 = nullptr;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin2 = nullptr;
             break;
         case 3:
             plugin = engine->plugin3;
             engine ->plugin3 = nullptr;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin3 = nullptr;
             break;
         case 4:
             plugin = engine->plugin4;
             engine ->plugin4 = nullptr;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin4 = nullptr;
             break;
         default:
             LOGE("Unknown plugin index %d", position);
@@ -360,15 +368,23 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
     switch (position) {
         case 1:
             engine->plugin1 = plugin;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin1 = plugin;
             break;
         case 2:
             engine->plugin2 = plugin;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin2 = plugin;
             break;
         case 3:
             engine->plugin3 = plugin;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin3 = plugin;
             break;
         case 4:
             engine->plugin4 = plugin;
+            if (engine -> mDuplexStream)
+                engine -> mDuplexStream -> plugin4 = plugin;
             break;
         default:
             LOGE("Unknown plugin index %d", position);
@@ -470,30 +486,38 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
     switch (plugin) {
         case 1:
             if (engine->plugin1) {
-                engine->plugin1 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine->mDuplexStream->plugin1 = nullptr;
                 engine->plugin1->closePlugin();
                 free(engine->plugin1);
+                engine->plugin1 = nullptr;
             }
             break;
         case 2:
             if (engine->plugin2) {
-                engine->plugin2 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine->mDuplexStream->plugin2 = nullptr;
                 engine->plugin2->closePlugin();
                 free(engine->plugin2);
+                engine->plugin2 = nullptr;
             }
             break ;
         case 3:
             if (engine->plugin3) {
-                engine->plugin3 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine->mDuplexStream->plugin3 = nullptr;
                 engine->plugin3->closePlugin();
                 free(engine->plugin3);
+                engine->plugin3 = nullptr;
             }
             break ;
         case 4:
             if (engine->plugin4) {
-                engine->plugin4 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine->mDuplexStream->plugin4 = nullptr;
                 engine->plugin4->closePlugin();
                 free(engine->plugin4);
+                engine->plugin4 = nullptr;
             }
 
     }
