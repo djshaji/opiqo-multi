@@ -31,6 +31,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.slider.Slider;
 import com.google.oboe.samples.audio_device.AudioDeviceListEntry;
 import com.google.oboe.samples.audio_device.AudioDeviceSpinner;
 
@@ -71,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        Slider gainSlider = findViewById(R.id.volume_slider);
+        gainSlider.addOnChangeListener(new Slider.OnChangeListener() {
+            @Override
+            public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+                AudioEngine.setGain(value);
+            }
+        });
 
         recordingDeviceSpinner = findViewById(R.id.recording_devices_spinner);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -123,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
         AudioEngine.create();
         AudioEngine.initPlugins(path);
+
         try {
             pluginInfo = new JSONObject(AudioEngine.getPluginInfo());
 //            Log.d(TAG, "onCreate: [plugin info] " + pluginInfo.toString(2));
@@ -263,4 +272,15 @@ public class MainActivity extends AppCompatActivity {
         return ((AudioDeviceListEntry)playbackDeviceSpinner.getSelectedItem()).getId();
     }
 
+    @Override
+    protected void onStop() {
+        onOff.setChecked(false);
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        onOff.setChecked(false);
+        super.onDestroy();
+    }
 }

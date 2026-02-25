@@ -21,6 +21,8 @@
 
 LiveEffectEngine::LiveEffectEngine() {
     assert(mOutputChannelCount == mInputChannelCount);
+    gain = static_cast<float *>(malloc(sizeof(float)));
+     *gain = 1.f ;
 }
 
 void LiveEffectEngine::setRecordingDeviceId(int32_t deviceId) {
@@ -106,6 +108,7 @@ oboe::Result  LiveEffectEngine::openStreams() {
     mDuplexStream -> plugin3 = plugin3 ;
     mDuplexStream -> plugin4 = plugin4 ;
     mDuplexStream->instance = instance ;
+    mDuplexStream -> gain = gain ;
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
     mDuplexStream->start();

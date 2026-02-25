@@ -21,6 +21,7 @@
 #include <jalv/backend.h>
 #include <lilv/lilv.h>
 #include <fstream>
+#include <dlfcn.h>
 #include "jalv.h"
 #include "LV2Plugin.hpp"
 
@@ -43,6 +44,7 @@ JNIEXPORT jboolean JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_create(JNIEnv *env, jclass) {
     if (engine == nullptr) {
         engine = new LiveEffectEngine();
+
     }
 
     return (engine != nullptr) ? JNI_TRUE : JNI_FALSE;
@@ -190,7 +192,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_test(JNIEnv *env, jclass clazz, j
 //    lv2Plugin->ports_.at(3).control = 1.f;
     lv2Plugin->ports_.at(4).control = 0.4f;
 //    lv2Plugin->ports_.at(5).control = 0.f;
-    return ;
+//    return ;
 
     LilvNode* plugin_uri = lilv_new_uri(world, "http://guitarix.sourceforge.net/plugins/gx_sloopyblue_#_sloopyblue_");
     const LilvPlugin* plugin = lilv_plugins_get_by_uri(plugins, plugin_uri);
@@ -288,6 +290,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
             return;
     }
 
+    LOGD("[setValue] Setting plugin %d port %d to value %f", p, index, value);
     plugin->ports_.at (index).control = value;
 //    LOGD("[setValue] Set plugin %d port %d to value %f", p, index, value);
 //    switch (index) {
@@ -354,8 +357,24 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
     }
 
     plugin = new LV2Plugin(engine -> world, env->GetStringUTFChars(uri, nullptr), engine -> sampleRate, 4096);
+    LOGD("[plugin %s] Created plugin %s at position %d", lilv_node_as_string(
+            lilv_plugin_get_library_uri(plugin->plugin_)) , env->GetStringUTFChars(uri, nullptr), position);
+
+    /*
+    const char *filename = lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_)) ;
+
+    void * lib = dlopen (basename(filename), RTLD_NOW | RTLD_LOCAL);
+    assert(lib != nullptr);
+    typedef void (*init_func_t)(void);
+    init_func_t init_func = (init_func_t) dlsym(lib, "lv2_descriptor");
+    assert(init_func != nullptr);
+
+    assert(plugin != nullptr);
+    */
+
     if ( !plugin->initialize()) {
-        LOGE("Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
+        LOGE("[load plugin] Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
+//        LOGF("[load plugin] %s", dlerror());
         free ((void*)env->GetStringUTFChars(uri, nullptr));
         return -1;
     } else {
@@ -521,4 +540,9 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
             }
 
     }
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setGain(JNIEnv *env, jclass clazz, jfloat gain) {
+    * engine -> gain = gain ;
 }

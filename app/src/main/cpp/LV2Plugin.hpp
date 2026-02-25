@@ -336,6 +336,16 @@ public:
 
     // Initialize plugin: discover ports, create controls, instantiate instance
     bool initialize() {
+        if (!plugin_) {
+            LOGE("Plugin is null, cannot initialize");
+            return false;
+        }
+
+        if (!world_) {
+            LOGE("Lilv world is null, cannot initialize plugin");
+            return false;
+        }
+
         if (!world_ || !plugin_) return false;
 
         // Create port class nodes
@@ -348,9 +358,19 @@ public:
         init_urids();
         init_features();
         
-        if (!check_resize_port_requirements()) return false;
-        if (!init_ports()) return false;
-        if (!init_instance()) return false;
+        if (!check_resize_port_requirements()) {
+            LOGE("Plugin requires resize-port feature but does not meet requirements");
+            return false;
+        }
+        if (!init_ports()) {
+            LOGE("Failed to initialize plugin ports and controls");
+            return false;
+        }
+
+        if (!init_instance()) {
+            LOGE("Failed to instantiate plugin");
+            return false;
+        }
 
         return true;
     }
@@ -710,6 +730,7 @@ private:
         LILV_FOREACH(nodes, f, requests) {
             const char* uri = lilv_node_as_uri(lilv_nodes_get(requests, f));
             if (!feature_is_supported(uri, feat)) {
+                LOGE("Plugin requires unsupported feature: %s", uri);
                 lilv_nodes_free(requests);
                 return false;
             }
@@ -838,10 +859,16 @@ private:
                     &features_.make_path_feature, &features_.free_path_feature,
                     &host_worker_.feature, nullptr };
 
-        if (!checkFeatures(feats)) return false;
+        if (!checkFeatures(feats)) {
+            LOGE("Plugin requires unsupported features, cannot instantiate");
+            return false;
+        }
 
         instance_ = lilv_plugin_instantiate(plugin_, sample_rate_, feats);
-        if (!instance_) return false;
+        if (!instance_) {
+            HERE LOGE("Failed to instantiate plugin");
+            return false;
+        }
 
         // Setup worker if plugin provides interface
         const LV2_Worker_Interface* iface = (const LV2_Worker_Interface*)
@@ -995,7 +1022,6 @@ private:
 
     // ========== Member variables ==========
     LilvWorld* world_;
-    LilvPlugin* plugin_;
     LilvInstance* instance_;
 
     LilvNode *audio_class_, *control_class_, *atom_class_, *input_class_, *rsz_minimumSize_;
@@ -1005,6 +1031,7 @@ private:
     uint32_t required_atom_size_;
 
 public:
+    LilvPlugin* plugin_;
     std::vector<Port> ports_;
 private:
     std::vector<PluginControl*> controls_;

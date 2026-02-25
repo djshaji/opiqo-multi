@@ -22,6 +22,7 @@
             android:textAlignment="center"
             android:fontFamily="@font/anta"
             android:textSize="60dp"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintTop_toTopOf="parent"

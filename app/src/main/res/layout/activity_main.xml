@@ -119,6 +119,7 @@
                     android:layout_width="wrap_content"
                     android:id="@+id/volume_slider"
                     android:layout_margin="0dp"
+                    android:value="1"
                     android:layout_height="wrap_content"/>
                 <TextView
                     android:layout_margin="0dp"

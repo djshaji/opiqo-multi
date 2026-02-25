@@ -22,6 +22,7 @@
 class FullDuplexPass : public oboe::FullDuplexStream {
 public:
     LV2Plugin* plugin, *plugin1, *plugin2, *plugin3, *plugin4;
+    float * gain = nullptr;
     LilvInstance *instance;
     virtual oboe::DataCallbackResult
     onBothStreamsReady(
@@ -57,6 +58,10 @@ public:
             plugin3->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
         if (plugin4)
             plugin4->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+
+        for (int32_t i = 0; i < samplesToProcess; i++) {
+            *outputFloats++ *= *gain; // do some arbitrary processing
+        }
 
 //        lilv_instance_connect_port(instance, 0, const_cast<float *>(outputFloats));
 //        lilv_instance_connect_port(instance, 1, (void *) inputFloats);

@@ -67,7 +67,7 @@ public:
     std::shared_ptr<oboe::AudioStream> mRecordingStream;
     std::shared_ptr<oboe::AudioStream> mPlayStream;
     int32_t sampleRate = oboe::DefaultStreamValues::SampleRate ;
-
+    float * gain = nullptr ;
 
 private:
     bool              mIsEffectOn = false;
