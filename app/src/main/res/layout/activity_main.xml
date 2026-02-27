@@ -104,6 +104,7 @@
                 android:fontFamily="@font/anta"
                 android:textStyle="bold"
                 android:textSize="24dp"
+                android:id="@+id/power"
                 android:text="Power" />
             <ToggleButton
                 android:id="@+id/onoff"

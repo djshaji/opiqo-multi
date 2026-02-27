@@ -60,6 +60,20 @@ public class MainActivity extends AppCompatActivity {
     private CollectionFragment collectionFragment;
     private AudioDeviceSpinner playbackDeviceSpinner, recordingDeviceSpinner;
 
+    String [] tests = {
+            "Plugin Loader Test"
+    };
+
+    void runTest(int index) {
+        switch (index) {
+            case 0:
+                new Test(this).pluginLoader();
+                break;
+            default:
+                Log.w(TAG, "runTest: no such test: " + index);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +84,21 @@ public class MainActivity extends AppCompatActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        TextView testButton = findViewById(R.id.power);
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Select Test")
+                        .setItems(tests, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                runTest(which);
+                            }
+                        });
+                builder.show();
+            }
         });
 
         Slider gainSlider = findViewById(R.id.volume_slider);
@@ -283,4 +312,5 @@ public class MainActivity extends AppCompatActivity {
         onOff.setChecked(false);
         super.onDestroy();
     }
+
 }
