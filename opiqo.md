@@ -1,48 +1,86 @@
-## Project Overview: Opiqo
+## Project Overview: Opiqo Multi
 
-**Opiqo** is a streamlined, open-source bridge designed to bring the power of **LV2 (LADSPA Version 2)** audio plugins to the Android ecosystem. Traditionally, high-end audio processing and synthesis via LV2 have been desktop-centric; Opiqo breaks that barrier, offering a general-purpose library port that is both lightweight and developer-friendly.
+**Opiqo Multi** is an open-source **Guitar Multi-Effects Processor** for Android. It hosts up to **4 LV2 (LADSPA Version 2)** audio plugins simultaneously in a swipeable pedal-board UI, giving guitarists a professional-grade effects chain directly on their Android device.
 
 ---
 
 ### Key Capabilities
 
-* **LV2 Portability:** Enables the hosting and execution of LV2 plugins directly within Android applications.
-* **General Purpose Design:** Unlike project-specific wrappers, Opiqo is built to be integrated into any Android audio project, from DAWs (Digital Audio Workstations) to standalone synthesizers.
-* **Open Source:** Full transparency and community-driven improvements, allowing developers to customize the integration to their specific needs.
-* **Easy Integration:** Focuses on reducing the boilerplate code typically required to manage shared libraries (`.so` files) and plugin state on mobile devices.
+* **Multi-Plugin Chain:** Up to 4 LV2 plugins run in series — Pedal 1 → Pedal 2 → Pedal 3 → Pedal 4.
+* **Per-Pedal Bypass:** Each loaded plugin has its own enable/disable toggle, letting you include or exclude it from the chain without losing its settings.
+* **Dynamic Plugin Management:** Plugins are loaded and removed at runtime. Tap `+` on any empty pedal slot to pick from the bundled library; tap Delete to remove a loaded plugin.
+* **Real-time Parameter Control:** Every LV2 control port is exposed as a labelled slider. Values update the plugin in real time during audio processing.
+* **Audio Device Selection:** Choose input (microphone / audio interface) and output (speaker / headphones) devices independently at runtime.
+* **Master Volume:** A global gain slider scales the final output level.
+* **54 Bundled Guitar Effects:** Ships with a curated collection of Guitarix-derived distortion, overdrive, fuzz, modulation, and amp-simulator plugins — no extra downloads needed.
 
 ---
 
 ### Why Opiqo Matters
 
-Android’s audio stack has historically been challenging for low-latency, professional-grade plugin hosting. Opiqo simplifies this by handling the heavy lifting of plugin discovery and parameter mapping.
+Android's audio stack has historically been challenging for low-latency, professional-grade plugin hosting. Opiqo Multi addresses this by combining Google's **Oboe** library for low-latency full-duplex audio with the **Lilv** LV2 host library and a custom `LV2Plugin` C++ wrapper that is real-time safe.
 
 | Feature | Description |
 | --- | --- |
-| **Plugin Discovery** | Automatically scans and identifies available LV2 bundles on the Android filesystem. |
-| **Parameter Control** | Provides a clean API to map UI elements (sliders, knobs) to plugin ports. |
-| **State Management** | Supports saving and loading plugin presets and configurations. |
-| **Cross-Architecture** | Designed to handle the diverse ARM/x86 environment of Android devices. |
+| **Multi-Pedal UI** | Swipeable tabs (Pedal 1–4), each hosting one LV2 plugin slot |
+| **Plugin Discovery** | Bundles are copied from APK assets to app storage; Lilv scans them at startup |
+| **Parameter Control** | Per-port sliders with min/max/default from the plugin's LV2 metadata |
+| **Plugin Bypass** | Per-plugin `Switch` widget in each plugin's header row |
+| **State Management** | `LV2Plugin::saveState` / `loadState` via Lilv TTL serialization |
+| **Cross-Architecture** | NDK compilation for armeabi-v7a, arm64-v8a, x86, x86_64 |
 
 ---
 
 ### High-Level Architecture
 
-Opiqo sits between the Android Native Development Kit (NDK) and the audio processing layer. It translates standard LV2 host requirements into an Android-compatible format, ensuring that audio buffers are processed efficiently without significant overhead.
+```
+[Android UI Layer]
+  MainActivity  ─── CollectionFragment ─── CollectionAdapter
+                         │
+                 ObjectFragment × 4         (one per pedal slot)
+                         │
+                      UI.java               (builds sliders + bypass + delete)
 
-> **Pro-Tip:** For the best performance, Opiqo is best used in conjunction with **Oboe**, Google’s C++ library for low-latency audio.
+[JNI Boundary]
+  AudioEngine.java  ←→  jni_bridge.cpp
+
+[Native Layer]
+  LiveEffectEngine  ←→  FullDuplexPass      (Oboe full-duplex stream)
+       │
+  LV2Plugin × 4                             (plugin1 … plugin4)
+       │
+  Lilv + LV2 library stack
+```
+
+> **Audio thread safety:** `LV2Plugin::process()` is the only method called from the Oboe RT callback. Parameter changes from the UI thread use atomic stores; atom messages use a lock-free ringbuffer.
 
 ---
 
 ### Getting Started
 
-To integrate Opiqo, you typically follow these steps:
-
-1. **Clone the Repository:** Integrate the source into your Android project via CMake.
-2. **Plugin Deployment:** Include your desired `.lv2` bundles in your assets or external storage.
-3. **Initialization:** Use the Opiqo API to "world" (initialize) the plugin environment.
-4. **Process Loop:** Feed your audio buffers into the Opiqo engine within your high-priority audio thread.
+1. **Clone the Repository** and open in Android Studio.
+2. **Build:** `./gradlew assembleDebug`
+3. **Install:** `./gradlew installDebug`
+4. **Grant** the `RECORD_AUDIO` permission when prompted.
+5. **Enable** the Power toggle to start audio processing.
+6. **Add Plugins:** Tap `+` on any pedal tab, pick a plugin from the list.
+7. **Adjust Parameters:** Move the sliders under the plugin name.
+8. **Bypass / Delete:** Use the toggle to bypass or the Delete button to remove.
 
 ---
 
-Would you like me to generate a **sample `build.gradle` or CMake configuration** to help you start the integration process?
+### Adding Your Own LV2 Plugins
+
+1. Cross-compile the plugin `.so` for Android ABIs (armeabi-v7a, arm64-v8a, …).
+2. Place `.so` files in `app/src/main/jniLibs/<ABI>/`.
+3. Create the `.lv2` bundle directory in `app/src/main/assets/lv2/` with `manifest.ttl` and the plugin `.ttl` file.
+4. Rebuild — the plugin appears in the picker automatically.
+
+---
+
+### Internal API Highlights
+
+* **`LV2Plugin`** (`cpp/LV2Plugin.hpp`): Generic LV2 wrapper. Handles port discovery, control management, atom ringbuffers, worker threads, and state save/load. See [`LV2Plugin-Usage.md`](app/src/main/cpp/LV2Plugin-Usage.md) for full API docs.
+* **`LiveEffectEngine`** (`cpp/LiveEffectEngine.h/.cpp`): Oboe full-duplex engine; owns `plugin1`–`plugin4` pointers and the `gain` float.
+* **`jni_bridge.cpp`**: All `AudioEngine` JNI methods — `create`, `setEffectOn`, `addPlugin`, `deletePlugin`, `setPluginEnabled`, `setValue`, `setGain`, `initPlugins`, `getPluginInfo`, and device ID setters.
+* **`UI.java`**: Dynamically builds the per-plugin control panel from the JSON port metadata returned by `AudioEngine.getPluginInfo()`.

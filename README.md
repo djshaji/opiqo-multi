@@ -9,16 +9,29 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 ### Core Capabilities
 - **LV2 Plugin Host**: Full support for standard LV2 (LADSPA Version 2) audio plugins
 - **Real-time Audio Processing**: Low-latency audio I/O using Google's Oboe library
-- **Guitar Effects**: Process guitar audio through multiple LV2-compatible effects plugins
+- **Guitar Effects**: Process guitar audio through a chain of up to 4 LV2 effects plugins simultaneously
 - **Native Performance**: Built with C++ for efficient audio processing
-- **Easy On/Off Control**: Simple toggle interface to enable/disable effects
+- **Master On/Off Control**: Toggle to enable/disable the entire effects chain
+
+### Multi-Pedal Chain
+- **4 Independent Pedal Slots**: Swipe between 4 pedal tabs, each hosting one LV2 plugin
+- **Per-Pedal Enable/Disable**: Each pedal has its own bypass toggle to include or exclude it from the signal chain without removing it
+- **Dynamic Plugin Loading**: Tap the `+` button on any empty pedal slot to pick and load a plugin from the bundled library
+- **Plugin Deletion**: Remove a loaded plugin from any slot with the Delete button, restoring the slot to empty
+- **Real-time Parameter Control**: Sliders for every plugin control port, labelled and set to the plugin's default values
+
+### Audio Device Management
+- **Input Device Selection**: Spinner to choose the recording (input) audio device from all connected inputs
+- **Output Device Selection**: Spinner to choose the playback (output) audio device from all connected outputs
+- **Master Volume**: Slider to adjust the overall output gain
 
 ### Technical Features
 - **Google Oboe Integration**: Modern, low-latency audio API for Android
 - **NDK Support**: High-performance native code compilation
 - **LV2 Plugin Standards**: Compatible with standard LV2 plugins (JACK, Lilv, Sord libraries)
-- **Multi-threaded Audio**: Efficient background audio processing
+- **Multi-threaded Audio**: Efficient full-duplex background audio processing via `FullDuplexPass`
 - **Android 12+**: Optimized for modern Android devices (API level 31+)
+- **54 Bundled Plugins**: Ships with a curated library of guitar effects ready to use out of the box
 
 ## Requirements
 
@@ -81,20 +94,40 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 
 ### Project Structure
 ```
-opiqoGuitarMultiEffectsProcessor/
+opiqo-multi/
 ├── app/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/org/acoustixaudio/opiqo/multi/
-│   │   │   │   ├── MainActivity.java          # Main UI activity
-│   │   │   │   └── AudioEngine.java           # Audio processing engine
+│   │   │   │   ├── MainActivity.java          # Main UI activity; permission handling, plugin loading
+│   │   │   │   ├── AudioEngine.java           # JNI declarations for the native audio engine
+│   │   │   │   ├── CollectionFragment.java    # Tab-pager fragment (hosts 4 pedal tabs)
+│   │   │   │   ├── CollectionAdapter.java     # ViewPager2 adapter (4 pedal slots)
+│   │   │   │   ├── ObjectFragment.java        # Single pedal slot fragment
+│   │   │   │   ├── UI.java                    # Dynamic plugin UI builder (sliders, bypass, delete)
+│   │   │   │   └── Test.java                  # Developer test helpers
 │   │   │   ├── cpp/
 │   │   │   │   ├── CMakeLists.txt             # Native build configuration
 │   │   │   │   ├── multi.cpp                  # Main native audio processor
-│   │   │   │   ├── jni_bridge.cpp             # Java/Native interface
-│   │   │   │   ├── LiveEffectEngine.cpp       # LV2 effects engine
-│   │   │   │   └── jalv.cpp                   # JACK/LV2 host implementation
-│   │   │   ├── res/                           # UI resources
+│   │   │   │   ├── jni_bridge.cpp             # Java/Native JNI interface
+│   │   │   │   ├── LiveEffectEngine.cpp       # Full-duplex audio engine (Oboe)
+│   │   │   │   ├── LiveEffectEngine.h         # Engine header; holds plugin1–plugin4 slots
+│   │   │   │   ├── FullDuplexPass.h           # Full-duplex Oboe stream helper
+│   │   │   │   ├── LV2Plugin.hpp              # Generic LV2 plugin wrapper (controls, state, RT)
+│   │   │   │   ├── LV2OboeHost.hpp            # Single-plugin Oboe host (output only)
+│   │   │   │   ├── LV2Plugin-Usage.md         # LV2Plugin API usage guide
+│   │   │   │   ├── jalv.cpp / jalv.h          # JACK/LV2 host utilities
+│   │   │   │   ├── lv2_ringbuffer.h           # Lock-free ringbuffer for atom messages
+│   │   │   │   ├── json.hpp                   # nlohmann/json (single-header)
+│   │   │   │   ├── kitty.cpp                  # Utility helpers
+│   │   │   │   └── logging_macros.h           # Android NDK logging helpers
+│   │   │   ├── assets/lv2/                    # 54 bundled LV2 plugin bundles
+│   │   │   ├── res/
+│   │   │   │   ├── layout/
+│   │   │   │   │   ├── activity_main.xml      # Root layout: pager + control bar
+│   │   │   │   │   ├── pager.xml              # TabLayout + ViewPager2
+│   │   │   │   │   └── plugin.xml             # Pedal slot: plugin UI container + add button
+│   │   │   │   └── ...
 │   │   │   └── AndroidManifest.xml
 │   │   ├── androidTest/                       # Instrumented tests
 │   │   └── test/                              # Unit tests
@@ -105,26 +138,32 @@ opiqoGuitarMultiEffectsProcessor/
 │   └── wrapper/
 ├── build.gradle                               # Project-level build configuration
 ├── settings.gradle                            # Gradle settings
+├── opiqo.md                                   # Project overview document
 └── README.md                                  # This file
 ```
 
 ### Audio Processing Pipeline
 
 ```
-Guitar Input (Microphone)
+Guitar / Microphone Input
          ↓
-    [Oboe Audio API]
+    [Oboe Audio API]          ← Low-latency full-duplex stream
          ↓
-  [JNI Bridge Layer]
+   [JNI Bridge Layer]         ← Java ↔ C++ boundary
          ↓
-[LV2 Plugin Host (Jalv)]
+ [LiveEffectEngine / FullDuplexPass]
          ↓
-[Audio Effects Processing]
-    - Effect 1
-    - Effect 2
-    - Effect N
+  [LV2Plugin Slot 1 (Pedal 1)]  ← bypassed if disabled
          ↓
-    [Output Speaker]
+  [LV2Plugin Slot 2 (Pedal 2)]  ← bypassed if disabled
+         ↓
+  [LV2Plugin Slot 3 (Pedal 3)]  ← bypassed if disabled
+         ↓
+  [LV2Plugin Slot 4 (Pedal 4)]  ← bypassed if disabled
+         ↓
+   [Master Gain (volume)]
+         ↓
+    [Output Speaker / Headphones]
 ```
 
 ## Usage
@@ -136,17 +175,45 @@ Guitar Input (Microphone)
    - The app will request `RECORD_AUDIO` permission on first run
    - Grant the permission to enable audio processing
 
-2. **Enable Effects**
-   - Toggle the "Effect On/Off" switch to enable/disable audio processing
-   - When enabled, the app will process audio through loaded LV2 plugins
+2. **Enable the Effects Chain**
+   - Press the **Power** toggle at the bottom of the screen to start audio processing
+   - When enabled, audio is captured from the selected input device, passed through any loaded plugins, and sent to the selected output device
 
-3. **Load LV2 Plugins**
-   - Place LV2 plugin files in the appropriate directory
-   - The plugin host will automatically discover and load compatible plugins
+3. **Load a Plugin onto a Pedal Slot**
+   - Each of the 4 pedal tabs (Pedal 1–4) shows a `+` placeholder when empty
+   - Tap the `+` area to open the plugin picker dialog
+   - Select any plugin from the bundled library to load it into that slot
+   - The plugin's parameter sliders appear immediately after loading
+
+4. **Adjust Plugin Parameters**
+   - Each loaded plugin displays a slider for every controllable port
+   - Move a slider to change the parameter value in real time
+   - The slider range and default value come directly from the plugin's LV2 metadata
+
+5. **Enable or Bypass a Pedal**
+   - Use the toggle switch in the plugin header to enable or bypass that pedal
+   - Bypass removes the plugin from the signal chain without unloading it
+
+6. **Remove a Plugin**
+   - Tap the **Delete** button at the bottom of a loaded plugin to unload it
+   - The pedal slot returns to the empty `+` state
+
+7. **Select Audio Devices**
+   - Use the **Input Device** spinner to choose the microphone or audio interface input
+   - Use the **Output Device** spinner to route audio to a specific output (speaker, headphones, etc.)
+
+8. **Adjust Master Volume**
+   - Move the **Volume** slider (bottom bar) to scale the overall output level
 
 ### UI Components
-- **On/Off Toggle**: Main switch to enable/disable audio effects processing
-- **Status Indicator**: Shows current audio processing state
+- **Power Toggle**: Master switch to start/stop the audio engine and all plugin processing
+- **Volume Slider**: Controls master output gain
+- **Pedal Tabs (Pedal 1–4)**: Swipeable tabs, each hosting one LV2 plugin slot
+- **Plugin `+` Button**: Opens the plugin selection dialog for an empty slot
+- **Plugin Bypass Switch**: Per-plugin enable/disable toggle in each plugin's header
+- **Plugin Parameter Sliders**: One slider per control port; labels and ranges from the plugin
+- **Delete Button**: Removes and unloads the plugin from its slot
+- **Input / Output Device Spinners**: Select which audio hardware to use
 
 ## Permissions
 
@@ -156,23 +223,95 @@ The app requires the following Android permissions:
 
 These permissions are requested at runtime on Android 6.0 (API level 23) and above.
 
+## Bundled LV2 Plugins
+
+The app ships with 54 guitar effects plugins in `app/src/main/assets/lv2/`. They are automatically copied to the app's private storage on first launch.
+
+### Distortion / Overdrive / Fuzz
+| Plugin | Description |
+|--------|-------------|
+| FatFrog | Fuzz effect |
+| GxAxisFace | Axis Face fuzz |
+| GxBaJaTubeDriver | Tube driver overdrive |
+| GxBoobTube | Boob Tube overdrive |
+| GxBottleRocket | Bottle Rocket distortion |
+| GxClubDrive | Club Drive overdrive |
+| GxCreamMachine | Cream Machine distortion |
+| GxDOP250 | DOD 250 Overdrive Preamp |
+| GxEpic | Epic distortion |
+| GxEternity | Eternity overdrive |
+| GxFz1b | Maestro FZ-1B fuzz |
+| GxFz1s | Maestro FZ-1S fuzz |
+| GxGuvnor | Guvnor distortion |
+| GxHeathkit | Heathkit distortion |
+| GxHotBox | Hot Box overdrive |
+| GxHyperion | Hyperion fuzz |
+| GxKnightFuzz | Knight Fuzz |
+| GxLiquidDrive | Liquid Drive overdrive |
+| GxLuna | Luna overdrive |
+| GxMicroAmp | Micro Amp clean boost |
+| GxPlexi | Plexi amp sim |
+| GxSD1 | SD-1 Super Overdrive sim |
+| GxSD2Lead | SD-2 Lead distortion sim |
+| GxSaturator | Saturator |
+| GxShakaTube | Shaka Tube overdrive |
+| GxSloopyBlue | Sloopy Blue overdrive |
+| GxSupersonic | Supersonic distortion |
+| GxSuppaToneBender | Supra Tone Bender fuzz |
+| GxTimRay | Tim Ray overdrive |
+| GxToneMachine | Tone Machine fuzz |
+| GxTubeDistortion | Tube Distortion |
+| GxVintageFuzzMaster | Vintage Fuzz Master |
+| GxVoodoFuzz | Voodoo Fuzz |
+| bluesbreaker | Blues Breaker overdrive |
+| gx_bajatubedriver | Baja Tube Driver (alt bundle) |
+| gx_sloopyblue | Sloopy Blue (alt bundle) |
+
+### Modulation / Filter / Special Effects
+| Plugin | Description |
+|--------|-------------|
+| GxQuack | Auto-wah / quack filter |
+| GxSlowGear | Slow-gear volume swell |
+| GxSunFace | Sun Face fuzz/sustainer |
+| GxSuperFuzz | Super Fuzz |
+| GxUVox720k | UniVox 720k effect |
+| GxVmk2 | VMK2 effect |
+| LittleFly | Little Fly effect |
+| ModularAmpToolKit | Modular amp toolkit |
+
+### Amp Simulators
+| Plugin | Description |
+|--------|-------------|
+| GxBlueAmp | Blue amp simulator |
+| GxSVT | Ampeg SVT bass amp sim |
+| GxUltraCab | Ultra cabinet simulator |
+| GxVBassPreAmp | V-Bass preamp simulator |
+| GxValveCaster | Valve Caster amp sim |
+| Ratatouille | Amp/cab simulator |
+| VintageAC30 | Vintage AC30 amp sim |
+| VintageTubeOverdrive | Vintage tube overdrive |
+| XDarkTerror | Dark Terror amp sim |
+| XTinyTerror | Tiny Terror amp sim |
+
 ## Development
 
-### Adding New Effects
+### Adding New LV2 Plugin Bundles
 
-To add new LV2 plugin support:
+To bundle additional LV2 plugins with the app:
 
-1. **Prepare LV2 Plugin**
-   - Ensure plugin is compatible with Android NDK
-   - Compile plugin binaries for target architectures (x86, armeabi-v7a, arm64-v8a)
+1. **Compile the Plugin for Android**
+   - Cross-compile the plugin's `.so` library for each target ABI (armeabi-v7a, arm64-v8a, x86, x86_64) using the Android NDK
+   - Ensure all dependencies are statically linked or also provided as `.so` files
 
-2. **Update CMakeLists.txt**
-   - Add plugin library paths to the CMake configuration
-   - Link plugin libraries in `target_link_libraries()`
+2. **Create the LV2 Bundle**
+   - Create a directory under `app/src/main/assets/lv2/` named `<PluginName>.lv2/`
+   - Add the `manifest.ttl` (bundle manifest) and the plugin-specific `.ttl` metadata file
+   - Add the compiled `.so` library to `app/src/main/jniLibs/<ABI>/`
 
-3. **Update LiveEffectEngine.cpp**
-   - Register new plugin in the host
-   - Add plugin parameter controls
+3. **Rebuild the App**
+   - Run `./gradlew assembleDebug`; the new plugin will be discovered automatically at runtime via Lilv
+
+> **Note:** The app copies all bundles from `assets/lv2/` to the app's private `files/lv2/` directory on first launch and passes this path to Lilv for plugin discovery. No changes to Java or C++ code are needed to add new bundles.
 
 ### Native Code Compilation
 
@@ -180,9 +319,10 @@ The project uses CMake for native code compilation. Key files:
 
 - **CMakeLists.txt**: Defines build rules for native libraries
 - **Source Files**:
-  - `multi.cpp`: Main native audio processor
-  - `jni_bridge.cpp`: JNI bindings for Java/C++ communication
-  - `LiveEffectEngine.cpp`: LV2 plugin host implementation
+  - `multi.cpp`: Main native audio processor entry point
+  - `jni_bridge.cpp`: JNI bindings for Java/C++ communication; all `AudioEngine` native methods
+  - `LiveEffectEngine.cpp`: Full-duplex Oboe engine; holds 4 plugin slots
+  - `LV2Plugin.hpp`: Generic, backend-agnostic LV2 wrapper with RT-safe processing
   - `jalv.cpp`: JACK/LV2 host utilities
 
 ### Building for Different Architectures
@@ -240,20 +380,27 @@ Located in `app/src/main/libs/`:
 
 ### No Audio Output
 - Verify RECORD_AUDIO permission is granted
-- Check device volume settings
-- Ensure microphone is not blocked
-- Verify LV2 plugins are properly loaded
+- Check device volume settings and the in-app Volume slider
+- Ensure the Power toggle is enabled
+- Check that at least one pedal slot has a plugin loaded
+- Verify the correct Input and Output devices are selected
+
+### Plugin Not Loading
+- Check Logcat for `[load plugin]` error messages
+- Ensure the plugin's `.so` library is compiled for your device's ABI
+- Verify the plugin's `.ttl` manifest is valid and the URI matches
 
 ### Build Failures
 - Ensure NDK is properly installed
-- Check CMake version compatibility
+- Check CMake version compatibility (3.22.1+)
 - Verify all prebuilt libraries are present in `app/src/main/libs/`
 - Clean and rebuild: `./gradlew clean build`
 
-### Plugin Loading Issues
-- Verify LV2 plugin manifest files (TTL) are valid
+### Plugin Discovery Issues
+- Verify LV2 plugin bundle is in `app/src/main/assets/lv2/`
+- Check `manifest.ttl` and plugin `.ttl` files are valid Turtle RDF
 - Check plugin architecture matches device (arm64-v8a, armeabi-v7a, etc.)
-- Review Lilv logs for plugin discovery errors
+- Review Lilv logs (`[initPlugins]`) for plugin discovery errors
 
 ## Contributing
 
@@ -274,12 +421,14 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - **Google Oboe**: Modern, low-latency audio API for Android
 - **LV2 Project**: Standard plugin format and utilities
 - **JACK Audio**: Professional audio routing infrastructure
+- **Guitarix**: Source of many of the bundled guitar effects plugins
 - **AndroidX**: Modern Android development libraries
 
 ## Support & Documentation
 
 ### Resources
 - [LV2 Plugin Specification](https://lv2plug.in/)
+- [LV2Plugin API Guide](app/src/main/cpp/LV2Plugin-Usage.md)
 - [Google Oboe Documentation](https://github.com/google/oboe)
 - [Android NDK Guide](https://developer.android.com/ndk)
 - [Android Audio Documentation](https://developer.android.com/guide/topics/media)
@@ -292,11 +441,17 @@ This project is licensed under the MIT License - see LICENSE file for details.
 
 ## Changelog
 
-### Version 1.0.0 (Initial Release)
-- LV2 plugin host implementation
-- Google Oboe audio I/O integration
-- Basic UI with effect on/off control
-- Multi-architecture NDK support
+### Version 0.7
+- **Multi-pedal chain**: 4 independent pedal slots in a swipeable tab UI
+- **Per-pedal bypass toggle**: Enable/disable individual plugins without removing them
+- **Dynamic plugin loading**: Add or delete plugins at runtime from bundled library
+- **Real-time parameter sliders**: Per-port sliders with labels and correct default values
+- **Input/output device selection**: Choose audio hardware at runtime
+- **Master volume control**: Output gain slider
+- **54 bundled LV2 plugins**: Curated guitar effects ready to use
+- LV2 plugin host implementation (Lilv + custom `LV2Plugin` wrapper)
+- Google Oboe full-duplex audio I/O integration
+- Multi-architecture NDK support (armeabi-v7a, arm64-v8a, x86, x86_64)
 - Android 12+ compatibility
 
 ---
