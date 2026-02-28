@@ -25,9 +25,13 @@ public class Test {
 
              Log.d(TAG, "pluginLoader: load [ok]");
              Log.d(TAG, "pluginLoader: failed plugins: ");
-                for (String failedPlugin : failedPlugins) {
-                    Log.d(TAG, "pluginLoader: " + failedPlugin);
-                }
+             if (! failedPlugins.isEmpty()) {
+                 for (String failedPlugin : failedPlugins) {
+                     Log.d(TAG, "pluginLoader: " + failedPlugin);
+                 }
+             } else {
+                 Log.i(TAG, "pluginLoader: all plugins loaded successfully");
+             }
          }
     }
 }

@@ -374,7 +374,24 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
 
     if ( !plugin->initialize()) {
         LOGE("[load plugin] Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
-//        LOGF("[load plugin] %s", dlerror());
+        char * libname = const_cast<char *>(basename(
+                lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_))));
+        LOGE("[load plugin] Failed to initialize plugin %s from library %s", env->GetStringUTFChars(uri, nullptr), libname);
+        void * lib = dlopen (libname, RTLD_NOW | RTLD_LOCAL);
+        if (lib == nullptr) {
+            LOGE("[load plugin] Failed to load library %s: %s", libname, dlerror());
+        } else {
+            void (*init_func)(void) = (void (*)(void)) dlsym(lib, "lv2_descriptor");
+            if (init_func == nullptr) {
+                LOGE("[load plugin] Failed to find lv2_descriptor in library %s: %s", libname, dlerror());
+            } else {
+                LOGD("[debug] Successfully found lv2_descriptor in library %s", libname);
+            }
+
+            LOGW("[debug] Successfully loaded library %s manually", libname);
+            dlclose(lib);
+        }
+
         free ((void*)env->GetStringUTFChars(uri, nullptr));
         return -1;
     } else {
