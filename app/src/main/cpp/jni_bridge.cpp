@@ -576,3 +576,32 @@ JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_setGain(JNIEnv *env, jclass clazz, jfloat gain) {
     * engine -> gain = gain ;
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginEnabled(JNIEnv *env, jclass clazz,
+                                                                jint plugin, jboolean is_enabled) {
+    switch (plugin) {
+        case 1:
+            if (engine->plugin1) {
+                engine->plugin1->enabled = is_enabled;
+            }
+            break;
+        case 2:
+            if (engine->plugin2) {
+                engine->plugin2->enabled = is_enabled;
+            }
+            break ;
+        case 3:
+            if (engine->plugin3) {
+                engine->plugin3->enabled = is_enabled;
+            }
+            break ;
+        case 4:
+            if (engine->plugin4) {
+                engine->plugin4->enabled = is_enabled;
+            }
+            break;
+        default:
+            LOGE("Unknown plugin index %d", plugin);
+    }
+}

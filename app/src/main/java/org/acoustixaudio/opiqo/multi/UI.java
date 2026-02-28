@@ -5,10 +5,14 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.material.slider.Slider;
 
@@ -51,9 +55,29 @@ public class UI extends LinearLayout {
             Log.d(TAG, "build: ports " + ports);
             TextView title = new TextView(context);
             title.setText(pluginInfo.getString("name"));
-            title.setTextSize(40);
-            title.setPadding(0, 0, 0, 40);
-            addView(title);
+            title.setTextSize(22);
+            title.setPadding(10, 10, 10, 40);
+
+            LinearLayout header = new LinearLayout(context);
+            header.setBackground(getResources().getDrawable(R.drawable.trans2));
+            header.setOrientation(HORIZONTAL);
+            header.setGravity(Gravity.CENTER_VERTICAL);
+            header.addView(title);
+
+            LayoutParams headerParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            headerParams.weight = 1;
+            title.setLayoutParams(headerParams);
+            Switch bypass = new Switch(context);
+            bypass.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(@NonNull CompoundButton compoundButton, boolean b) {
+                    AudioEngine.setPluginEnabled(position, b);
+                }
+            });
+
+            bypass.setChecked(true);
+            addView(header);
+            header.addView(bypass);
 
             for (int i = 0; i < ports.length(); i++) {
                 JSONObject port = ports.getJSONObject(i);
@@ -80,7 +104,7 @@ public class UI extends LinearLayout {
 
                 TextView label = new TextView(context);
                 label.setText(port.getString("name"));
-                label.setTextSize(16);
+//                label.setTextSize(16);
                 label.setPadding(0, 0, 0, 20);
 
                 addView(slider);

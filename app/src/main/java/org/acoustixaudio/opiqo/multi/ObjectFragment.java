@@ -15,7 +15,7 @@ import androidx.fragment.app.Fragment;
 public class ObjectFragment extends Fragment {
     public static final String ARG_OBJECT = "object";
     public MainActivity mainActivity;
-    TextView add = null;
+    View add = null;
     View root = null;
     int position;
 

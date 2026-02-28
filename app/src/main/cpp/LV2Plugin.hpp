@@ -308,6 +308,7 @@ private:
 
 class LV2Plugin {
 public:
+    bool enabled = true;
     // Constructor: caller provides discovered Lilv world and plugin
     LV2Plugin(LilvWorld* world, LilvPlugin* plugin, double sample_rate, uint32_t max_block_length)
         : world_(world), plugin_(plugin), sample_rate_(sample_rate),
@@ -418,6 +419,14 @@ public:
 
     // RT-safe audio processing with atom message handling
     bool process(float* inputBuffer, float* outputBuffer, int numFrames) {
+        if (!enabled) {
+            // If plugin is bypassed, just copy input to output
+            if (inputBuffer && outputBuffer && numFrames > 0) {
+                std::memcpy(outputBuffer, inputBuffer, sizeof(float) * numFrames);
+            }
+            return true;
+        }
+
         if (shutdown_.load(std::memory_order_acquire) || !instance_)
             return false;
 

@@ -146,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Request record audio permission if not already granted
         requestRecordAudioPermission();
-        pluginUIContainer1 = findViewById(R.id.plugin_container);
         FrameLayout pager_layout = findViewById(R.id.pager_container);
 
         collectionFragment = new CollectionFragment(this);
@@ -268,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void showAddPluginDialog(View root, TextView add, int position) {
+    public void showAddPluginDialog(View root, View add, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         CharSequence [] pluginNamesArray = pluginNames.toArray(new CharSequence[0]);
         builder.setTitle("Add Plugin")
