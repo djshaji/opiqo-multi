@@ -1,4 +1,4 @@
-## Project Overview: Opiqo Multi
+## Project Overview: Opiqo Multi Effects Processor
 
 **Opiqo Multi** is an open-source **Guitar Multi-Effects Processor** for Android. It hosts up to **4 LV2 (LADSPA Version 2)** audio plugins simultaneously in a swipeable pedal-board UI, giving guitarists a professional-grade effects chain directly on their Android device.
 
