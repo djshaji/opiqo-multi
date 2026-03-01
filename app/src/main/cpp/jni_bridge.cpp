@@ -237,6 +237,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_test(JNIEnv *env, jclass clazz, j
                     break;
                 default:
 //                    *d = 0.0f;
+                    break;
 
             }
         }
@@ -438,7 +439,6 @@ JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass clazz,
                                                            jstring dir) {
     std::string path;
-    int pluginCount = 0 ;
     if (dir != nullptr) {
         const char* cstr = env->GetStringUTFChars(dir, nullptr);
         if (cstr) {
@@ -463,7 +463,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
     engine -> pluginInfo = {} ;
 
     LILV_FOREACH (plugins, i, engine -> plugins) {
-        pluginCount++;
+        engine -> pluginCount++;
         const LilvPlugin* p = lilv_plugins_get(engine -> plugins, i);
         LOGD("[plugin] %s\n", lilv_node_as_uri(lilv_plugin_get_uri(p)));
         json pluginInfo = {
@@ -513,7 +513,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
     }
 
 //    LOGD("[plugininfo] %s", engine -> pluginInfo.dump(4).c_str());
-    LOGD ("[initPlugins] Found %d plugins", pluginCount);
+    LOGD ("[initPlugins] Found %d plugins", engine -> pluginCount);
 }
 
 extern "C"

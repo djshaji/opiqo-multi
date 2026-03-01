@@ -83,7 +83,7 @@ public class UI extends LinearLayout {
                 JSONObject port = ports.getJSONObject(i);
                 Log.d(TAG, "build: port " + port);
 
-                if (! port.getString("type").equals("control"))
+                if (! port.has("type") || ! port.getString("type").equals("control"))
                     continue;
 
                 Slider slider = new Slider(context);
