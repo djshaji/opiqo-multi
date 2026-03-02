@@ -1,0 +1,36 @@
+@prefix modgui: <http://moddevices.com/ns/modgui#> .
+@prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
+
+<http://aidadsp.cc/plugins/aidadsp-bundle/rt-neural-generic>
+    modgui:gui [
+        modgui:resourcesDirectory <modgui> ;
+        modgui:iconTemplate <modgui/icon-rt-neural-generic.html> ;
+        modgui:javascript <modgui/javascript-rt-neural-generic.js> ;
+        modgui:stylesheet <modgui/stylesheet-rt-neural-generic.css> ;
+        modgui:screenshot <modgui/screenshot-rt-neural-generic.png> ;
+        modgui:thumbnail <modgui/thumbnail-rt-neural-generic.png> ;
+        modgui:brand "Aida DSP" ;
+        modgui:label "rt-neural-gen" ;
+        modgui:documentation <modgui/aida-x-manual.pdf> ;
+        modgui:discussionURL <https://forum.mod.audio/t/aida-dsp-aida-x/9639> ;
+        modgui:port [
+            lv2:index 0 ;
+            lv2:symbol "PREGAIN" ;
+            lv2:name "INPUT" ;
+        ] , [
+            lv2:index 1 ;
+            lv2:symbol "BASS" ;
+            lv2:name "BASS" ;
+        ] , [
+            lv2:index 2 ;
+            lv2:symbol "TREBLE" ;
+            lv2:name "TREBLE" ;
+        ] , [
+            lv2:index 3 ;
+            lv2:symbol "MASTER" ;
+            lv2:name "OUTPUT" ;
+        ] ;
+        modgui:monitoredOutputs [
+            lv2:symbol "ModelInSize";
+        ] ;
+    ] .

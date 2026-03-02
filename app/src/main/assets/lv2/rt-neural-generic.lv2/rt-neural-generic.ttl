@@ -1,0 +1,317 @@
+@prefix atom:  <http://lv2plug.in/ns/ext/atom#> .
+@prefix doap:  <http://usefulinc.com/ns/doap#> .
+@prefix lv2:   <http://lv2plug.in/ns/lv2core#> .
+@prefix patch: <http://lv2plug.in/ns/ext/patch#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix state: <http://lv2plug.in/ns/ext/state#> .
+@prefix urid:  <http://lv2plug.in/ns/ext/urid#> .
+@prefix work:  <http://lv2plug.in/ns/ext/worker#> .
+@prefix param: <http://lv2plug.in/ns/ext/parameters#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix mod: <http://moddevices.com/ns/mod#>.
+@prefix bsize:  <http://lv2plug.in/ns/ext/buf-size#>.
+@prefix units: <http://lv2plug.in/ns/extensions/units#> .
+
+<http://aidadsp.cc/plugins/aidadsp-bundle/rt-neural-generic#json>
+    a lv2:Parameter ;
+    mod:fileTypes "aidadspmodel" ;
+    rdfs:label "Neural Model" ;
+    rdfs:range atom:Path .
+
+<http://aidadsp.cc/plugins/aidadsp-bundle/rt-neural-generic>
+    a lv2:Plugin, lv2:SimulatorPlugin ;
+    doap:name "AIDA-X" ;
+    lv2:optionalFeature lv2:hardRTCapable ;
+
+doap:license <http://spdx.org/licenses/GPL-3.0-or-later.html> ;
+
+rdfs:comment """
+AIDA-X is an Amp Model Player, allowing it to load models of AI trained music gear, which you can then play through!
+
+Its main intended use is to provide high fidelity simulations of amplifiers.
+However, it is also possible to run entire signal chains consisting of any combination of amp, cab, dist, drive, fuzz, boost and eq.
+""";
+
+doap:developer [
+    foaf:name "Aida DSP";
+    foaf:homepage <http://aidadsp.cc>;
+];
+
+doap:maintainer [
+    foaf:name "Aida DSP";
+    foaf:homepage <http://aidadsp.cc>;
+];
+
+lv2:minorVersion 1;
+lv2:microVersion 1;
+
+mod:brand "Aida DSP";
+mod:label "AIDA-X";
+
+doap:license <http://opensource.org/license/gpl-3-0> ;
+lv2:project <http://lv2plug.in/ns/lv2>;
+lv2:requiredFeature urid:map ,
+    work:schedule ;
+lv2:optionalFeature lv2:hardRTCapable ,
+    state:loadDefaultState, state:mapPath ;
+lv2:extensionData state:interface ,
+    work:interface ;
+patch:writable <http://aidadsp.cc/plugins/aidadsp-bundle/rt-neural-generic#json>;
+lv2:port
+[
+    a lv2:AudioPort, lv2:InputPort;
+    lv2:index 0;
+    lv2:symbol "IN";
+    lv2:name "IN";
+],
+[
+    a lv2:AudioPort, lv2:OutputPort;
+    lv2:index 1;
+    lv2:symbol "OUT";
+    lv2:name "OUT";
+],
+[
+    a lv2:InputPort, atom:AtomPort;
+    lv2:index 2;
+    atom:bufferType atom:Sequence;
+    atom:supports patch:Message;
+    lv2:designation lv2:control;
+    lv2:symbol "CONTROL";
+    lv2:name "CONTROL";
+],
+[
+    a lv2:OutputPort, atom:AtomPort;
+    lv2:index 3;
+    atom:bufferType atom:Sequence;
+    atom:supports patch:Message;
+    lv2:designation lv2:control;
+    lv2:symbol "NOTIFY";
+    lv2:name "NOTIFY";
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 4;
+    lv2:symbol "ANTIALIASING";
+    lv2:name "ANTIALIASING";
+    lv2:default 66.216;
+    lv2:minimum 0;
+    lv2:maximum 100.0;
+    units:unit units:pc;
+    lv2:scalePoint [rdfs:label "Off"; rdf:value 0];
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 5;
+    lv2:symbol "PREGAIN";
+    lv2:name "INPUT";
+    lv2:default 0;
+    lv2:minimum -12.0;
+    lv2:maximum 12.0;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 6;
+    lv2:symbol "NETBYPASS";
+    lv2:name "NETBYPASS";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 7;
+    lv2:symbol "PARAM1";
+    lv2:name "PARAM1";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1.0;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 8;
+    lv2:symbol "PARAM2";
+    lv2:name "PARAM2";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1.0;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 9;
+    lv2:symbol "EQBYPASS";
+    lv2:name "EQBYPASS";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 10;
+    lv2:symbol "EQPOS";
+    lv2:name "EQPOS";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:enumeration;
+    lv2:scalePoint [rdfs:label "POST"; rdf:value 0];
+    lv2:scalePoint [rdfs:label "PRE"; rdf:value 1];
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 11;
+    lv2:symbol "BASS";
+    lv2:name "BASS";
+    lv2:default 0;
+    lv2:minimum -8.0;
+    lv2:maximum 8;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 12;
+    lv2:symbol "BFREQ";
+    lv2:name "BFREQ";
+    lv2:default 305.0;
+    lv2:minimum 75.0;
+    lv2:maximum 600.0;
+    units:unit units:hz;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 13;
+    lv2:symbol "MID";
+    lv2:name "MID";
+    lv2:default 0;
+    lv2:minimum -8.0;
+    lv2:maximum 8;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 14;
+    lv2:symbol "MFREQ";
+    lv2:name "MFREQ";
+    lv2:default 750.0;
+    lv2:minimum 150.0;
+    lv2:maximum 5000.0;
+    units:unit units:hz;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 15;
+    lv2:symbol "MIDQ";
+    lv2:name "MIDQ";
+    lv2:default 0.707;
+    lv2:minimum 0.2;
+    lv2:maximum 5.0;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 16;
+    lv2:symbol "MTYPE";
+    lv2:name "MTYPE";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:enumeration;
+    lv2:scalePoint [rdfs:label "PEAK"; rdf:value 0];
+    lv2:scalePoint [rdfs:label "BANDPASS"; rdf:value 1];
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 17;
+    lv2:symbol "TREBLE";
+    lv2:name "TREBLE";
+    lv2:default 0;
+    lv2:minimum -8.0;
+    lv2:maximum 8;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 18;
+    lv2:symbol "TFREQ";
+    lv2:name "TFREQ";
+    lv2:default 2000.0;
+    lv2:minimum 1000.0;
+    lv2:maximum 4000.0;
+    units:unit units:hz;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 19;
+    lv2:symbol "DEPTH";
+    lv2:name "DEPTH";
+    lv2:default 0;
+    lv2:minimum -8.0;
+    lv2:maximum 8;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 20;
+    lv2:symbol "PRESENCE";
+    lv2:name "PRESENCE";
+    lv2:default 0;
+    lv2:minimum -8.0;
+    lv2:maximum 8;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 21;
+    lv2:symbol "DCBLOCKER";
+    lv2:name "DCBLOCKER";
+    lv2:default 1;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 22;
+    lv2:symbol "MASTER";
+    lv2:name "OUTPUT";
+    lv2:default 0;
+    lv2:minimum -15.0;
+    lv2:maximum 15;
+    units:unit units:db;
+],
+[
+    a lv2:ControlPort, lv2:OutputPort;
+    lv2:index 23;
+    lv2:symbol "ModelInSize";
+    lv2:name "Model Input Size";
+    lv2:default 0;
+    lv2:minimum 0;
+    lv2:maximum 3;
+    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:enumeration;
+    lv2:scalePoint [rdfs:label "ERROR"; rdf:value 0];
+    lv2:scalePoint [rdfs:label "SNAPSHOT"; rdf:value 1];
+    lv2:scalePoint [rdfs:label "WITH 1 PARAM"; rdf:value 2];
+    lv2:scalePoint [rdfs:label "WITH 2 PARAMS"; rdf:value 3];
+],
+[
+    a lv2:ControlPort, lv2:InputPort;
+    lv2:index 24;
+    lv2:symbol "enabled";
+    lv2:name "Enabled";
+    lv2:default 1;
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:designation lv2:enabled;
+];
+
+state:state [
+    <http://aidadsp.cc/plugins/aidadsp-bundle/rt-neural-generic#json> <models/deer%20ink%20studios/tw40_california_clean_deerinkstudios.json>
+].

@@ -1,0 +1,2180 @@
+@prefix lv2: <http://lv2plug.in/ns/lv2core#> .
+@prefix pset: <http://lv2plug.in/ns/ext/presets#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://moddevices.com/plugins/mda/presets#DX10-bright-e-piano>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6123.89 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 424.42 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 28 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.24675 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 23 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 4600.0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 90 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 44.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 10.35 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-jazz-e-piano>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 18 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 44.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 178.643 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 24.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 17.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-e-piano-pad>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.138 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 27 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 469.403 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 22.4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 97.4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 25 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 42.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 83.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-fuzzy-e-piano>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.16275 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 59.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 1851.16 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 30.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 26.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.0420003 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 27.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 63.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 13.15 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-soft-chimes>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 47.8176 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 5727.86 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 1210.38 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 23 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 39 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 97.8411 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 16 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 36.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 40.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 29.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.325 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-harpsichord>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 722.87 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 46.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 88 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 34.2356 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 40.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6338.11 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 84.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 65.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-funk-clav>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 1151.19 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 87.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 52.1069 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 59.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 30.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 86.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-sitar>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 1586.77 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 15.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 3240.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 49.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6411.17 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 42.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 63.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-chiff-organ>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 209.128 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.21225 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 57 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 138.847 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 318.91 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 13.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 28.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 82.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-tinkle>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 1210.38 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.48825 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 39.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 799.113 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 25.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 30 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 1.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 41.4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-space-pad>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 630.708 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.14775 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 52 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 2626.98 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 28 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6313.95 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 25 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 33.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 42.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-koto>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 318.91 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 46.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 88 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 34.2356 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 60 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6338.11 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 52.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 48 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-harp>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 1555.27 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 15.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 195.664 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 439.58 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 90 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.708 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 40.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-jazz-guitar>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 49 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 97.8411 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 25 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 26.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 14.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-steel-drum>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 516.087 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 590.907 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.5475 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 34.2356 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 30.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6313.95 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 100 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 57.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-log-drum>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 516.087 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 570.526 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 46.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 29.5551 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 15.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 15.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-trumpet>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 68.9456 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 45 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 11.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 71.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 10.025 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-horn>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 19.7285 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 189.319 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 18 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 279.618 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 30 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 21.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 48 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-reed-1>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 12.672 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 162.879 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 24 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 148.915 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 25.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 75.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 69.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 80.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-reed-2>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 12.672 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 162.879 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.0525 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 24 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 148.915 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 36 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 21.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 18.4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 10.35 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-violin>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 427.771 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 6973.31 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 383.921 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.1035 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 75 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 260.712 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 51.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6485.07 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 31.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 46.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 1.068 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 74.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 75.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.175 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-chunky-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 1151.19 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 46.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.09375 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 47.4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 97.8411 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 10 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 57.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 59.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-e-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 13.6423 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 38.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 32.371 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 25 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 154.913 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 20 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -1.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 17.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 82.2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-clunk-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 5727.86 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 2 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 45 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 159.713 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -1.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 52 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 10.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-thick-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 5727.86 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.10875 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 29 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 197.038 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 10 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 44.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 30.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-sine-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 5727.86 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 542.624 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.11325 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 9.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 279.618 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6737.62 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 11.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 1.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-square-bass>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 5727.86 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 76.7746 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 4 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 35 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 1851.16 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 10 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 154.913 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -1.8 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 30.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 73 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-upright-bass-1>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 22.8653 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 18 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 745.084 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 29.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 3.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-upright-bass-2>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 22.8653 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 345.55 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 46.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 27.7504 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value -0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 54.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 46.7 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-harmonics>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 570.526 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 33 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 68.9456 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 6241.99 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 15.1 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 7.9 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-scratch>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 46.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.18 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 58 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 1399.04 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 46.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 81.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 24.3 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+
+<http://moddevices.com/plugins/mda/presets#DX10-syn-tom>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/DX10> ;
+	lv2:port [
+		lv2:symbol "attack" ;
+		pset:value 2.5 ;
+	] ;
+	lv2:port [
+		lv2:symbol "decay" ;
+		pset:value 802.334 ;
+	] ;
+	lv2:port [
+		lv2:symbol "release" ;
+		pset:value 268.923 ;
+	] ;
+	lv2:port [
+		lv2:symbol "coarse" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "fine" ;
+		pset:value 0.07875 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_init" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_dec" ;
+		pset:value 17 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_sus" ;
+		pset:value 20 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_rel" ;
+		pset:value 2567.85 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_vel" ;
+		pset:value 50 ;
+	] ;
+	lv2:port [
+		lv2:symbol "vibrato" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "octave" ;
+		pset:value 0.87 ;
+	] ;
+	lv2:port [
+		lv2:symbol "finetune" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "waveform" ;
+		pset:value 100 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mod_thru" ;
+		pset:value 29.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "lfo_rate" ;
+		pset:value 12.5 ;
+	] .
+

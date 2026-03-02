@@ -1,0 +1,22 @@
+@prefix modgui: <http://moddevices.com/ns/modgui#> .
+@prefix lv2:    <http://lv2plug.in/ns/lv2core#> .
+
+<http://VeJaPlugins.com/plugins/Release/BassCab>
+    modgui:gui [
+        modgui:resourcesDirectory <modgui> ;
+        modgui:iconTemplate <modgui/icon-cabsim-vejabass.html> ;
+        modgui:stylesheet <modgui/stylesheet-cabsim-vejabass.css> ;
+        modgui:screenshot <modgui/screenshot-vejabass-cabinet.png> ;
+        modgui:thumbnail <modgui/thumbnail-vejabass-cabinet.png> ;
+        
+        modgui:port [
+            lv2:index 0;
+            lv2:symbol "Attenuation";
+            lv2:name "Attenuation";
+        ], [
+            lv2:index 1;
+            lv2:symbol "Model";
+            lv2:name "Model";
+        ] ;
+        
+    ] .

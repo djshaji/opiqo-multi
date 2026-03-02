@@ -1,0 +1,78 @@
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pg:   <http://lv2plug.in/ns/ext/port-groups#> .
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix mda:  <http://moddevices.com/plugins/mda/> .
+@prefix mdap: <http://moddevices.com/plugins/mda/presets#> .
+@prefix pset: <http://lv2plug.in/ns/ext/presets#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+mda:
+    a doap:Project ;
+    lv2:symbol "mda" ;
+    doap:name "MDA LV2" ;
+    doap:shortdesc "An LV2 port of the MDA plugins." ;
+    doap:homepage <http://drobilla.net/software/mda-lv2> ;
+    doap:maintainer [
+        foaf:name "MOD Team";
+        foaf:homepage <http://moddevices.com>;
+        foaf:mbox <mailto:devel@moddevices.com>;
+    ] ;
+    doap:developer [
+        a foaf:Person ;
+        foaf:name "Paul Kellett" ;
+        foaf:mbox <mailto:paul@mda-vst.com>
+    ] .
+
+mda:Piano
+    a lv2:Plugin ;
+    rdfs:seeAlso <Piano.ttl> ;
+    lv2:binary <Piano.so> .
+
+<default-preset>
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Default" ;
+    rdfs:seeAlso <default-preset.ttl> .
+
+mdap:Piano-plain-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Plain Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-compressed-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Compressed Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-dance-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Dance Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-concert-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Concert Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-dark-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Dark Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-school-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "School Piano" ;
+    rdfs:seeAlso <presets.ttl> .
+
+mdap:Piano-broken-piano
+    a pset:Preset ;
+    lv2:appliesTo mda:Piano ;
+    rdfs:label "Broken Piano" ;
+    rdfs:seeAlso <presets.ttl> .

@@ -1,0 +1,263 @@
+@prefix atom: <http://lv2plug.in/ns/ext/atom#> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix lv2: <http://lv2plug.in/ns/lv2core#> .
+@prefix mda: <http://moddevices.com/plugins/mda/> .
+@prefix mod: <http://moddevices.com/ns/mod#> .
+@prefix param: <http://lv2plug.in/ns/ext/parameters#> .
+@prefix pg: <http://lv2plug.in/ns/ext/port-groups#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix epp: <http://lv2plug.in/ns/ext/port-props#>.
+@prefix units: <http://lv2plug.in/ns/extensions/units#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+mda:mainOut
+    a pg:StereoGroup ,
+        pg:OutputGroup ;
+    lv2:name "Output" ;
+    lv2:symbol "out" .
+
+<http://moddevices.com/plugins/mda/DX10/env>
+    a param:EnvelopeControls ,
+        pg:InputGroup ;
+    lv2:name "Envelope" ;
+    lv2:symbol "env" .
+
+mda:DX10
+    a lv2:Plugin ,
+        lv2:InstrumentPlugin ;
+    lv2:project mda: ;
+    lv2:symbol "DX10" ;
+    doap:name "MDA DX10" ;
+    doap:license <http://usefulinc.com/doap/licenses/gpl> ;
+    lv2:optionalFeature lv2:hardRTCapable ;
+    lv2:requiredFeature <http://lv2plug.in/ns/ext/urid#map> ;
+    pg:mainOutput mda:mainOut ;
+    rdfs:comment """
+The DX10 is inspired by the later Yamaha DX© (*) synthesizers which are some of the most popular digital synths in the world. This generator, however, was tweaked a bit to give it a warmer cleaner tone. It is 8-voice polyphonic and has a wide variety of sounds and presets. Some of these are bound to give you flashbacks to the 80’s where the DX series really shined!
+
+Features:
+Modeled by MDA
+N.B. The carrier operator has a fixed coarse tuning ratio of 2.
+(*) “Other product names modeled in the software trademarks of their respective companies that do not endorse and are not associated or affiliated with MOD. Yamaha DX© is a trademark or trade name of another manufacturer and was used merely to identify the product whose sound was reviewed in the creation of the product. All other trademarks are the property of their respective holders.”
+    """ ;
+    lv2:minorVersion 0;
+    lv2:microVersion 3;
+    mod:brand "MDA" ;
+    mod:label "DX10" ;
+
+    lv2:port[
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 0 ;
+        lv2:name "Attack" ;
+        lv2:symbol "attack" ;
+        lv2:default 2.5 ;
+        lv2:minimum 2.5 ;
+        lv2:maximum 4000.0 ;
+        units:unit units:ms;
+        lv2:portProperty epp:logarithmic;
+        lv2:designation param:attack ;
+        pg:group <http://moddevices.com/plugins/mda/DX10/env>
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 1 ;
+        lv2:name "Decay" ;
+        lv2:symbol "decay" ;
+        lv2:default 6124.0 ;
+        lv2:minimum 46.5 ;
+        lv2:maximum 7000.0 ;
+        units:unit units:ms;
+        lv2:portProperty epp:logarithmic;
+        lv2:designation param:decay ;
+        pg:group <http://moddevices.com/plugins/mda/DX10/env> ;
+        lv2:scalePoint [
+            rdfs:label "Inf" ;
+            rdf:value 7000.0
+        ];
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 2 ;
+        lv2:name "Release" ;
+        lv2:symbol "release" ;
+        lv2:default 424.42 ;
+        lv2:minimum 46.5 ;
+        lv2:maximum 7000.0 ;
+        units:unit units:ms;
+        lv2:portProperty epp:logarithmic;
+        lv2:designation param:release ;
+        pg:group <http://moddevices.com/plugins/mda/DX10/env>
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 3 ;
+        lv2:name "Coarse" ;
+        lv2:symbol "coarse" ;
+        lv2:portProperty lv2:integer;
+        lv2:default 28.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 40.0 ;
+        units:unit [
+            rdfs:label   "ratio" ;
+            units:symbol "ratio" ;
+            units:render "%f" ;
+        ]
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 4 ;
+        lv2:name "Fine" ;
+        lv2:symbol "fine" ;
+        lv2:portProperty epp:logarithmic;
+        lv2:default 0.24675 ;
+        lv2:minimum 0.001 ;
+        lv2:maximum 0.750 ;
+        units:unit [
+            rdfs:label   "ratio" ;
+            units:symbol "ratio" ;
+            units:render "%f" ;
+        ]
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 5 ;
+        lv2:name "Mod Init" ;
+        lv2:symbol "mod_init" ;
+        lv2:default 23.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0;
+        units:unit units:pc
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 6 ;
+        lv2:name "Mod Dec" ;
+        lv2:symbol "mod_dec" ;
+        lv2:default 4600.0 ;
+        lv2:minimum 17.0 ;
+        lv2:maximum 7000.0 ;
+        units:unit units:ms;
+        lv2:portProperty epp:logarithmic;
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 7 ;
+        lv2:name "Mod Sus" ;
+        lv2:symbol "mod_sus" ;
+        lv2:default 5.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:pc
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 8 ;
+        lv2:name "Mod Rel" ;
+        lv2:symbol "mod_rel" ;
+        lv2:default 6485.0 ;
+        lv2:minimum 46.5 ;
+        lv2:maximum 7000.0 ;
+        units:unit units:ms;
+        lv2:portProperty epp:logarithmic;
+        lv2:scalePoint [
+            rdfs:label "Inf" ;
+            rdf:value 7000.0
+        ]
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 9 ;
+        lv2:name "Mod Vel" ;
+        lv2:symbol "mod_vel" ;
+        lv2:default 90.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:pc
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 10 ;
+        lv2:name "Vibrato" ;
+        lv2:symbol "vibrato" ;
+        lv2:default 0.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:pc
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 11 ;
+        lv2:name "Octave" ;
+        lv2:symbol "octave" ;
+        lv2:portProperty lv2:integer;
+        lv2:default 0 ;
+        lv2:minimum -3 ;
+        lv2:maximum 3;
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 12 ;
+        lv2:name "FineTune" ;
+        lv2:symbol "finetune" ;
+        lv2:default 0.0 ;
+        lv2:minimum -100.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:cent
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 13 ;
+        lv2:name "Waveform" ;
+        lv2:symbol "waveform" ;
+        lv2:default 44.7 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:pc;
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 14 ;
+        lv2:name "Mod Thru" ;
+        lv2:symbol "mod_thru" ;
+        lv2:default 0.0 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 100.0 ;
+        units:unit units:pc
+    ] , [
+        a lv2:InputPort ,
+            lv2:ControlPort ;
+        lv2:index 15 ;
+        lv2:name "LFO Rate" ;
+        lv2:portProperty  mod:tapTempo , mod:tempoRelatedDynamicScalePoints;
+        lv2:symbol "lfo_rate" ;
+        lv2:default 10.35 ;
+        lv2:minimum 0.0 ;
+        lv2:maximum 25.0 ;
+        units:unit units:hz
+    ] , [
+        a lv2:OutputPort ,
+            lv2:AudioPort ;
+        lv2:index 16 ;
+        lv2:symbol "left_out" ;
+        lv2:name "Left Out" ;
+        lv2:designation pg:left ;
+        pg:group mda:mainOut
+    ] , [
+        a lv2:OutputPort ,
+            lv2:AudioPort ;
+        lv2:index 17 ;
+        lv2:symbol "right_out" ;
+        lv2:name "Right Out" ;
+        lv2:designation pg:right ;
+        pg:group mda:mainOut
+    ] , [
+        a lv2:InputPort ,
+            atom:AtomPort ;
+        atom:bufferType atom:Sequence ;
+        atom:supports <http://lv2plug.in/ns/ext/midi#MidiEvent> ;
+        lv2:index 18 ;
+        lv2:symbol "event_in" ;
+        lv2:name "Event In"
+    ] .

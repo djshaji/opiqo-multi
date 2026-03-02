@@ -1,0 +1,94 @@
+
+.mod-pedal{{{cns}}} {
+    background-image: url(/resources/body-vejabass-cabinet.png{{{ns}}});
+    position: absolute;
+    width: 449px;
+    height: 540px;
+}
+
+
+.mod-pedal{{{cns}}} .mod-pedal-input,
+.mod-pedal{{{cns}}} .mod-pedal-output
+ {
+    top: 80px;
+}
+
+.mod-pedal{{{cns}}} .mod-audio-input {
+    left: 3px;
+}
+
+.mod-pedal{{{cns}}} .mod-audio-output {
+    right: -84px;
+}
+
+.mod-pedal{{{cns}}} .mod-switch {
+    background-image: url(/resources/switch_button.png{{{ns}}}22);
+    bottom: 8px;
+    left: 49px;
+    height: 16px;
+    overflow: hidden;
+    position: absolute;
+    text-align: center;
+    width: 42px;
+    cursor: pointer;
+    z-index: 21;
+}
+
+.mod-pedal{{{cns}}} .mod-switch.off {
+    background-position: left;
+}
+.mod-pedal{{{cns}}} .mod-switch.on {
+    background-position: right;
+}
+
+.mod-pedal{{{cns}}} .mod-horizontal-slider {
+    bottom: 3px;
+    left: 332px;
+    height: 19px;
+    overflow: hidden;
+    position: absolute;
+    text-align: center;
+    width: 200px;
+    z-index: 21;
+}
+
+
+.mod-pedal{{{cns}}} .mod-horizontal-slider .mod-horizontal-slider-image {
+    background-image: url(/resources/cabinet-slider.png{{{ns}}});
+    background-position: left 0px;
+    background-repeat: no-repeat;
+    height: 12px;    
+    position: relative;
+    width: 62px;
+    cursor: pointer;
+}
+
+
+.mod-pedal{{{cns}}} .mod-enumerated {
+
+    left: 147px;
+    width: 131px;
+    position: absolute;
+    bottom: 1px;
+    color: #b9b4b4;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 21;
+    line-height: 20px;
+
+}
+
+.mod-pedal{{{cns}}} .mod-enumerated .mod-enumerated-list {
+
+    background-color: rgba(51, 51, 51, .9);
+    display: none;
+    position: absolute;
+    bottom: 23px;
+    width: 200px;
+    max-height: 150px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    font-size: 12px;
+
+}

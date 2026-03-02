@@ -1,0 +1,24 @@
+@prefix lv2: <http://lv2plug.in/ns/lv2core#> .
+@prefix pset: <http://lv2plug.in/ns/ext/presets#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://moddevices.com/plugins/mda/presets#Detune-out-of-tune>
+	a pset:Preset ;
+	lv2:appliesTo <http://moddevices.com/plugins/mda/Detune> ;
+	lv2:port [
+		lv2:symbol "detune" ;
+		pset:value 153.6 ;
+	] ;
+	lv2:port [
+		lv2:symbol "mix" ;
+		pset:value 70.0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "output" ;
+		pset:value 0 ;
+	] ;
+	lv2:port [
+		lv2:symbol "latency" ;
+		pset:value 0.5 ;
+	] .
+

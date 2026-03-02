@@ -1,0 +1,230 @@
+<div class="rt-neural-ax">
+  <div mod-role="drag-handle" class="mod-drag-handle"></div>
+  <div class="grid">
+    <div class="background_head">
+      <div class="brand">
+        <img src="/resources/img/aida.png{{{ns}}}" />
+      </div>
+      <div class="plate">
+        <h1 class="plate-brand">
+          <img src="/resources/img/ax.svg{{{ns}}}" width="350" height="100" />
+        </h1>
+        <h3>AI CRAFTED TONE</h3>
+      </div>
+      <div class="plugin">
+        <!-- <h3>neural profile player</h3> -->
+        <!-- <h3>powered by</h3> -->
+        <!-- <img src="/resources/img/logo-01.svg{{{ns}}}" width="50" height="20" /> -->
+      </div>
+    </div>
+    <div class="mod-control-group rt-neural-ax-controls">
+      <div class="switch-grid">
+        <div class="lbl">ON</div>
+        <div class="flipsw off" mod-role="bypass" mod-widget="switch">
+          <div class="toggle-sw">Toggle</div>
+        </div>
+        <div class="lbl">Off</div>
+      </div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="PREGAIN"
+          ></span>
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="PREGAIN"
+          ></div>
+        </div>
+        <div class="lbl">INPUT</div>
+      </div>
+      <div class="seperator-grid"></div>
+      <div class="switch-grid">
+        <div class="lbl">Post</div>
+        <div
+          class="flipsw off"
+          mod-role="input-control-port"
+          mod-widget="switch"
+          mod-port-symbol="EQPOS"
+        >
+          <div class="toggle-sw">Toggle</div>
+        </div>
+        <div class="lbl">Pre</div>
+      </div>
+      <div class="switch-grid">
+        <div class="lbl">Peak</div>
+        <div
+          class="flipsw off"
+          mod-role="input-control-port"
+          mod-widget="switch"
+          mod-port-symbol="MTYPE"
+        >
+          <div class="toggle-sw">Toggle</div>
+        </div>
+        <div class="lbl">Bandpass</div>
+      </div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="BASS"
+          ></span>
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="BASS"
+          ></div>
+        </div>
+        <div class="lbl">Bass</div>
+      </div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="MID"
+          ></span>
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="MID"
+          ></div>
+        </div>
+        <div class="lbl">Middle</div>
+      </div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="TREBLE"
+          ></span>
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="TREBLE"
+          ></div>
+        </div>
+        <div class="lbl">Treble</div>
+      </div>
+      <div class="seperator-grid"></div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="DEPTH"
+          ></span>          
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="DEPTH"
+          ></div>
+        </div>
+        <div class="lbl">DEPTH</div>
+      </div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="PRESENCE"
+          ></span>            
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="PRESENCE"
+          ></div>
+        </div>
+        <div class="lbl">PRESENCE</div>
+      </div>
+      <div class="seperator-grid"></div>
+      <div class="knob-grid">
+        <div class="knob-scale">
+          <span
+          class="mod-knob-current-value tip"
+          mod-role="input-control-value"
+          mod-port-symbol="MASTER"
+          ></span>     
+          <div
+            class="knob-bg"
+            mod-role="input-control-port"
+            mod-widget-rotation="270"
+            mod-port-symbol="MASTER"
+          ></div>
+        </div>
+        <div class="lbl">OUTPUT</div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- inputs/outputs -->
+<div class="mod-pedal-input">
+  {{#effect.ports.audio.input}}
+  <div
+    class="mod-input mod-input-disconnected"
+    title="{{name}}"
+    mod-role="input-audio-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-input-image"></div>
+  </div>
+  {{/effect.ports.audio.input}} {{#effect.ports.midi.input}}
+  <div
+    class="mod-input mod-input-disconnected"
+    title="{{name}}"
+    mod-role="input-midi-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-input-image"></div>
+  </div>
+  {{/effect.ports.midi.input}} {{#effect.ports.cv.input}}
+  <div
+    class="mod-input mod-input-disconnected"
+    title="{{name}}"
+    mod-role="input-cv-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-input-image"></div>
+  </div>
+  {{/effect.ports.cv.input}}
+</div>
+<div class="mod-pedal-output">
+  {{#effect.ports.audio.output}}
+  <div
+    class="mod-output mod-output-disconnected"
+    title="{{name}}"
+    mod-role="output-audio-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-output-image"></div>
+  </div>
+  {{/effect.ports.audio.output}} {{#effect.ports.midi.output}}
+  <div
+    class="mod-output mod-output-disconnected"
+    title="{{name}}"
+    mod-role="output-midi-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-output-image"></div>
+  </div>
+  {{/effect.ports.midi.output}} {{#effect.ports.cv.output}}
+  <div
+    class="mod-output mod-output-disconnected"
+    title="{{name}}"
+    mod-role="output-cv-port"
+    mod-port-symbol="{{symbol}}"
+  >
+    <div class="mod-pedal-output-image"></div>
+  </div>
+  {{/effect.ports.cv.output}}
+</div>
