@@ -272,47 +272,36 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
         return;
     }
 
-    LV2Plugin * plugin = nullptr ;
-    switch (p) {
-        case 1:
-            plugin = engine->plugin1;
-            break;
-        case 2:
-            plugin = engine->plugin2;
-            break;
-        case 3:
-            plugin = engine->plugin3;
-            break;
-        case 4:
-            plugin = engine->plugin4;
-            break;
-        default:
-            LOGE("Unknown plugin index %d", p);
+    {
+        std::lock_guard<std::mutex> lock(engine->pluginMutex);
+
+        LV2Plugin * plugin = nullptr ;
+        switch (p) {
+            case 1:
+                plugin = engine->plugin1;
+                break;
+            case 2:
+                plugin = engine->plugin2;
+                break;
+            case 3:
+                plugin = engine->plugin3;
+                break;
+            case 4:
+                plugin = engine->plugin4;
+                break;
+            default:
+                LOGE("Unknown plugin index %d", p);
+                return;
+        }
+
+        if (plugin == nullptr) {
+            LOGE("Plugin %d is null", p);
             return;
+        }
+
+        LOGD("[setValue] Setting plugin %d port %d to value %f", p, index, value);
+        plugin->ports_.at (index).control = value;
     }
-
-    LOGD("[setValue] Setting plugin %d port %d to value %f", p, index, value);
-    plugin->ports_.at (index).control = value;
-//    LOGD("[setValue] Set plugin %d port %d to value %f", p, index, value);
-//    switch (index) {
-//        case 0:
-//            plugin->ports_.at(2).control = value;
-//            break;
-//        case 1:
-//            plugin->ports_.at(3).control = value;
-//            break;
-//        case 2:
-//            plugin->ports_.at(4).control = value;
-//            break;
-//        case 3:
-//            plugin->ports_.at(5).control = value;
-//            break;
-//        default:
-//            LOGE("Unknown control index %d", index);
-//
-//    }
-
-
 }
 
 
@@ -322,116 +311,112 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
                                                          jstring uri) {
 
     engine -> bypass = true ;
-    LV2Plugin * plugin = nullptr ;
-    switch (position) {
-        case 1:
-            plugin = engine->plugin1;
-            engine ->plugin1 = nullptr;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin1 = nullptr;
-            break;
-        case 2:
-            plugin = engine->plugin2;
-            engine ->plugin2 = nullptr;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin2 = nullptr;
-            break;
-        case 3:
-            plugin = engine->plugin3;
-            engine ->plugin3 = nullptr;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin3 = nullptr;
-            break;
-        case 4:
-            plugin = engine->plugin4;
-            engine ->plugin4 = nullptr;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin4 = nullptr;
-            break;
-        default:
-            LOGE("Unknown plugin index %d", position);
-            return -1;
-    }
 
-    if (plugin != nullptr) {
-        plugin ->closePlugin();
-        free(plugin);
-    }
+    {
+        std::lock_guard<std::mutex> lock(engine->pluginMutex);
 
-    plugin = new LV2Plugin(engine -> world, env->GetStringUTFChars(uri, nullptr), engine -> sampleRate, 4096);
-    LOGD("[plugin %s] Created plugin %s at position %d", lilv_node_as_string(
-            lilv_plugin_get_library_uri(plugin->plugin_)) , env->GetStringUTFChars(uri, nullptr), position);
+        LV2Plugin * plugin = nullptr ;
+        switch (position) {
+            case 1:
+                plugin = engine->plugin1;
+                engine ->plugin1 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin1 = nullptr;
+                break;
+            case 2:
+                plugin = engine->plugin2;
+                engine ->plugin2 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin2 = nullptr;
+                break;
+            case 3:
+                plugin = engine->plugin3;
+                engine ->plugin3 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin3 = nullptr;
+                break;
+            case 4:
+                plugin = engine->plugin4;
+                engine ->plugin4 = nullptr;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin4 = nullptr;
+                break;
+            default:
+                LOGE("Unknown plugin index %d", position);
+                engine -> bypass = false ;
+                return -1;
+        }
 
-    /*
-    const char *filename = lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_)) ;
+        if (plugin != nullptr) {
+            plugin ->closePlugin();
+            free(plugin);
+        }
 
-    void * lib = dlopen (basename(filename), RTLD_NOW | RTLD_LOCAL);
-    assert(lib != nullptr);
-    typedef void (*init_func_t)(void);
-    init_func_t init_func = (init_func_t) dlsym(lib, "lv2_descriptor");
-    assert(init_func != nullptr);
+        plugin = new LV2Plugin(engine -> world, env->GetStringUTFChars(uri, nullptr), engine -> sampleRate, 4096);
+        LOGD("[plugin %s] Created plugin %s at position %d", lilv_node_as_string(
+                lilv_plugin_get_library_uri(plugin->plugin_)) , env->GetStringUTFChars(uri, nullptr), position);
 
-    assert(plugin != nullptr);
-    */
-
-    if ( !plugin->initialize()) {
-        LOGE("[load plugin] Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
-        char * libname = const_cast<char *>(basename(
-                lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_))));
-        LOGE("[load plugin] Failed to initialize plugin %s from library %s", env->GetStringUTFChars(uri, nullptr), libname);
-        void * lib = dlopen (libname, RTLD_NOW | RTLD_LOCAL);
-        if (lib == nullptr) {
-            LOGE("[load plugin] Failed to load library %s: %s", libname, dlerror());
-        } else {
-            void (*init_func)(void) = (void (*)(void)) dlsym(lib, "lv2_descriptor");
-            if (init_func == nullptr) {
-                LOGE("[load plugin] Failed to find lv2_descriptor in library %s: %s", libname, dlerror());
+        if ( !plugin->initialize()) {
+            LOGE("[load plugin] Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
+            char * libname = const_cast<char *>(basename(
+                    lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_))));
+            LOGE("[load plugin] Failed to initialize plugin %s from library %s", env->GetStringUTFChars(uri, nullptr), libname);
+            void * lib = dlopen (libname, RTLD_NOW | RTLD_LOCAL);
+            if (lib == nullptr) {
+                LOGE("[load plugin] Failed to load library %s: %s", libname, dlerror());
             } else {
-                LOGD("[debug] Successfully found lv2_descriptor in library %s", libname);
+                void (*init_func)(void) = (void (*)(void)) dlsym(lib, "lv2_descriptor");
+                if (init_func == nullptr) {
+                    LOGE("[load plugin] Failed to find lv2_descriptor in library %s: %s", libname, dlerror());
+                } else {
+                    LOGD("[debug] Successfully found lv2_descriptor in library %s", libname);
+                }
+
+                LOGW("[debug] Successfully loaded library %s manually", libname);
+                dlclose(lib);
             }
 
-            LOGW("[debug] Successfully loaded library %s manually", libname);
-            dlclose(lib);
+            free ((void*)env->GetStringUTFChars(uri, nullptr));
+            engine -> bypass = false ;
+            return -1;
+        } else {
+            plugin->start();
+            LOGD("Successfully added plugin %s at position %d", env->GetStringUTFChars(uri, nullptr), position);
+            LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
+            int portsTotal = lilv_plugin_get_num_ports(plugin->plugin_);
+            LOGD("[debug] Plugin %s has [%d/%d] ports", env->GetStringUTFChars(uri, nullptr), plugin->ports_.size(), portsTotal);
+        }
+
+        switch (position) {
+            case 1:
+                engine->plugin1 = plugin;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin1 = plugin;
+                break;
+            case 2:
+                engine->plugin2 = plugin;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin2 = plugin;
+                break;
+            case 3:
+                engine->plugin3 = plugin;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin3 = plugin;
+                break;
+            case 4:
+                engine->plugin4 = plugin;
+                if (engine -> mDuplexStream)
+                    engine -> mDuplexStream -> plugin4 = plugin;
+                break;
+            default:
+                LOGE("Unknown plugin index %d", position);
+                engine -> bypass = false ;
+                return -1;
         }
 
         free ((void*)env->GetStringUTFChars(uri, nullptr));
-        engine -> bypass = false ;
-        return -1;
-    } else {
-        plugin->start();
-        LOGD("Successfully added plugin %s at position %d", env->GetStringUTFChars(uri, nullptr), position);
-        LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
-
     }
 
-    switch (position) {
-        case 1:
-            engine->plugin1 = plugin;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin1 = plugin;
-            break;
-        case 2:
-            engine->plugin2 = plugin;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin2 = plugin;
-            break;
-        case 3:
-            engine->plugin3 = plugin;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin3 = plugin;
-            break;
-        case 4:
-            engine->plugin4 = plugin;
-            if (engine -> mDuplexStream)
-                engine -> mDuplexStream -> plugin4 = plugin;
-            break;
-        default:
-            LOGE("Unknown plugin index %d", position);
-            engine -> bypass = false ;
-            return -1;
-    }
-
-    free ((void*)env->GetStringUTFChars(uri, nullptr));
     engine -> bypass = false ;
     return 0 ;
 }
@@ -537,43 +522,48 @@ JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass clazz,
                                                             jint plugin) {
     engine -> bypass = true ;
-    switch (plugin) {
-        case 1:
-            if (engine->plugin1) {
-                if (engine -> mDuplexStream)
-                    engine->mDuplexStream->plugin1 = nullptr;
-                engine->plugin1->closePlugin();
-                free(engine->plugin1);
-                engine->plugin1 = nullptr;
-            }
-            break;
-        case 2:
-            if (engine->plugin2) {
-                if (engine -> mDuplexStream)
-                    engine->mDuplexStream->plugin2 = nullptr;
-                engine->plugin2->closePlugin();
-                free(engine->plugin2);
-                engine->plugin2 = nullptr;
-            }
-            break ;
-        case 3:
-            if (engine->plugin3) {
-                if (engine -> mDuplexStream)
-                    engine->mDuplexStream->plugin3 = nullptr;
-                engine->plugin3->closePlugin();
-                free(engine->plugin3);
-                engine->plugin3 = nullptr;
-            }
-            break ;
-        case 4:
-            if (engine->plugin4) {
-                if (engine -> mDuplexStream)
-                    engine->mDuplexStream->plugin4 = nullptr;
-                engine->plugin4->closePlugin();
-                free(engine->plugin4);
-                engine->plugin4 = nullptr;
-            }
 
+    {
+        std::lock_guard<std::mutex> lock(engine->pluginMutex);
+
+        switch (plugin) {
+            case 1:
+                if (engine->plugin1) {
+                    if (engine -> mDuplexStream)
+                        engine->mDuplexStream->plugin1 = nullptr;
+                    engine->plugin1->closePlugin();
+                    free(engine->plugin1);
+                    engine->plugin1 = nullptr;
+                }
+                break;
+            case 2:
+                if (engine->plugin2) {
+                    if (engine -> mDuplexStream)
+                        engine->mDuplexStream->plugin2 = nullptr;
+                    engine->plugin2->closePlugin();
+                    free(engine->plugin2);
+                    engine->plugin2 = nullptr;
+                }
+                break ;
+            case 3:
+                if (engine->plugin3) {
+                    if (engine -> mDuplexStream)
+                        engine->mDuplexStream->plugin3 = nullptr;
+                    engine->plugin3->closePlugin();
+                    free(engine->plugin3);
+                    engine->plugin3 = nullptr;
+                }
+                break ;
+            case 4:
+                if (engine->plugin4) {
+                    if (engine -> mDuplexStream)
+                        engine->mDuplexStream->plugin4 = nullptr;
+                    engine->plugin4->closePlugin();
+                    free(engine->plugin4);
+                    engine->plugin4 = nullptr;
+                }
+                break;
+        }
     }
 
     engine -> bypass = false ;
@@ -587,29 +577,33 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginEnabled(JNIEnv *env, jclass clazz,
                                                                 jint plugin, jboolean is_enabled) {
-    switch (plugin) {
-        case 1:
-            if (engine->plugin1) {
-                engine->plugin1->enabled = is_enabled;
-            }
-            break;
-        case 2:
-            if (engine->plugin2) {
-                engine->plugin2->enabled = is_enabled;
-            }
-            break ;
-        case 3:
-            if (engine->plugin3) {
-                engine->plugin3->enabled = is_enabled;
-            }
-            break ;
-        case 4:
-            if (engine->plugin4) {
-                engine->plugin4->enabled = is_enabled;
-            }
-            break;
-        default:
-            LOGE("Unknown plugin index %d", plugin);
+    {
+        std::lock_guard<std::mutex> lock(engine->pluginMutex);
+
+        switch (plugin) {
+            case 1:
+                if (engine->plugin1) {
+                    engine->plugin1->enabled = is_enabled;
+                }
+                break;
+            case 2:
+                if (engine->plugin2) {
+                    engine->plugin2->enabled = is_enabled;
+                }
+                break ;
+            case 3:
+                if (engine->plugin3) {
+                    engine->plugin3->enabled = is_enabled;
+                }
+                break ;
+            case 4:
+                if (engine->plugin4) {
+                    engine->plugin4->enabled = is_enabled;
+                }
+                break;
+            default:
+                LOGE("Unknown plugin index %d", plugin);
+        }
     }
 }
 extern "C"

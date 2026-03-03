@@ -48,7 +48,7 @@ public class Test {
                         Log.i(TAG, "pluginLoader: all plugins loaded successfully");
                     }
                 } else {
-                    handler.postDelayed(this, 300); // Delay in milliseconds
+                    handler.postDelayed(this, 30); // Delay in milliseconds
                 }
 
             }

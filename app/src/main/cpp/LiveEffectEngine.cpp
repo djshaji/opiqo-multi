@@ -110,6 +110,7 @@ oboe::Result  LiveEffectEngine::openStreams() {
     mDuplexStream->instance = instance ;
     mDuplexStream -> gain = gain ;
     mDuplexStream -> bypass = &bypass ;
+    mDuplexStream->pluginMutex = &pluginMutex;  // Share the engine's mutex with the duplex stream
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
     mDuplexStream->start();

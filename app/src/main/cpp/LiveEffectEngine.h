@@ -21,6 +21,7 @@
 #include <oboe/Oboe.h>
 #include <string>
 #include <thread>
+#include <mutex>
 #include "FullDuplexPass.h"
 #include "json.hpp"
 
@@ -56,6 +57,7 @@ public:
 
     std::string cacheDir ;
     std::unique_ptr<FullDuplexPass> mDuplexStream;
+    std::mutex pluginMutex;  // Protects plugin1, plugin2, plugin3, plugin4 access
     LV2Plugin * plugin1 = nullptr;
     LV2Plugin * plugin2 = nullptr;
     LV2Plugin * plugin3 = nullptr;
