@@ -321,6 +321,7 @@ JNIEXPORT jint JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass clazz, jint position,
                                                          jstring uri) {
 
+    engine -> bypass = true ;
     LV2Plugin * plugin = nullptr ;
     switch (position) {
         case 1:
@@ -394,6 +395,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
         }
 
         free ((void*)env->GetStringUTFChars(uri, nullptr));
+        engine -> bypass = false ;
         return -1;
     } else {
         plugin->start();
@@ -425,10 +427,12 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
             break;
         default:
             LOGE("Unknown plugin index %d", position);
+            engine -> bypass = false ;
             return -1;
     }
 
     free ((void*)env->GetStringUTFChars(uri, nullptr));
+    engine -> bypass = false ;
     return 0 ;
 }
 
@@ -465,7 +469,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
     LILV_FOREACH (plugins, i, engine -> plugins) {
         engine -> pluginCount++;
         const LilvPlugin* p = lilv_plugins_get(engine -> plugins, i);
-        LOGD("[plugin] %s\n", lilv_node_as_uri(lilv_plugin_get_uri(p)));
+//        LOGD("[plugin] %s\n", lilv_node_as_uri(lilv_plugin_get_uri(p)));
         json pluginInfo = {
                 {"name", lilv_node_as_string(lilv_plugin_get_name(p))},
                 {"uri", lilv_node_as_string(lilv_plugin_get_uri(p))},
@@ -473,40 +477,40 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
                 {"ports", lilv_plugin_get_num_ports(p)}};
 
         pluginInfo["port"] = {};
-        for (int i = 0 ; i < lilv_plugin_get_num_ports(p); i++) {
-            const LilvPort* port = lilv_plugin_get_port_by_index(p, i);
-            LOGD ("[%s] Port %d: %s\n", lilv_node_as_string(lilv_plugin_get_name(p)),
-                  i, lilv_node_as_string(lilv_port_get_symbol(p, port)));
-            pluginInfo ["port"][i] = {};
-            pluginInfo ["port"][i]["index"] = i ;
-            pluginInfo ["port"][i]["name"] = lilv_node_as_string(lilv_port_get_symbol(p, port));
+        for (int index = 0 ; index < lilv_plugin_get_num_ports(p); index++) {
+            const LilvPort* port = lilv_plugin_get_port_by_index(p, index);
+//            LOGD ("[%s] Port %d: %s\n", lilv_node_as_string(lilv_plugin_get_name(p)),
+//                  index, lilv_node_as_string(lilv_port_get_symbol(p, port)));
+            pluginInfo ["port"][index] = {};
+            pluginInfo ["port"][index]["index"] = index ;
+            pluginInfo ["port"][index]["name"] = lilv_node_as_string(lilv_port_get_symbol(p, port));
             if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__AudioPort))) {
-                LOGD("[%s] Port %d is an audio port\n", lilv_node_as_string(lilv_plugin_get_name(p)), i);
-                pluginInfo["port"][i]["type"] = "audio";
+//                LOGD("[%s] Port %d is an audio port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
+                pluginInfo["port"][index]["type"] = "audio";
             }
             else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__ControlPort)) &&
                     lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__InputPort))) {
-                pluginInfo["port"][i]["type"] = "control";
-                LOGD("[%s] Port %d is a control port\n", lilv_node_as_string(lilv_plugin_get_name(p)), i);
+                pluginInfo["port"][index]["type"] = "control";
+//                LOGD("[%s] Port %d is a control port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
                 LilvNode * def = lilv_new_float(engine -> world, 0.0f);
                 LilvNode * min = lilv_new_float(engine -> world, 0.0f);
                 LilvNode * max = lilv_new_float(engine -> world, 0.0f);
                 lilv_port_get_range(p, port, reinterpret_cast<LilvNode **>(&def),
                                     reinterpret_cast<LilvNode **>(&min),
                                     reinterpret_cast<LilvNode **>(&max));
-                pluginInfo["port"][i]["min"] = lilv_node_as_float(min) ;
-                pluginInfo["port"][i]["max"] = lilv_node_as_string(max);
-                pluginInfo["port"][i]["default"] = lilv_node_as_string(def);
+                pluginInfo["port"][index]["min"] = lilv_node_as_float(min) ;
+                pluginInfo["port"][index]["max"] = lilv_node_as_string(max);
+                pluginInfo["port"][index]["default"] = lilv_node_as_string(def);
 
             }
             else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_ATOM__AtomPort))) {
-                pluginInfo["port"][i]["type"] = "atom";
-                LOGD ("[%s] Port %d is an atom port\n", lilv_node_as_string(lilv_plugin_get_name(p)), i);
+                pluginInfo["port"][index]["type"] = "atom";
+//                LOGD ("[%s] Port %d is an atom port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
             } else {
-                LOGW ("[%s] Port %d is of unknown type\n", lilv_node_as_string(lilv_plugin_get_name(p)), i);
+                LOGW ("[%s] Port %d (%s) is of unknown type\n", lilv_node_as_string(lilv_plugin_get_name(p)), index, lilv_node_as_string(lilv_port_get_symbol(p, port)));
             }
 
-            LOGI("[plugin ok] Port %d: %s\n", i, lilv_node_as_string(lilv_port_get_symbol(p, port)));
+//            LOGI("[plugin ok] Port %d: %s\n", index, lilv_node_as_string(lilv_port_get_symbol(p, port)));
         }
 
         engine->pluginInfo [pluginInfo["uri"]] = pluginInfo;
@@ -532,6 +536,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass clazz,
                                                             jint plugin) {
+    engine -> bypass = true ;
     switch (plugin) {
         case 1:
             if (engine->plugin1) {
@@ -570,6 +575,8 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
             }
 
     }
+
+    engine -> bypass = false ;
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -604,4 +611,10 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginEnabled(JNIEnv *env, jcl
         default:
             LOGE("Unknown plugin index %d", plugin);
     }
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_bypass(JNIEnv *env, jclass clazz,
+                                                      jboolean is_bypassed) {
+    engine -> bypass = is_bypassed;
 }

@@ -22,6 +22,7 @@
 class FullDuplexPass : public oboe::FullDuplexStream {
 public:
     LV2Plugin* plugin, *plugin1, *plugin2, *plugin3, *plugin4;
+    bool *bypass = nullptr ;
     float * gain = nullptr;
     LilvInstance *instance;
     virtual oboe::DataCallbackResult
@@ -50,14 +51,18 @@ public:
 //        }
 
         memcpy(outputFloats, inputFloats, samplesToProcess * sizeof(float));
-        if (plugin1)
-            plugin1->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
-        if (plugin2)
-            plugin2->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
-        if (plugin3)
-            plugin3->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
-        if (plugin4)
-            plugin4->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+
+        /* TODO: Use mutex to protect plugin processing if plugins can be added/removed while the stream is running. */
+        if (! *bypass) {
+            if (plugin1)
+                plugin1->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+            if (plugin2)
+                plugin2->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+            if (plugin3)
+                plugin3->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+            if (plugin4)
+                plugin4->process(const_cast<float *>(outputFloats), outputFloats, samplesToProcess);
+        }
 
         for (int32_t i = 0; i < samplesToProcess; i++) {
             *outputFloats++ *= *gain; // do some arbitrary processing

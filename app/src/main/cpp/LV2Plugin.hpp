@@ -388,7 +388,6 @@ public:
     }
 
     void closePlugin() {
-        HERE
         stop_worker();
 
         if (instance_) {
@@ -1006,12 +1005,10 @@ private:
     }
 
     void stop_worker() {
-        HERE
 //        assert(host_worker_.iface != nullptr);
         if (! host_worker_.iface || !host_worker_.running.exchange(false))
             return;
 
-        HERE
         if (host_worker_.worker_thread.joinable())
             host_worker_.worker_thread.join();
 

@@ -69,6 +69,7 @@ public:
     int32_t sampleRate = oboe::DefaultStreamValues::SampleRate ;
     float * gain = nullptr ;
     int pluginCount = 0 ;
+    bool bypass = false ;
 
 private:
     bool              mIsEffectOn = false;
