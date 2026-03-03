@@ -44,6 +44,7 @@ import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    public AlertDialog.Builder builder;
 
     static {
         System.loadLibrary("multi");
@@ -268,25 +269,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showAddPluginDialog(View root, View add, int position) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        CharSequence [] pluginNamesArray = pluginNames.toArray(new CharSequence[0]);
-        builder.setTitle("Add Plugin")
-                .setItems(pluginNamesArray, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        // The 'which' argument contains the index position of the selected item.
-                        String pluginUri = pluginUris.get(which);
-                        AudioEngine.addPlugin(position, pluginUri);
-                        Log.d(TAG, "[add plugin]: " + position + ":" + pluginUri);
-                        UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
-                        pluginUI.add = add;
+        if (builder == null) {
+            builder = new AlertDialog.Builder(this);
+            CharSequence[] pluginNamesArray = pluginNames.toArray(new CharSequence[0]);
+            builder.setTitle("Add Plugin")
+                    .setItems(pluginNamesArray, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            // The 'which' argument contains the index position of the selected item.
+                            String pluginUri = pluginUris.get(which);
+                            AudioEngine.addPlugin(position, pluginUri);
+                            Log.d(TAG, "[add plugin]: " + position + ":" + pluginUri);
+                            UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
+                            pluginUI.add = add;
 
-                        LinearLayout layout = (LinearLayout) root;
-                        layout.removeAllViews();
+                            LinearLayout layout = (LinearLayout) root;
+                            layout.removeAllViews();
 
-                        layout.addView(pluginUI);
-                        add.setVisibility(GONE);
-                    }
-                });
+                            layout.addView(pluginUI);
+                            add.setVisibility(GONE);
+                        }
+                    });
+        }
 
         builder.show();
     }
