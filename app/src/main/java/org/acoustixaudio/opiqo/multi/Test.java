@@ -69,4 +69,9 @@ public class Test {
          handler.postDelayed(runner, 300); // Delay in milliseconds
 
     }
+
+    void printPreset () {
+        Log.d(TAG, "printPreset: checking whether printPreset works");
+        AudioEngine.printPreset(1);
+    }
 }

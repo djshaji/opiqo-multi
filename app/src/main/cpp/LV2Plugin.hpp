@@ -777,6 +777,9 @@ private:
         for (uint32_t i = 0; i < n; ++i) {
             const LilvPort* lp = lilv_plugin_get_port_by_index(plugin_, i);
             Port p;
+            p.name = lilv_node_as_string(lilv_port_get_name(plugin_, lp));
+            const LilvNode* sym = lilv_port_get_symbol(plugin_, lp);
+            p.symbol = sym ? lilv_node_as_string(sym) : "";
             p.index = i;
             p.lilv_port = lp;
             p.is_audio = lilv_port_is_a(plugin_, lp, audio_class_);
@@ -836,6 +839,7 @@ private:
 
     struct Port {
         uint32_t index = 0;
+        std::string symbol, name;
         const LilvPort* lilv_port = nullptr;
         bool is_audio = false, is_input = false, is_control = false;
         bool is_atom = false, is_midi = false;

@@ -487,6 +487,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
                     pluginInfo["port"][index]["type"] = "toggled";
                 }
 
+                // TODO: Fix memory leak here - we need to free the nodes created by lilv_new_uri
                 if (lilv_port_has_property(p, port, lilv_new_uri(engine->world, LV2_CORE__enumeration))) {
                     pluginInfo["port"][index]["type"] = "dropdown";
 
@@ -637,4 +638,55 @@ JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_bypass(JNIEnv *env, jclass clazz,
                                                       jboolean is_bypassed) {
     engine -> bypass = is_bypassed;
+}
+
+json getPreset (int plugin) {
+    LV2Plugin * p = nullptr ;
+    switch (plugin) {
+        case 1:
+            p = engine->plugin1;
+            break;
+        case 2:
+            p = engine->plugin2;
+            break ;
+        case 3:
+            p = engine->plugin3;
+            break ;
+        case 4:
+            p = engine->plugin4;
+            break;
+        default:
+            LOGE("Unknown plugin index %d", plugin);
+            return nullptr;
+    }
+
+    if (p == nullptr) {
+        LOGE("Plugin %d is null", plugin);
+        return nullptr;
+    }
+
+    json preset = {};
+    preset ["name"] = lilv_node_as_string(lilv_plugin_get_name(p->plugin_));
+    preset ["uri"] = lilv_node_as_string(lilv_plugin_get_uri(p->plugin_));
+    preset ["controls"] = {};
+    for (const auto& port : p->ports_) {
+        if (! port.is_audio)
+            preset ["controls"][port.name] = port.control;
+    }
+
+    return preset;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_printPreset(JNIEnv *env, jclass clazz, jint plugin) {
+    json preset = getPreset(plugin);
+    LOGD("[preset] Plugin %d preset: %s", plugin, preset.dump(4).c_str());
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPreset(JNIEnv *env, jclass clazz, jint plugin) {
+    json preset = getPreset(plugin);
+    return env->NewStringUTF(preset.dump().c_str());
 }

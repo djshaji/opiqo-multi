@@ -61,13 +61,19 @@ public class MainActivity extends AppCompatActivity {
     private AudioDeviceSpinner playbackDeviceSpinner, recordingDeviceSpinner;
 
     String [] tests = {
-            "Plugin Loader Test"
+            "Plugin Loader Test",
+            "Preset Save/Load Test",
     };
+    private Slider gainSlider;
 
     void runTest(int index) {
         switch (index) {
             case 0:
                 new Test(this).pluginLoader();
+                break;
+            case 1:
+//                new Test(this).printPreset();
+                savePreset();
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
@@ -101,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Slider gainSlider = findViewById(R.id.volume_slider);
+        gainSlider = findViewById(R.id.volume_slider);
         gainSlider.addOnChangeListener(new Slider.OnChangeListener() {
             @Override
             public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
@@ -314,4 +320,48 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    void savePreset () {
+        JSONObject preset = new JSONObject();
+        try {
+            preset.put("app", R.string.app_name);
+            preset.put("masterGain", gainSlider.getValue());
+
+            String p1 = AudioEngine.getPreset(1);
+            String p2 = AudioEngine.getPreset(2);
+            String p3 = AudioEngine.getPreset(3);
+            String p4 = AudioEngine.getPreset(4);
+
+            Log.d(TAG, "savePreset: " + "\n1: " + p1 +
+                    "\n2: " + p2 +
+                    "\n3: " + p3 +
+                    "\n4: " + p4
+            );
+
+            JSONObject preset1 = null, preset2 = null, preset3 = null, preset4 = null;
+
+            if (p1 != null)
+                preset1 = new JSONObject(p1);
+            if (p2 != null)
+                preset2 = new JSONObject(p2);
+            if (p3 != null)
+                preset3 = new JSONObject(p3);
+            if (p4 != null)
+                preset4 = new JSONObject(p4);
+
+            preset.put("plugins", new JSONObject());
+            if (preset1 != null)
+                preset.getJSONObject("plugins").put("1", preset1);
+            if (preset2 != null)
+                preset.getJSONObject("plugins").put("2", preset2);
+            if (preset3 != null)
+                preset.getJSONObject("plugins").put("3", preset3);
+            if (preset4 != null)
+                preset.getJSONObject("plugins").put("4", preset4);
+        } catch (JSONException e) {
+            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+            throw new RuntimeException(e);
+        }
+
+        Log.d(TAG, "savePreset: " + preset.toString());
+    }
 }
