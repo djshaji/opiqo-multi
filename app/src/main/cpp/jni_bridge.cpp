@@ -24,6 +24,7 @@
 #include <dlfcn.h>
 #include "jalv.h"
 #include "LV2Plugin.hpp"
+#include "utils.h"
 
 static const int kOboeApiAAudio = 0;
 static const int kOboeApiOpenSLES = 1;
@@ -382,9 +383,9 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
         } else {
             plugin->start();
             LOGD("Successfully added plugin %s at position %d", env->GetStringUTFChars(uri, nullptr), position);
-            LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
+//            LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
             int portsTotal = lilv_plugin_get_num_ports(plugin->plugin_);
-            LOGD("[debug] Plugin %s has [%d/%d] ports", env->GetStringUTFChars(uri, nullptr), plugin->ports_.size(), portsTotal);
+//            LOGD("[debug] Plugin %s has [%d/%d] ports", env->GetStringUTFChars(uri, nullptr), plugin->ports_.size(), portsTotal);
         }
 
         switch (position) {
@@ -452,8 +453,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
     engine -> pluginInfo = {} ;
 
     LILV_FOREACH (plugins, i, engine -> plugins) {
-        engine -> pluginCount++;
         const LilvPlugin* p = lilv_plugins_get(engine -> plugins, i);
+        if (isNoLoadPlugin(lilv_node_as_string(lilv_plugin_get_uri(p)))) {
+            LOGD("[initPlugins] Skipping no-load plugin %s", lilv_node_as_uri(lilv_plugin_get_uri(p)));
+            continue;
+        }
+
+        engine -> pluginCount++;
 //        LOGD("[plugin] %s\n", lilv_node_as_uri(lilv_plugin_get_uri(p)));
         json pluginInfo = {
                 {"name", lilv_node_as_string(lilv_plugin_get_name(p))},

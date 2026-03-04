@@ -897,10 +897,14 @@ private:
             if (p.is_audio) continue;
             if (p.is_control) {
                 lilv_instance_connect_port(instance_, p.index, &p.control);
-                LOGD ("[%s] Connected control port %u to value %f", lilv_node_as_string(lilv_plugin_get_name(plugin_)), p.index, p.control);
+//                LOGD ("[%s] Connected control port %u to value %f", lilv_node_as_string(lilv_plugin_get_name(plugin_)), p.index, p.control);
             }
             if (p.is_atom)
                 lilv_instance_connect_port(instance_, p.index, p.atom);
+            if (! p.is_atom and ! p.is_control) {
+//                lilv_instance_connect_port(instance_, p.index, nullptr);
+                LOGE ("[%s] Warning: Unconnected port %u (not control or atom)", lilv_node_as_string(lilv_plugin_get_name(plugin_)), p.index);
+            }
         }
 
         lilv_instance_activate(instance_);

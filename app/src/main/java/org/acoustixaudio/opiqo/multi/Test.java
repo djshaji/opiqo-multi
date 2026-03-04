@@ -1,10 +1,13 @@
 package org.acoustixaudio.opiqo.multi;
 
+import static androidx.core.util.SparseIntArrayKt.contains;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.stream.IntStream;
 
 public class Test {
     MainActivity mainActivity;
@@ -18,6 +21,7 @@ public class Test {
     void pluginLoader () {
         Log.d(TAG, "pluginLoader: checking whether plugins load");
         pluginCounter = 0;
+        int [] skip = {};
         ArrayList <String> failedPlugins = new ArrayList<>();
         final Handler handler = new Handler(Looper.getMainLooper());
         Runnable runner = new Runnable() {
@@ -27,8 +31,16 @@ public class Test {
                 // Intent intent = new Intent(SecondActivity.this, MainActivity.class);
                 // startActivity(intent);
 
-                Log.i(TAG, "pluginLoader: loading " + mainActivity.pluginUris.get(pluginCounter));
+                Log.i(TAG, "pluginLoader test [" + pluginCounter + "]: loading " + mainActivity.pluginUris.get(pluginCounter));
+                if (IntStream.of (skip).anyMatch(x -> x == pluginCounter)) {
+                    Log.w(TAG, "pluginLoader: skipping plugin " + mainActivity.pluginUris.get(pluginCounter));
+                    pluginCounter++;
+                    handler.postDelayed(this, 100); // Delay in milliseconds
+                    return;
+                }
+
                 String uri = mainActivity.pluginUris.get(pluginCounter++);
+
                 if (AudioEngine.addPlugin(1, uri) != 0) {
                     Log.e(TAG, "pluginLoader: load [failed]");
                     failedPlugins.add(uri);
