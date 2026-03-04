@@ -482,6 +482,11 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
             else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__ControlPort)) &&
                     lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__InputPort))) {
                 pluginInfo["port"][index]["type"] = "control";
+
+                if (lilv_port_has_property(p, port, lilv_new_uri(engine -> world, LV2_CORE__toggled))) {
+                    pluginInfo["port"][index]["type"] = "toggled";
+                }
+
 //                LOGD("[%s] Port %d is a control port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
                 LilvNode * def = lilv_new_float(engine -> world, 0.0f);
                 LilvNode * min = lilv_new_float(engine -> world, 0.0f);

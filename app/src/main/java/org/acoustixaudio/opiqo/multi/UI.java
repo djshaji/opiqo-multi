@@ -11,6 +11,7 @@ import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 
@@ -83,32 +84,57 @@ public class UI extends LinearLayout {
                 JSONObject port = ports.getJSONObject(i);
                 Log.d(TAG, "build: port " + port);
 
-                if (! port.has("type") || ! port.getString("type").equals("control"))
+                if (! port.has("type") || port.getString("type").equals("audio"))
                     continue;
 
-                Slider slider = new Slider(context);
-                slider.setValueFrom((float) port.getDouble("min"));
-                slider.setValueTo((float) port.getDouble("max"));
-                slider.setValue((float) port.getDouble("default"));
-                slider.setLabelFormatter(value -> String.format("%.2f", value));
-                slider.addOnChangeListener((s, value, fromUser) -> {
-                    if (fromUser) {
+                if (port.getString("type").equals("control")) {
+                    Slider slider = new Slider(context);
+                    slider.setValueFrom((float) port.getDouble("min"));
+                    slider.setValueTo((float) port.getDouble("max"));
+                    slider.setValue((float) port.getDouble("default"));
+                    slider.setLabelFormatter(value -> String.format("%.2f", value));
+                    slider.addOnChangeListener((s, value, fromUser) -> {
+                        if (fromUser) {
+                            try {
+                                AudioEngine.setValue(position, port.getInt("index"), value);
+                            } catch (JSONException e) {
+                                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+
+                    TextView label = new TextView(context);
+                    label.setText(port.getString("name"));
+//                label.setTextSize(16);
+                    label.setPadding(0, 0, 0, 20);
+
+                    addView(slider);
+                    addView(label);
+                } else if (port.getString("type").equals("toggled")) {
+                    ToggleButton sw = new ToggleButton(context);
+                    sw.setTextOn("ON");
+                    sw.setChecked(port.getInt("default") == 1);
+                    sw.setTextOff("OFF");
+                    sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
                         try {
-                            AudioEngine.setValue(position, port.getInt("index"), value);
+                            AudioEngine.setValue(position, port.getInt("index"), isChecked ? 1.0f : 0.0f);
                         } catch (JSONException e) {
                             Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                             throw new RuntimeException(e);
                         }
-                    }
-                });
+                    });
 
-                TextView label = new TextView(context);
-                label.setText(port.getString("name"));
-//                label.setTextSize(16);
-                label.setPadding(0, 0, 0, 20);
-
-                addView(slider);
-                addView(label);
+                    LinearLayout layout = new LinearLayout(context);
+                    layout.setGravity(Gravity.CENTER_HORIZONTAL);
+                    layout.setOrientation(HORIZONTAL);
+                    TextView label = new TextView(context);
+                    label.setText(port.getString("name") + ":");
+                    label.setPadding(0, 0, 20, 20);
+                    layout.addView(label);
+                    layout.addView(sw);
+                    addView(layout);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
