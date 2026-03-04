@@ -474,7 +474,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
 //                  index, lilv_node_as_string(lilv_port_get_symbol(p, port)));
             pluginInfo ["port"][index] = {};
             pluginInfo ["port"][index]["index"] = index ;
-            pluginInfo ["port"][index]["name"] = lilv_node_as_string(lilv_port_get_symbol(p, port));
+            pluginInfo ["port"][index]["name"] = lilv_node_as_string(lilv_port_get_name(p, port));
             if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__AudioPort))) {
 //                LOGD("[%s] Port %d is an audio port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
                 pluginInfo["port"][index]["type"] = "audio";
