@@ -487,6 +487,21 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
                     pluginInfo["port"][index]["type"] = "toggled";
                 }
 
+                if (lilv_port_has_property(p, port, lilv_new_uri(engine->world, LV2_CORE__enumeration))) {
+                    pluginInfo["port"][index]["type"] = "dropdown";
+
+                    // Query Scale Points (Labels for the enum)
+                    LilvScalePoints* points = lilv_port_get_scale_points(p, port);
+                    pluginInfo["port"][index]["options"] = json::array();
+
+                    LILV_FOREACH(scale_points, s, points) {
+                        const LilvScalePoint* point = lilv_scale_points_get(points, s);
+                        json sp;
+                        sp["label"] = lilv_node_as_string(lilv_scale_point_get_label(point));
+                        sp["value"] = lilv_node_as_float(lilv_scale_point_get_value(point));
+                        pluginInfo["port"][index]["options"].push_back(sp);
+                    }
+                }
 //                LOGD("[%s] Port %d is a control port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
                 LilvNode * def = lilv_new_float(engine -> world, 0.0f);
                 LilvNode * min = lilv_new_float(engine -> world, 0.0f);

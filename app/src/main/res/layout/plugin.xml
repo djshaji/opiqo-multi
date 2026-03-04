@@ -2,11 +2,12 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="10dp"
-    android:layout_marginBottom="0dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:layout_marginBottom="20dp"
         android:layout_width="match_parent"
         android:background="@drawable/semitrans"
         android:layout_height="wrap_content">

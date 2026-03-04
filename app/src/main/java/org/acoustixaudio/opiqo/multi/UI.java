@@ -4,10 +4,14 @@ import android.content.Context;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +25,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public class UI extends LinearLayout {
@@ -134,6 +140,94 @@ public class UI extends LinearLayout {
                     layout.addView(label);
                     layout.addView(sw);
                     addView(layout);
+                } else if (port.getString("type").equals("dropdown")) {
+                    JSONArray options = port.getJSONArray("options");
+                    ArrayList <String> optionNames = new ArrayList<>();
+                    ArrayList <Integer> optionValues = new ArrayList<>();
+                    for (int j = 0; j < options.length(); j++) {
+                        optionNames.add(options.getJSONObject(j).getString("label"));
+                        optionValues.add(options.getJSONObject(j).getInt("value"));
+                    }
+
+                    Spinner spinner = new Spinner(context);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            getContext(),
+                            android.R.layout.simple_spinner_item,
+                            optionNames
+                    );
+
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinner.setAdapter(adapter);
+                    int defaultIndex = optionValues.indexOf(port.getInt("default"));
+                    if (defaultIndex != -1)
+                        spinner.setSelection(defaultIndex);
+
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                          @Override
+                                                          public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                                              try {
+                                                                  AudioEngine.setValue(UI.this.position, port.getInt("index"), optionValues.get(position));
+                                                              } catch (JSONException e) {
+                                                                  Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                  throw new RuntimeException(e);
+                                                              }
+                                                          }
+
+                                                          @Override
+                                                          public void onNothingSelected(AdapterView<?> adapterView) {
+//                            AudioEngine.setValue(position, port.getInt("index"), optionValues.get(i));
+                                                          }
+                                                      });
+
+
+                    TextView left = new TextView(context), right = new TextView(context);
+                    left.setText("<");
+                    right.setText(">");
+
+                    left.setPadding(20,10,20,10);
+                    right.setPadding(20,10,20,10);
+
+                    left.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
+                    right.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
+
+                    left.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            int max = optionNames.size();
+                            int current = spinner.getSelectedItemPosition();
+                            spinner.setSelection((current - 1 + max) % max);
+                        }
+                    });
+
+                    right.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            int max = optionNames.size();
+                            int current = spinner.getSelectedItemPosition();
+                            spinner.setSelection((current + 1) % max);
+                        }
+                    });
+
+                    LinearLayout layout = new LinearLayout(context);
+                    layout.setPadding(0,10,0,10);
+                    layout.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_neutral90));
+                    layout.setGravity(Gravity.CENTER_VERTICAL);
+                    LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                    layoutParams.setMargins(0, 20, 0, 10);
+                    layout.setOrientation(HORIZONTAL);
+                    layout.setLayoutParams(layoutParams);
+                    TextView label = new TextView(context);
+                    label.setText(port.getString("name") + ":");
+                    label.setPadding(0, 0, 20, 0);
+                    layout.addView(label);
+                    layout.addView(left);
+                    layout.addView(spinner);
+                    layout.addView(right);
+                    addView(layout);
+
+                    LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT);
+                    spinnerParams.weight = 1;
+                    spinner.setLayoutParams(spinnerParams);
                 }
             }
         } catch (Exception e) {
