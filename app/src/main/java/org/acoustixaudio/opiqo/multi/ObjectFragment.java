@@ -1,6 +1,7 @@
 package org.acoustixaudio.opiqo.multi;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ public class ObjectFragment extends Fragment {
     View add = null;
     View root = null;
     int position;
+    private String TAG = "ObjectFragment";
 
     public ObjectFragment(MainActivity _mainActivity) {
         mainActivity = _mainActivity;
@@ -45,6 +47,7 @@ public class ObjectFragment extends Fragment {
         });
 
         root = view.findViewById(R.id.plugin_box);
+        Log.d(TAG, "onViewCreated: " + position + " plugin box root");
     }
 
     void addPluginDialog () {

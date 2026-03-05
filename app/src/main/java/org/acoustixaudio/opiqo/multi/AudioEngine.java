@@ -17,6 +17,7 @@ public class AudioEngine {
     static native void bypass (boolean isBypassed);
     static native void printPreset (int plugin);
     static native String getPreset (int plugin);
+    static native String getPresetList ();
     static native String getPluginInfo ();
     static native void initPlugins (String lv2Path);
     static native void setRecordingDeviceId(int deviceId);

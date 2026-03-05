@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Build;
@@ -35,6 +36,7 @@ import com.google.android.material.slider.Slider;
 import com.google.oboe.samples.audio_device.AudioDeviceListEntry;
 import com.google.oboe.samples.audio_device.AudioDeviceSpinner;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -44,6 +46,9 @@ import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    SharedPreferences sharedPreferences;
+
+    JSONObject UIs = new JSONObject();
 
     static {
         System.loadLibrary("multi");
@@ -62,7 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
     String [] tests = {
             "Plugin Loader Test",
-            "Preset Save/Load Test",
+            "Preset Save Test",
+            "Preset Load Test"
     };
     private Slider gainSlider;
 
@@ -74,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
             case 1:
 //                new Test(this).printPreset();
                 savePreset();
+                break;
+            case 2:
+                loadPreset();
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
@@ -91,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        sharedPreferences = getSharedPreferences("core", MODE_PRIVATE);
 
         TextView testButton = findViewById(R.id.power);
         testButton.setOnClickListener(new View.OnClickListener() {
@@ -288,6 +299,13 @@ public class MainActivity extends AppCompatActivity {
                         UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
                         pluginUI.add = add;
 
+                        try {
+                            UIs.put(String.valueOf(position), pluginUI);
+                        } catch (JSONException e) {
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            throw new RuntimeException(e);
+                        }
+
                         LinearLayout layout = (LinearLayout) root;
                         layout.removeAllViews();
 
@@ -321,47 +339,61 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void savePreset () {
-        JSONObject preset = new JSONObject();
-        try {
-            preset.put("app", R.string.app_name);
-            preset.put("masterGain", gainSlider.getValue());
+        String preset = AudioEngine.getPresetList();
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("default_preset", preset);
+        editor.apply();
 
-            String p1 = AudioEngine.getPreset(1);
-            String p2 = AudioEngine.getPreset(2);
-            String p3 = AudioEngine.getPreset(3);
-            String p4 = AudioEngine.getPreset(4);
+        Log.d(TAG, "savePreset: " + preset);
+    }
 
-            Log.d(TAG, "savePreset: " + "\n1: " + p1 +
-                    "\n2: " + p2 +
-                    "\n3: " + p3 +
-                    "\n4: " + p4
-            );
-
-            JSONObject preset1 = null, preset2 = null, preset3 = null, preset4 = null;
-
-            if (p1 != null)
-                preset1 = new JSONObject(p1);
-            if (p2 != null)
-                preset2 = new JSONObject(p2);
-            if (p3 != null)
-                preset3 = new JSONObject(p3);
-            if (p4 != null)
-                preset4 = new JSONObject(p4);
-
-            preset.put("plugins", new JSONObject());
-            if (preset1 != null)
-                preset.getJSONObject("plugins").put("1", preset1);
-            if (preset2 != null)
-                preset.getJSONObject("plugins").put("2", preset2);
-            if (preset3 != null)
-                preset.getJSONObject("plugins").put("3", preset3);
-            if (preset4 != null)
-                preset.getJSONObject("plugins").put("4", preset4);
-        } catch (JSONException e) {
-            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-            throw new RuntimeException(e);
+    void loadPreset () {
+        String preset = sharedPreferences.getString("default_preset", null);
+        if (preset == null) {
+            Log.w(TAG, "loadPreset: no preset found");
+            return;
         }
 
-        Log.d(TAG, "savePreset: " + preset.toString());
+        JSONObject presetJson;
+        try {
+            presetJson = new JSONObject(preset);
+        } catch (JSONException e) {
+            Log.e(TAG, "loadPreset: failed to parse preset", e);
+            return;
+        }
+
+        Log.d(TAG, "loadPreset: loading " + presetJson);
+
+        gainSlider.setValue((float) presetJson.optDouble("gain", 0f));
+        JSONObject plugin1 = presetJson.optJSONObject("plugin1");
+        if (plugin1 != null) {
+            String uri = plugin1.optString("uri", null);
+            JSONObject info = pluginInfo.optJSONObject(uri);
+            Log.d(TAG, "loadPreset: " + info);
+            JSONArray ports = info.optJSONArray("port");
+            for (int i = 0; i < ports.length(); i++) {
+                JSONObject port = ports.optJSONObject(i);
+                if (! port.optString("type").equals("audio")) {
+                    try {
+                        port.put("default", plugin1.getJSONObject("controls").get(port.optString("name")));
+                    } catch (JSONException e) {
+                        Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        throw new RuntimeException(e);
+                    }
+                    Log.d(TAG, "loadPreset: [port] " + port);
+                }
+            }
+
+            try {
+                info.put("port", ports);
+            } catch (JSONException e) {
+                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                throw new RuntimeException(e);
+            }
+
+            UI pluginUI = new UI(context, info.toString(), 1);
+            pluginUI.add = null;
+
+        }
     }
 }

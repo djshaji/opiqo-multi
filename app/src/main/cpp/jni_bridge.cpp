@@ -657,12 +657,12 @@ json getPreset (int plugin) {
             break;
         default:
             LOGE("Unknown plugin index %d", plugin);
-            return nullptr;
+            return "{}";
     }
 
     if (p == nullptr) {
         LOGE("Plugin %d is null", plugin);
-        return nullptr;
+        return "{}";
     }
 
     json preset = {};
@@ -674,6 +674,7 @@ json getPreset (int plugin) {
             preset ["controls"][port.name] = port.control;
     }
 
+    preset ["enabled"] = p->enabled;
     return preset;
 }
 
@@ -688,5 +689,20 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPreset(JNIEnv *env, jclass clazz, jint plugin) {
     json preset = getPreset(plugin);
+    return env->NewStringUTF(preset.dump().c_str());
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPresetList(JNIEnv *env, jclass clazz) {
+    json preset = {};
+    preset ["app"] = "opiqo-android";
+    preset ["gain"] = *engine -> gain ;
+
+    preset ["plugin1"] = getPreset(1);
+    preset ["plugin2"] = getPreset(2);
+    preset ["plugin3"] = getPreset(3);
+    preset ["plugin4"] = getPreset(4);
+
     return env->NewStringUTF(preset.dump().c_str());
 }
