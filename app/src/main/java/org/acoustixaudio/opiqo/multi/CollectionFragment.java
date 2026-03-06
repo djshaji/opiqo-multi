@@ -19,6 +19,7 @@ public class CollectionFragment extends Fragment {
     CollectionAdapter collectionAdapter;
     ViewPager2 viewPager;
     public MainActivity mainActivity ;
+    public TabLayout tabLayout;
 
     public CollectionFragment(MainActivity _mainActivity) {
         mainActivity = _mainActivity;
@@ -33,11 +34,12 @@ public class CollectionFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        TabLayout tabLayout = view.findViewById(R.id.tab_layout);
+        tabLayout = view.findViewById(R.id.tab_layout);
         collectionAdapter = new CollectionAdapter(this, mainActivity);
         collectionAdapter.mainActivity = mainActivity;
         viewPager = view.findViewById(R.id.pager);
         viewPager.setAdapter(collectionAdapter);
+        viewPager.setOffscreenPageLimit(4);
         new TabLayoutMediator(tabLayout, viewPager,
                 (tab, position) -> tab.setText("Pedal " + (position + 1))
         ).attach();

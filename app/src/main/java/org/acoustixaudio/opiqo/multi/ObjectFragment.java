@@ -48,6 +48,7 @@ public class ObjectFragment extends Fragment {
 
         root = view.findViewById(R.id.plugin_box);
         Log.d(TAG, "onViewCreated: " + position + " plugin box root");
+        mainActivity.pluginUIContainers .put(position, root);
     }
 
     void addPluginDialog () {

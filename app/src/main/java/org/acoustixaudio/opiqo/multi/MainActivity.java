@@ -26,6 +26,7 @@ import android.widget.ToggleButton;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -42,6 +43,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     public JSONObject pluginInfo;
     ArrayList <String> pluginNames;
     ArrayList <String> pluginUris;
-    ScrollView pluginUIContainer1, pluginUIContainer2, pluginUIContainer3, pluginUIContainer4;
+    HashMap<Integer, View> pluginUIContainers = new HashMap<>();
     private CollectionFragment collectionFragment;
     private AudioDeviceSpinner playbackDeviceSpinner, recordingDeviceSpinner;
 
@@ -209,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
                     AudioEngine.setEffectOn(b);
             }
         });
+
     }
 
     /**
@@ -354,8 +357,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        JSONObject presetJson;
+        JSONObject presetJson, pluginInfoCopy;
         try {
+            pluginInfoCopy = new JSONObject(pluginInfo.toString());
             presetJson = new JSONObject(preset);
         } catch (JSONException e) {
             Log.e(TAG, "loadPreset: failed to parse preset", e);
@@ -365,35 +369,59 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "loadPreset: loading " + presetJson);
 
         gainSlider.setValue((float) presetJson.optDouble("gain", 0f));
-        JSONObject plugin1 = presetJson.optJSONObject("plugin1");
-        if (plugin1 != null) {
-            String uri = plugin1.optString("uri", null);
-            JSONObject info = pluginInfo.optJSONObject(uri);
-            Log.d(TAG, "loadPreset: " + info);
-            JSONArray ports = info.optJSONArray("port");
-            for (int i = 0; i < ports.length(); i++) {
-                JSONObject port = ports.optJSONObject(i);
-                if (! port.optString("type").equals("audio")) {
-                    try {
-                        port.put("default", plugin1.getJSONObject("controls").get(port.optString("name")));
-                    } catch (JSONException e) {
-                        Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                        throw new RuntimeException(e);
+        for (int j = 1 ; j < 5 ; j ++) {
+//            collectionFragment.tabLayout.getTabAt(j-1).select();
+//            collectionFragment.viewPager.setCurrentItem(j, false);
+            JSONObject plugin1 = presetJson.optJSONObject("plugin" + j);
+            if (plugin1 != null) {
+                String uri = plugin1.optString("uri", null);
+                JSONObject info = pluginInfoCopy.optJSONObject(uri);
+                Log.d(TAG, "loadPreset: " + info);
+                JSONArray ports = info.optJSONArray("port");
+                for (int i = 0; i < ports.length(); i++) {
+                    JSONObject port = ports.optJSONObject(i);
+                    if (!port.optString("type").equals("audio")) {
+                        try {
+                            port.put("default", plugin1.getJSONObject("controls").get(port.optString("name")));
+                        } catch (JSONException e) {
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            throw new RuntimeException(e);
+                        }
+                        Log.d(TAG, "loadPreset: [port] " + port);
                     }
-                    Log.d(TAG, "loadPreset: [port] " + port);
                 }
+
+                try {
+                    info.put("port", ports);
+                } catch (JSONException e) {
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    throw new RuntimeException(e);
+                }
+
+                UI pluginUI = new UI(context, info.toString(), j);
+                /*
+                if (!pluginUIContainers.containsKey(j)) {
+                    collectionFragment.viewPager.setCurrentItem(j);
+                    Log.d(TAG, "loadPreset: " + "waiting for plugin container " + j);
+                    while (!pluginUIContainers.containsKey(j)) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+
+                 */
+
+                LinearLayout container = (LinearLayout) pluginUIContainers.get(j);
+                assert container != null;
+                container.removeAllViews();
+                container.addView(pluginUI);
+                pluginUI.add = ((ConstraintLayout) container.getParent()).findViewById(R.id.add);
+                pluginUI.add.setVisibility(GONE);
             }
-
-            try {
-                info.put("port", ports);
-            } catch (JSONException e) {
-                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                throw new RuntimeException(e);
-            }
-
-            UI pluginUI = new UI(context, info.toString(), 1);
-            pluginUI.add = null;
-
         }
     }
 }
