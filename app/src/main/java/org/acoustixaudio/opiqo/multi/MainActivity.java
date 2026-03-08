@@ -13,10 +13,13 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -49,8 +52,10 @@ import java.util.Iterator;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     SharedPreferences sharedPreferences;
+    String presetsDir;
 
     JSONObject UIs = new JSONObject();
+    ArrayList <JSONObject> presets = new ArrayList<>();
 
     static {
         System.loadLibrary("multi");
@@ -73,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
             "Preset Load Test"
     };
     private Slider gainSlider;
+    private File presetsDirectory;
+    private TextView patchLabel;
 
     void runTest(int index) {
         switch (index) {
@@ -80,8 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 new Test(this).pluginLoader();
                 break;
             case 1:
-//                new Test(this).printPreset();
-                savePreset();
+                savePresetToFileWithFilePicker();
                 break;
             case 2:
                 loadPreset();
@@ -104,6 +110,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         sharedPreferences = getSharedPreferences("core", MODE_PRIVATE);
+        presetsDir = getFilesDir() + "/presets";
+        presetsDirectory = new File(presetsDir);
+        if (!presetsDirectory.exists() && !presetsDirectory.mkdirs()) {
+            Log.e(TAG, "Failed to create presets directory: " + presetsDir);
+        }
 
         TextView testButton = findViewById(R.id.power);
         testButton.setOnClickListener(new View.OnClickListener() {
@@ -117,6 +128,22 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
                 builder.show();
+            }
+        });
+
+        ImageButton savePresetButton = findViewById(R.id.save_patch);
+        savePresetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                savePresetToFileWithFilePicker();
+            }
+        });
+
+        patchLabel = findViewById(R.id.patch_label);
+        patchLabel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                selectPresetFromLoadedPresetsWithDialog();
             }
         });
 
@@ -212,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        loadAllPresetsFromPresetsDir();
     }
 
     /**
@@ -350,6 +378,14 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "savePreset: " + preset);
     }
 
+    void savePresetFromString (String preset) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("default_preset", preset);
+        editor.apply();
+
+        Log.d(TAG, "savePreset: " + preset);
+    }
+
     void loadPreset () {
         String preset = sharedPreferences.getString("default_preset", null);
         if (preset == null) {
@@ -423,5 +459,96 @@ public class MainActivity extends AppCompatActivity {
                 pluginUI.add.setVisibility(GONE);
             }
         }
+    }
+
+    void savePresetToFile (String filename) {
+        String preset = AudioEngine.getPresetList();
+        JSONObject presetJson ;
+        try {
+            presetJson = new JSONObject(preset);
+            presetJson.put("name", filename);
+            preset = presetJson.toString();
+        } catch (JSONException e) {
+            Log.e(TAG, "savePresetToFile: failed to parse preset", e);
+            Toast.makeText(this, "Failed to save preset: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File outFile = new File(presetsDirectory, filename);
+        try (java.io.OutputStream out = new java.io.FileOutputStream(outFile)) {
+            out.write(preset.getBytes());
+            Toast.makeText(this, "Preset saved to " + outFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        } catch (java.io.IOException e) {
+            Log.e(TAG, "savePresetToFile failed", e);
+            Toast.makeText(this, "Failed to save preset: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+
+        loadAllPresetsFromPresetsDir();
+    }
+
+    void savePresetToFileWithFilePicker () {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.file_chooser, null);
+        EditText presetName = dialogView.findViewById(R.id.preset_name);
+
+        presetName.setText(((TextView) findViewById(R.id.patch_label)).getText());
+
+        new AlertDialog.Builder(this)
+                .setTitle("Save preset")
+                .setView(dialogView)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String filename = presetName.getText().toString().trim();
+                    if (filename.isEmpty()) {
+                        Toast.makeText(this, "Please enter a preset name", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (!filename.endsWith(".json")) {
+                        filename += ".json";
+                    }
+
+                    savePresetToFile(filename);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    void loadAllPresetsFromPresetsDir () {
+        File[] files = presetsDirectory.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) return;
+
+        presets = new ArrayList<>();
+
+        for (File file : files) {
+            try (java.io.InputStream in = new java.io.FileInputStream(file)) {
+                byte[] bytes = new byte[(int) file.length()];
+                in.read(bytes);
+                String preset = new String(bytes);
+                presets.add(new JSONObject(preset));
+                Log.d(TAG, "loadAllPresetsFromPresetsDir: read preset " + preset);
+            } catch (java.io.IOException | JSONException e) {
+                Log.e(TAG, "loadAllPresetsFromPresetsDir failed for " + file.getName(), e);
+            }
+        }
+    }
+
+    void selectPresetFromLoadedPresetsWithDialog () {
+        CharSequence[] presetNames = new CharSequence[presets.size()];
+        for (int i = 0; i < presets.size(); i++) {
+            presetNames[i] = presets.get(i).optString("name", "Preset " + (i + 1));
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Select Preset")
+                .setItems(presetNames, (dialog, which) -> {
+                    JSONObject selectedPreset = presets.get(which);
+                    savePresetFromString(selectedPreset.toString());
+                    loadPreset();
+                    try {
+                        patchLabel.setText(selectedPreset.getString("name"));
+                    } catch (JSONException e) {
+                        Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        throw new RuntimeException(e);
+                    }
+                })
+                .show();
     }
 }
