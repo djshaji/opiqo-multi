@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.slider.Slider;
 import com.google.oboe.samples.audio_device.AudioDeviceListEntry;
@@ -54,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     String presetsDir;
 
-    JSONObject UIs = new JSONObject();
     ArrayList <JSONObject> presets = new ArrayList<>();
 
     static {
@@ -131,6 +131,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageButton nextPresetButton = findViewById(R.id.patch_up);
+        nextPresetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nextPreset();
+            }
+        });
+        ImageButton previousPresetButton = findViewById(R.id.patch_down);
+        previousPresetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                previousPreset();
+            }
+        });
+
         ImageButton savePresetButton = findViewById(R.id.save_patch);
         savePresetButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,6 +159,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 selectPresetFromLoadedPresetsWithDialog();
+            }
+        });
+
+        patchLabel.setLongClickable(true);
+        patchLabel.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if (patchLabel.getText().toString().isEmpty()) {
+                    Toast.makeText(context, "No preset to delete", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                deletePreset(patchLabel.getText().toString());
+                return true;
             }
         });
 
@@ -240,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         loadAllPresetsFromPresetsDir();
+//        setFirstPreset();
     }
 
     /**
@@ -330,13 +359,6 @@ public class MainActivity extends AppCompatActivity {
                         UI pluginUI = new UI(context, pluginInfo.optJSONObject(pluginUri).toString(), position);
                         pluginUI.add = add;
 
-                        try {
-                            UIs.put(String.valueOf(position), pluginUI);
-                        } catch (JSONException e) {
-                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                            throw new RuntimeException(e);
-                        }
-
                         LinearLayout layout = (LinearLayout) root;
                         layout.removeAllViews();
 
@@ -393,8 +415,17 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        AudioEngine.deletePlugin(1);
+        AudioEngine.deletePlugin(2);
+        AudioEngine.deletePlugin(3);
+        AudioEngine.deletePlugin(4);
+
+        deleteUIs();
+
         JSONObject presetJson, pluginInfoCopy;
         try {
+            String name = new JSONObject(preset).optString("name", "Unnamed Preset");
+            patchLabel.setText(name);
             pluginInfoCopy = new JSONObject(pluginInfo.toString());
             presetJson = new JSONObject(preset);
         } catch (JSONException e) {
@@ -490,6 +521,14 @@ public class MainActivity extends AppCompatActivity {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.file_chooser, null);
         EditText presetName = dialogView.findViewById(R.id.preset_name);
 
+        ImageButton clear = dialogView.findViewById(R.id.clear_name);
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                presetName.setText("");
+            }
+        });
+
         presetName.setText(((TextView) findViewById(R.id.patch_label)).getText());
 
         new AlertDialog.Builder(this)
@@ -501,18 +540,20 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Please enter a preset name", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    if (!filename.endsWith(".json")) {
-                        filename += ".json";
-                    }
+
+//                    if (!filename.endsWith(".json")) {
+//                        filename += ".json";
+//                    }
 
                     savePresetToFile(filename);
+                    patchLabel.setText(filename);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
     void loadAllPresetsFromPresetsDir () {
-        File[] files = presetsDirectory.listFiles((dir, name) -> name.endsWith(".json"));
+        File[] files = presetsDirectory.listFiles();
         if (files == null) return;
 
         presets = new ArrayList<>();
@@ -550,5 +591,111 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .show();
+    }
+
+    void deleteUIs () {
+        for (int i = 1 ; i < 5 ; i ++) {
+            Log.d(TAG, "deleteUIs: " + i);
+            LinearLayout layout = (LinearLayout) pluginUIContainers.get(i);
+            if (layout != null) {
+                layout.removeAllViews();
+                View add = ((ConstraintLayout) layout.getParent()).findViewById(R.id.add);
+                if (add != null) add.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    void nextPreset () {
+        int which = -1;
+        String currentPresetName = patchLabel.getText().toString();
+        for (int i = 0; i < presets.size(); i++) {
+            if (presets.get(i).optString("name", "Preset " + (i + 1)).equals(currentPresetName)) {
+                which = i;
+                Log.d(TAG, "nextPreset: previous was " + which);
+                break;
+            }
+
+        }
+
+        if (which == -1) {
+            Toast.makeText(this, "Current preset not found in loaded presets", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (which == presets.size() - 1) {
+            which = 0;
+        } else {
+            which++;
+        }
+
+        JSONObject selectedPreset = presets.get(which);
+        savePresetFromString(selectedPreset.toString());
+        loadPreset();
+
+        Log.d(TAG, "nextPreset: total presets: " + presets.size());
+        Log.d(TAG, "nextPreset: selected: " + which);
+    }
+
+    void previousPreset () {
+        int which = -1;
+        String currentPresetName = patchLabel.getText().toString();
+        for (int i = 0; i < presets.size(); i++) {
+            if (presets.get(i).optString("name", "Preset " + (i + 1)).equals(currentPresetName)) {
+                which = i;
+                Log.d(TAG, "previousPreset: previous was " + which);
+                break;
+            }
+
+        }
+
+        if (which == -1) {
+            Toast.makeText(this, "Current preset not found in loaded presets", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (which == 0) {
+            which = presets.size() - 1;
+        } else {
+            which--;
+        }
+
+        JSONObject selectedPreset = presets.get(which);
+        savePresetFromString(selectedPreset.toString());
+        loadPreset();
+
+        Log.d(TAG, "previousPreset: total presets: " + presets.size());
+        Log.d(TAG, "previousPreset: selected: " + which + " " + selectedPreset);
+    }
+
+    void deletePreset (String filename) {
+        AlertDialog .Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Preset")
+                .setMessage("Are you sure you want to delete preset " + filename + "?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    File presetFile = new File(presetsDirectory, filename);
+                    if (presetFile.delete()) {
+                        Toast.makeText(this, "Preset deleted", Toast.LENGTH_SHORT).show();
+                        nextPreset();
+                        loadAllPresetsFromPresetsDir();
+                    } else {
+                        Toast.makeText(this, "Failed to delete preset", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    void setFirstPreset () {
+        if (presets.size() > 0) {
+            JSONObject firstPreset = presets.get(0);
+            savePresetFromString(firstPreset.toString());
+            loadPreset();
+            try {
+                patchLabel.setText(firstPreset.getString("name"));
+            } catch (JSONException e) {
+//                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

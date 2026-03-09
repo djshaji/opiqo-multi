@@ -71,8 +71,8 @@
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/baseline_keyboard_double_arrow_up_24"
-                android:id="@+id/patch_up"/>
+                android:src="@drawable/baseline_keyboard_double_arrow_down_24"
+                android:id="@+id/patch_down"/>
 
             <TextView
                 android:ellipsize="end"
@@ -90,8 +90,9 @@
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/baseline_keyboard_double_arrow_down_24"
-                android:id="@+id/patch_down"/>
+                android:src="@drawable/baseline_keyboard_double_arrow_up_24"
+                android:id="@+id/patch_up"/>
+
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
