@@ -45,7 +45,7 @@ JNIEXPORT jboolean JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_create(JNIEnv *env, jclass) {
     if (engine == nullptr) {
         engine = new LiveEffectEngine();
-
+        engine ->initLV2();
     }
 
     return (engine != nullptr) ? JNI_TRUE : JNI_FALSE;
@@ -216,7 +216,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_test(JNIEnv *env, jclass clazz, j
     for (int i = 0 ; i < lilv_plugin_get_num_ports(plugin); i++) {
         const LilvPort* port = lilv_plugin_get_port_by_index(plugin, i);
         LOGD ("[test] Port %d: %s\n", i, lilv_node_as_string(lilv_port_get_symbol(plugin, port)));
-        if (!lilv_port_is_a(plugin, port, lilv_new_uri(world, LV2_CORE__AudioPort))) {
+        if (!lilv_port_is_a(plugin, port, engine -> audio_class_)) {
             float * d = static_cast<float *>(malloc(sizeof(float)));
             lilv_instance_connect_port(instance, i, d);
             LOGD ("[test] Connected control port %d to %p [%s]\n", i, d, lilv_node_as_string(
@@ -440,7 +440,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
         return ;
     }
 
-    engine -> world = lilv_world_new();
+
     LOGD ("[test] LV2 path set to %s", path.c_str());
 
     LilvNode* lv2_path = lilv_new_string(engine -> world, path.c_str());
@@ -475,20 +475,19 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
             pluginInfo ["port"][index] = {};
             pluginInfo ["port"][index]["index"] = index ;
             pluginInfo ["port"][index]["name"] = lilv_node_as_string(lilv_port_get_name(p, port));
-            if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__AudioPort))) {
+            if (lilv_port_is_a(p, port, engine -> audio_class_)) {
 //                LOGD("[%s] Port %d is an audio port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
                 pluginInfo["port"][index]["type"] = "audio";
             }
-            else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__ControlPort)) &&
-                    lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_CORE__InputPort))) {
+            else if (lilv_port_is_a(p, port, engine -> control_class_) &&
+                    lilv_port_is_a(p, port, engine -> input_class_)) {
                 pluginInfo["port"][index]["type"] = "control";
 
-                if (lilv_port_has_property(p, port, lilv_new_uri(engine -> world, LV2_CORE__toggled))) {
+                if (lilv_port_has_property(p, port, engine -> toggle_class_)) {
                     pluginInfo["port"][index]["type"] = "toggled";
                 }
 
-                // TODO: Fix memory leak here - we need to free the nodes created by lilv_new_uri
-                if (lilv_port_has_property(p, port, lilv_new_uri(engine->world, LV2_CORE__enumeration))) {
+                if (lilv_port_has_property(p, port, engine -> enum_class_)) {
                     pluginInfo["port"][index]["type"] = "dropdown";
 
                     // Query Scale Points (Labels for the enum)
@@ -515,7 +514,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
                 pluginInfo["port"][index]["default"] = lilv_node_as_string(def);
 
             }
-            else if (lilv_port_is_a(p, port, lilv_new_uri(engine -> world, LV2_ATOM__AtomPort))) {
+            else if (lilv_port_is_a(p, port, engine -> atom_class_)) {
                 pluginInfo["port"][index]["type"] = "atom";
 //                LOGD ("[%s] Port %d is an atom port\n", lilv_node_as_string(lilv_plugin_get_name(p)), index);
             } else {

@@ -9,6 +9,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -228,6 +229,19 @@ public class UI extends LinearLayout {
                     LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT);
                     spinnerParams.weight = 1;
                     spinner.setLayoutParams(spinnerParams);
+                } else if (port.getString("type").equals("atom")) {
+                    ImageButton imageButton = new ImageButton(context);
+                    imageButton.setImageResource(R.drawable.outline_file_open_24);
+
+                    LinearLayout layout = new LinearLayout(context);
+                    layout.setGravity(Gravity.CENTER_HORIZONTAL);
+                    layout.setOrientation(HORIZONTAL);
+                    TextView label = new TextView(context);
+                    label.setText(port.getString("name") + ":");
+                    label.setPadding(0, 0, 20, 20);
+                    layout.addView(label);
+                    layout.addView(imageButton);
+                    addView(layout);
                 }
             }
         } catch (Exception e) {

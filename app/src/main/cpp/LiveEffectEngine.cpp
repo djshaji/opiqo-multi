@@ -23,6 +23,21 @@ LiveEffectEngine::LiveEffectEngine() {
     assert(mOutputChannelCount == mInputChannelCount);
     gain = static_cast<float *>(malloc(sizeof(float)));
      *gain = 1.f ;
+
+}
+
+void LiveEffectEngine::initLV2 () {
+    world = lilv_world_new();
+    audio_class_ = lilv_new_uri(world, LV2_CORE__AudioPort);
+    control_class_ = lilv_new_uri(world, LV2_CORE__ControlPort);
+    atom_class_ = lilv_new_uri(world, LV2_ATOM__AtomPort);
+    input_class_ = lilv_new_uri(world, LV2_CORE__InputPort);
+    toggle_class_ = lilv_new_uri(world, LV2_CORE__toggled);
+    enum_class_ = lilv_new_uri(world, LV2_CORE__enumeration);
+    patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+    rdfs_label     = lilv_new_uri(world, LILV_NS_RDFS "label");
+    rdfs_range     = lilv_new_uri(world, LILV_NS_RDFS "range");
+    mod_filetypes  = lilv_new_uri(world, "http://moddevices.com/ns/mod#fileTypes");
 }
 
 void LiveEffectEngine::setRecordingDeviceId(int32_t deviceId) {

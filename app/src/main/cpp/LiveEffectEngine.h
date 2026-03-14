@@ -30,6 +30,7 @@ using json = nlohmann::json;
 class LiveEffectEngine : public oboe::AudioStreamCallback {
 public:
     LiveEffectEngine();
+    void initLV2();
 
     void setRecordingDeviceId(int32_t deviceId);
     void setPlaybackDeviceId(int32_t deviceId);
@@ -64,6 +65,10 @@ public:
     LV2Plugin * plugin4 = nullptr;
     LilvInstance *instance = nullptr;
     LilvWorld * world = nullptr;
+
+    LilvNode *audio_class_, *control_class_, *atom_class_, *input_class_, * toggle_class_,
+        *patch_writable, *rsz_minimumSize_, *rdfs_label, *rdfs_range, *mod_filetypes, *enum_class_ ;
+
     const LilvPlugins * plugins = nullptr;
     json pluginInfo;
     std::shared_ptr<oboe::AudioStream> mRecordingStream;
