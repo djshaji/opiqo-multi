@@ -7,9 +7,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,7 +29,10 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -46,6 +51,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -80,6 +86,22 @@ public class MainActivity extends AppCompatActivity {
     private Slider gainSlider;
     private File presetsDirectory;
     private TextView patchLabel;
+    private ActivityResultLauncher<String[]> persistentPicker;
+    private static class PendingFileRequest {
+        final int position;
+        final String controlUri;
+        final String range;
+        final String type;
+
+        PendingFileRequest(int position, String controlUri, String range, String type) {
+            this.position = position;
+            this.controlUri = controlUri;
+            this.range = range;
+            this.type = type;
+        }
+    }
+
+    private PendingFileRequest pendingFileRequest;
 
     void runTest(int index) {
         switch (index) {
@@ -108,6 +130,28 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // Must be registered before STARTED; chooseFile() only launches this instance.
+        persistentPicker = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri == null || pendingFileRequest == null) return;
+                    PendingFileRequest req = pendingFileRequest;
+                    pendingFileRequest = null; // consume once
+
+                    final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                    try {
+                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                    } catch (SecurityException e) {
+                        Log.w(TAG, "chooseFile: persist permission not granted for " + uri, e);
+                    }
+
+                    Log.d(TAG, "chooseFile: selected file: " + uri);
+                    String path = copyFileToFilesDir(uri);
+                    AudioEngine.setFilePath(req.position, req.controlUri, path);
+                }
+        );
 
         sharedPreferences = getSharedPreferences("core", MODE_PRIVATE);
         presetsDir = getFilesDir() + "/presets";
@@ -697,5 +741,107 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    void chooseFileUsingIntent (int position, String controlUri, String range, String type) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.putExtra("range", range);
+        intent.putExtra("controlUri", controlUri);
+        intent.setType("*/*");
+        startActivityForResult(intent, position);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data == null || data.getData() == null) return;
+        Uri uri = data.getData();
+        Log.d(TAG, "onActivityResult: selected file: " + uri);
+        String path = copyFileToFilesDir(uri);
+        String controlUri = data.getStringExtra("controlUri");
+        String range = data.getStringExtra("range");
+        AudioEngine.setFilePath(requestCode, controlUri, path);
+    }
+
+    public void chooseFile (int position, String controlUri, String range, String type) {
+        if (persistentPicker == null) {
+            Log.e(TAG, "chooseFile: picker launcher is not initialized");
+            return;
+        }
+
+        pendingFileRequest = new PendingFileRequest(position, controlUri, range, type);
+
+        type = type + "," + type.toUpperCase() + ",application/octet-stream";
+        String[] mimeTypes = (type == null || type.trim().isEmpty())
+                ? new String[]{"*/*"}
+                : type.split(",");
+
+        Log.d(TAG, "chooseFile: launching file picker for control " + controlUri + " with types " + String.join(", ", mimeTypes));
+        persistentPicker.launch(mimeTypes);
+
+    }
+
+    void copyFile (Uri uri, String dstPath) throws java.io.IOException {
+        try (java.io.InputStream in = getContentResolver().openInputStream(uri);
+             java.io.OutputStream out = new java.io.FileOutputStream(dstPath)) {
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = in.read(buf)) != -1) {
+                out.write(buf, 0, r);
+            }
+        }
+    }
+
+    void copyFile (String srcPath, String dstPath) throws java.io.IOException {
+        Log.d(TAG, "copyFile: " + srcPath + " -> " + dstPath);
+        try (java.io.InputStream in = new java.io.FileInputStream(srcPath);
+             java.io.OutputStream out = new java.io.FileOutputStream(dstPath)) {
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = in.read(buf)) != -1) {
+                out.write(buf, 0, r);
+            }
+        }
+    }
+
+    String copyFileToFilesDir(Uri uri) {
+        String filename = uri.getLastPathSegment();
+        if (filename == null) {
+            Log.e(TAG, "copyFileToFilesDir: failed to get filename from uri " + uri);
+            return null;
+        }
+
+        String extension = "";
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex != -1) {
+            extension = filename.substring(dotIndex + 1);
+        }
+
+        File outFile = new File(getFilesDir(), extension + "/" + filename);
+        File outDir = outFile.getParentFile();
+        if (outDir != null) {
+            if (! outDir.mkdirs())
+                Log.d(TAG, "copyFileToFilesDir: directory already exists: " + outDir.getAbsolutePath());
+        } else {
+            Log.e(TAG, "copyFileToFilesDir: failed to get parent directory for " + outFile.getAbsolutePath());
+            return null;
+        }
+
+        try {
+            copyFile(uri, outFile.getAbsolutePath());
+            Log.d(TAG, "copyFileToFilesDir: " + uri + " -> " + outFile.getAbsolutePath());
+        } catch (IOException e) {
+            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+            throw new RuntimeException(e);
+        }
+
+        return outFile.getAbsolutePath();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        onOff.setChecked(true);
     }
 }

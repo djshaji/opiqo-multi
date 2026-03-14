@@ -87,6 +87,40 @@ public class UI extends LinearLayout {
             addView(header);
             header.addView(bypass);
 
+            if (pluginInfo.has("writableParams")) {
+                JSONObject writableParams = pluginInfo.getJSONObject("writableParams");
+                Iterator<String> keys = writableParams.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    JSONObject value = writableParams.getJSONObject(key);
+
+                    LinearLayout layout = new LinearLayout(context);
+                    layout.setGravity(Gravity.CENTER_HORIZONTAL);
+                    layout.setOrientation(HORIZONTAL);
+                    TextView label = new TextView(context);
+                    label.setText(value.getString("label") + ":");
+                    label.setPadding(0, 0, 20, 20);
+                    layout.addView(label);
+                    
+                    String range = value.getString("range");
+                    String type = value.getString("type");
+                    Button sw = new Button(context);
+
+                    sw.setCompoundDrawables(getResources().getDrawable(R.drawable.outline_file_open_24), null, null, null);
+                    sw.setText("Choose file");
+                    sw.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Log.d(TAG, "onClick: do something with " + key + " range " + range);
+                            ((MainActivity) context).chooseFile (position, key, range, type);
+                        }
+                    });
+                    
+                    layout.addView(sw);
+                    addView(layout);
+                }
+            }
+
             for (int i = 0; i < ports.length(); i++) {
                 JSONObject port = ports.getJSONObject(i);
                 Log.d(TAG, "build: port " + port);
@@ -229,7 +263,10 @@ public class UI extends LinearLayout {
                     LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT);
                     spinnerParams.weight = 1;
                     spinner.setLayoutParams(spinnerParams);
-                } else if (port.getString("type").equals("atom")) {
+                }
+
+                /*
+                else if (port.getString("type").equals("atom")) {
                     ImageButton imageButton = new ImageButton(context);
                     imageButton.setImageResource(R.drawable.outline_file_open_24);
 
@@ -243,6 +280,8 @@ public class UI extends LinearLayout {
                     layout.addView(imageButton);
                     addView(layout);
                 }
+
+                 */
             }
         } catch (Exception e) {
             e.printStackTrace();

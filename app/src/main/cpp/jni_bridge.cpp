@@ -524,7 +524,49 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
 //            LOGI("[plugin ok] Port %d: %s\n", index, lilv_node_as_string(lilv_port_get_symbol(p, port)));
         }
 
+        // probe atom path writable ports
+        printf("\n== patch:writable parameters (lv2:Parameter) ==\n");
+        const LilvNodes* writables = lilv_plugin_get_value(p, engine -> patch_writable);
+        json writableParams = {};
+        bool hasWritableParams = false ;
+        LILV_FOREACH(nodes, i, writables) {
+            hasWritableParams = true ;
+            json info = {};
+            const LilvNode* param = lilv_nodes_get(writables, i); // e.g. rata:Neural_Model
+
+            LilvNodes* labels = lilv_world_find_nodes(engine -> world, param, engine -> rdfs_label, NULL);
+            LilvNodes* ranges = lilv_world_find_nodes(engine -> world, param, engine -> rdfs_range, NULL);
+            LilvNodes* types  = lilv_world_find_nodes(engine -> world, param, engine -> mod_filetypes, NULL);
+
+            LOGD ("Writable parameter: %s", lilv_node_as_string(param));
+            LILV_FOREACH(nodes, j, labels) {
+                const LilvNode* label = lilv_nodes_get(labels, j);
+                LOGD ("  label: %s", lilv_node_as_string(label));
+                info ["label"] = lilv_node_as_string(label);
+            }
+
+            LILV_FOREACH(nodes, j, ranges) {
+                const LilvNode* range = lilv_nodes_get(ranges, j);
+                LOGD ("  range: %s", lilv_node_as_string(range));
+                info ["range"] = lilv_node_as_string(range);
+            }
+
+            LILV_FOREACH(nodes, j, types) {
+                const LilvNode* type = lilv_nodes_get(types, j);
+                LOGD ("  type: %s", lilv_node_as_string(type));
+                info ["type"] = lilv_node_as_string(type);
+            }
+
+            lilv_nodes_free(labels);
+            lilv_nodes_free(ranges);
+            lilv_nodes_free(types);
+            writableParams [lilv_node_as_string(param)] = info ;
+        }
+
         engine->pluginInfo [pluginInfo["uri"]] = pluginInfo;
+        if (hasWritableParams) {
+            engine->pluginInfo [pluginInfo["uri"]]["writableParams"] = writableParams;
+        }
     }
 
 //    LOGD("[plugininfo] %s", engine -> pluginInfo.dump(4).c_str());
@@ -704,4 +746,68 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPresetList(JNIEnv *env, jclass
     preset ["plugin4"] = getPreset(4);
 
     return env->NewStringUTF(preset.dump().c_str());
+}
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setFilePath(JNIEnv *env, jclass clazz, jint plugin,
+                                                           jstring uri, jstring path) {
+    LV2Plugin * p = nullptr ;
+    switch (plugin) {
+        case 1:
+            p = engine->plugin1;
+            break;
+        case 2:
+            p = engine->plugin2;
+            break ;
+        case 3:
+            p = engine->plugin3;
+            break ;
+        case 4:
+            p = engine->plugin4;
+            break ;
+        default:
+            LOGE("Unknown plugin index %d", plugin);
+            return;
+    }
+
+    int port = -1 ;
+    for (const auto& prt : p->ports_) {
+        if (prt.is_atom && prt.is_input) {
+            port = prt.index;
+            break;
+        }
+    }
+
+    if (port == -1) {
+        LOGE("Plugin %d does not have an input atom port", plugin);
+        return;
+    } else {
+        LOGD ("Plugin %d atom input port found at index %d", plugin, port);
+    }
+
+    std::string pathStr, uriStr;
+    if (path != nullptr) {
+        const char* cstr = env->GetStringUTFChars(path, nullptr);
+        if (cstr) {
+            pathStr.assign(cstr);
+            env->ReleaseStringUTFChars(path, cstr);
+        }
+
+        const char* cstrUri = env->GetStringUTFChars(uri, nullptr);
+        if (cstrUri) {
+            uriStr.assign(cstrUri);
+            env->ReleaseStringUTFChars(uri, cstrUri);
+        }
+    }
+
+    if (pathStr.empty() || uriStr.empty()) {
+        LOGE("Path or URI is empty");
+        return;
+    }
+
+    LOGD("Setting plugin %d port %d to file path %s with URI %s", plugin, port, pathStr.c_str(), uriStr.c_str());
+    p ->send_path_parameter(uriStr.c_str(), pathStr.c_str());
+
 }

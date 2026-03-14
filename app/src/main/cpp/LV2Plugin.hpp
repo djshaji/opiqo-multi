@@ -308,6 +308,81 @@ private:
 
 class LV2Plugin {
 public:
+    void send_path_parameter(const char* property_uri, const char* abs_path) {
+        if (!property_uri || !*property_uri || !abs_path || !*abs_path) {
+            LOGE("send_path_parameter: invalid property_uri or abs_path");
+            return;
+        }
+
+        // Prefer a real filesystem path here, not a content:// URI.
+        if (abs_path[0] != '/') {
+            LOGE("send_path_parameter: expected absolute filesystem path, got: %s", abs_path);
+            return;
+        }
+
+        // Find one atom input port suitable for control messages.
+        Port* target = nullptr;
+        for (auto& p : ports_) {
+            if (p.is_atom && p.is_input && p.atom_state && !p.is_midi) {
+                target = &p;
+                break;
+            }
+        }
+
+        if (!target) {
+            LOGE("send_path_parameter: no suitable atom input port found");
+            return;
+        }
+
+        const LV2_URID property_urid = map_uri(property_uri);
+
+        // Enough room for object header + property/value atoms + path string.
+        std::vector<uint8_t> forge_buf(512 + std::strlen(abs_path));
+        LV2_Atom_Forge forge;
+        LV2_Atom_Forge_Frame frame;
+
+        lv2_atom_forge_init(&forge, &um_);
+        lv2_atom_forge_set_buffer(&forge, forge_buf.data(), (uint32_t)forge_buf.size());
+
+        if (!lv2_atom_forge_object(&forge, &frame, 0, urids_.patch_Set)) {
+            LOGE("send_path_parameter: failed to forge patch:Set header");
+            return;
+        }
+
+        lv2_atom_forge_key(&forge, urids_.patch_property);
+        if (!lv2_atom_forge_urid(&forge, property_urid)) {
+            LOGE("send_path_parameter: failed to forge patch:property");
+            return;
+        }
+
+        lv2_atom_forge_key(&forge, urids_.patch_value);
+        if (!lv2_atom_forge_path(&forge, abs_path, (uint32_t)std::strlen(abs_path))) {
+            LOGE("send_path_parameter: failed to forge patch:value path");
+            return;
+        }
+
+        lv2_atom_forge_pop(&forge, &frame);
+
+        const LV2_Atom* atom = reinterpret_cast<const LV2_Atom*>(forge_buf.data());
+        if (!atom || atom->type != urids_.atom_Object || atom->size == 0) {
+            LOGE("send_path_parameter: forged atom is invalid");
+            return;
+        }
+
+        // process() wraps queued bytes as the event body, so store only the atom body.
+        const uint8_t* body = reinterpret_cast<const uint8_t*>(LV2_ATOM_BODY(atom));
+        target->atom_state->ui_to_dsp.assign(body, body + atom->size);
+        target->atom_state->ui_to_dsp_type = atom->type;  // atom:Object
+        target->atom_state->ui_to_dsp_pending.store(true, std::memory_order_release);
+        LOGD("send_path_parameter: sent path '%s' as atom:Object with property '%s' (URID %u) to port '%s'",
+             abs_path, property_uri, property_urid, target->symbol.c_str());
+    }
+
+
+    void send_filename_to_plugin(const char* filename, const char * uri ) {
+        send_path_parameter(uri, filename);
+    }
+
     bool enabled = true;
     // Constructor: caller provides discovered Lilv world and plugin
     LV2Plugin(LilvWorld* world, LilvPlugin* plugin, double sample_rate, uint32_t max_block_length)
@@ -529,20 +604,71 @@ public:
         return nullptr;
     }
 
-    // Helper to read atoms from ringbuffer
+    // Helper to read one atom message from ringbuffer. Returns total bytes copied.
     static size_t readAtomMessage(lv2_ringbuffer_t* rb, uint8_t* outBuffer, size_t maxSize) {
         if (!rb || !outBuffer || maxSize < sizeof(LV2_Atom)) return 0;
-        
+
         if (lv2_ringbuffer_read_space(rb) < sizeof(LV2_Atom)) return 0;
-        
+
         LV2_Atom atom_header;
         lv2_ringbuffer_peek(rb, (char*)&atom_header, sizeof(LV2_Atom));
-        
+
+        // Guard against corrupted/unsupported payloads.
+        if (atom_header.size > (16u * 1024u * 1024u)) {
+            LOGE("readAtomMessage: atom payload too large (%u)", atom_header.size);
+            return 0;
+        }
+
         const uint32_t total = sizeof(LV2_Atom) + atom_header.size;
         if (total > maxSize || lv2_ringbuffer_read_space(rb) < total) return 0;
-        
+
         lv2_ringbuffer_read(rb, (char*)outBuffer, total);
         return total;
+    }
+
+    // Read one message from an atom output port by symbol.
+    bool readAtomMessage(const char* portSymbol, std::vector<uint8_t>& outMessage) {
+        lv2_ringbuffer_t* rb = getAtomOutputRingbuffer(portSymbol);
+        if (!rb) return false;
+
+        if (lv2_ringbuffer_read_space(rb) < sizeof(LV2_Atom)) return false;
+
+        LV2_Atom atom_header;
+        lv2_ringbuffer_peek(rb, (char*)&atom_header, sizeof(LV2_Atom));
+        const uint32_t total = sizeof(LV2_Atom) + atom_header.size;
+
+        if (atom_header.size > (16u * 1024u * 1024u)) {
+            LOGE("readAtomMessage(port): atom payload too large (%u)", atom_header.size);
+            return false;
+        }
+
+        if (lv2_ringbuffer_read_space(rb) < total) return false;
+
+        outMessage.resize(total);
+        const size_t read = readAtomMessage(rb, outMessage.data(), outMessage.size());
+        if (read == 0) {
+            outMessage.clear();
+            return false;
+        }
+
+        outMessage.resize(read);
+        return true;
+    }
+
+    // Drain up to maxMessages from one atom output port.
+    size_t readAtomMessages(const char* portSymbol,
+                            std::vector<std::vector<uint8_t>>& outMessages,
+                            size_t maxMessages = 64) {
+        if (!portSymbol || maxMessages == 0) return 0;
+
+        size_t count = 0;
+        std::vector<uint8_t> msg;
+        while (count < maxMessages && readAtomMessage(portSymbol, msg)) {
+            outMessages.push_back(msg);
+            ++count;
+        }
+
+        return count;
     }
 
     // State management
@@ -645,9 +771,10 @@ private:
     std::unordered_map<std::string, LV2_URID> urid_map_;
     std::unordered_map<LV2_URID, std::string> urid_unmap_;
 
+public:
     LV2_URID_Map um_;
     LV2_URID_Unmap unm_;
-
+private:
     // ========== LV2 Features ==========
     struct {
         LV2_Feature um_f;
