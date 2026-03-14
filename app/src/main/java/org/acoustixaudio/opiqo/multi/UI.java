@@ -26,6 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import java.util.Iterator;
 public class UI extends LinearLayout {
     int position;
     JSONObject pluginInfo;
+    String pluginName;
     Context context;
     static final String TAG = "UI";
     public View add = null ;
@@ -62,7 +64,8 @@ public class UI extends LinearLayout {
             JSONArray ports = pluginInfo.getJSONArray("port");
             Log.d(TAG, "build: ports " + ports);
             TextView title = new TextView(context);
-            title.setText(pluginInfo.getString("name"));
+            pluginName = pluginInfo.getString("name");
+            title.setText(pluginName);
             title.setTextSize(22);
             title.setPadding(10, 10, 10, 40);
 
@@ -104,6 +107,7 @@ public class UI extends LinearLayout {
                     
                     String range = value.getString("range");
                     String type = value.getString("type");
+                    String controlName = value.getString("label");
                     Button sw = new Button(context);
 
                     sw.setCompoundDrawables(getResources().getDrawable(R.drawable.outline_file_open_24), null, null, null);
@@ -111,13 +115,67 @@ public class UI extends LinearLayout {
                     sw.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            Log.d(TAG, "onClick: do something with " + key + " range " + range);
-                            ((MainActivity) context).chooseFile (position, key, range, type);
+                            Log.d(TAG, "onClick: do something with " + key + " range " + range + " plugin " + pluginName + " control " + controlName);
+                            ((MainActivity) context).chooseFile (position, pluginName, controlName, key, range, type);
                         }
                     });
                     
                     layout.addView(sw);
                     addView(layout);
+
+                    String filesDir = String.format ("%s/user/%s/%s", context.getFilesDir(), pluginName, controlName);
+
+                    File dir = new File(filesDir);
+                    if (dir.exists()) {
+                        File[] files = dir.listFiles();
+                        ArrayList <String> fileNames = new ArrayList<>();
+                        if (files != null && files.length > 0) {
+                            for (int i = 0; i < files.length; i++) {
+                                File file = files[i];
+                                if (file.isFile()) {
+                                    fileNames.add(file.getName());
+                                }
+                            }
+                        }
+
+                        // add drop down to select from previously chosen files
+                        Spinner spinner = new Spinner(context);
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                getContext(),
+                                android.R.layout.simple_spinner_item,
+                                fileNames
+                        );
+
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spinner.setAdapter(adapter);
+                        TextView left = new TextView(context), right = new TextView(context);
+                        left.setText("<");
+                        right.setText(">");
+
+                        left.setPadding(20,10,20,10);
+                        right.setPadding(20,10,20,10);
+
+                        left.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
+                        right.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
+
+                        LinearLayout layout2 = new LinearLayout(context);
+                        layout2.setPadding(0,10,0,10);
+                        layout2.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_neutral90));
+                        layout2.setGravity(Gravity.CENTER_VERTICAL);
+                        LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                        layoutParams.setMargins(0, 20, 0, 10);
+                        layout2.setOrientation(HORIZONTAL);
+                        layout2.setLayoutParams(layoutParams);
+                        layout2.addView(left);
+                        layout2.addView(spinner);
+                        layout2.addView(right);
+                        addView(layout2);
+
+                        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        spinnerParams.weight = 1;
+                        spinner.setLayoutParams(spinnerParams);
+
+                    }
                 }
             }
 

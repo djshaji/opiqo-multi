@@ -92,12 +92,16 @@ public class MainActivity extends AppCompatActivity {
         final String controlUri;
         final String range;
         final String type;
+        final String pluginName;
+        final String controlName;
 
-        PendingFileRequest(int position, String controlUri, String range, String type) {
+        PendingFileRequest(int position, String pluginName, String controlName, String controlUri, String range, String type) {
             this.position = position;
             this.controlUri = controlUri;
             this.range = range;
             this.type = type;
+            this.pluginName = pluginName;
+            this.controlName = controlName;
         }
     }
 
@@ -148,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     Log.d(TAG, "chooseFile: selected file: " + uri);
-                    String path = copyFileToFilesDir(uri);
+                    String path = copyFileToFilesDir(uri, req.pluginName, req.controlName);
                     AudioEngine.setFilePath(req.position, req.controlUri, path);
                 }
         );
@@ -425,8 +429,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        onOff.setChecked(false);
         super.onStop();
+//        onOff.setChecked(false);
     }
 
     @Override
@@ -752,27 +756,30 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, position);
     }
 
+    /*
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (data == null || data.getData() == null) return;
         Uri uri = data.getData();
         Log.d(TAG, "onActivityResult: selected file: " + uri);
-        String path = copyFileToFilesDir(uri);
+        String path = copyFileToFilesDir(uri, "plugin" + requestCode, "control" + requestCode);
         String controlUri = data.getStringExtra("controlUri");
         String range = data.getStringExtra("range");
         AudioEngine.setFilePath(requestCode, controlUri, path);
     }
 
-    public void chooseFile (int position, String controlUri, String range, String type) {
+     */
+
+    public void chooseFile (int position, String plugin, String controlName, String controlUri, String range, String type) {
         if (persistentPicker == null) {
             Log.e(TAG, "chooseFile: picker launcher is not initialized");
             return;
         }
 
-        pendingFileRequest = new PendingFileRequest(position, controlUri, range, type);
+        pendingFileRequest = new PendingFileRequest(position, plugin, controlName, controlUri, range, type);
 
-        type = type + "," + type.toUpperCase() + ",application/octet-stream";
+        type = type + "," + type.toUpperCase() + ",application/octet-stream,*/*";
         String[] mimeTypes = (type == null || type.trim().isEmpty())
                 ? new String[]{"*/*"}
                 : type.split(",");
@@ -805,32 +812,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    String copyFileToFilesDir(Uri uri) {
+    String copyFileToFilesDir(Uri uri, String plugin, String control) {
+        Log.d(TAG, "copyFileToFilesDir: copying file from " + uri + " for plugin " + plugin + " control " + control);
         String filename = uri.getLastPathSegment();
         if (filename == null) {
             Log.e(TAG, "copyFileToFilesDir: failed to get filename from uri " + uri);
+            Toast.makeText(context, "failed to get filename", Toast.LENGTH_SHORT).show();
             return null;
         }
 
-        String extension = "";
-        int dotIndex = filename.lastIndexOf('.');
-        if (dotIndex != -1) {
-            extension = filename.substring(dotIndex + 1);
-        }
-
-        File outFile = new File(getFilesDir(), extension + "/" + filename);
-        File outDir = outFile.getParentFile();
-        if (outDir != null) {
-            if (! outDir.mkdirs())
-                Log.d(TAG, "copyFileToFilesDir: directory already exists: " + outDir.getAbsolutePath());
-        } else {
-            Log.e(TAG, "copyFileToFilesDir: failed to get parent directory for " + outFile.getAbsolutePath());
-            return null;
-        }
+        String basename = new File (filename).getName();
+        String target = String.format ("%s/user/%s/%s/%s", getFilesDir(), plugin, control, basename);
+        File outFile = new File(target);
+        outFile.getParentFile().mkdirs();
+        Log.d(TAG, "copyFileToFilesDir: [destination] " + target);
 
         try {
             copyFile(uri, outFile.getAbsolutePath());
-            Log.d(TAG, "copyFileToFilesDir: " + uri + " -> " + outFile.getAbsolutePath());
+            Log.d(TAG, "copyFileToFilesDir: file copied to " + outFile.getAbsolutePath());
         } catch (IOException e) {
             Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
             throw new RuntimeException(e);
@@ -842,6 +841,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        onOff.setChecked(true);
+//        onOff.setChecked(true);
     }
 }

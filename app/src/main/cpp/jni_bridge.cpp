@@ -810,4 +810,16 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setFilePath(JNIEnv *env, jclass c
     LOGD("Setting plugin %d port %d to file path %s with URI %s", plugin, port, pathStr.c_str(), uriStr.c_str());
     p ->send_path_parameter(uriStr.c_str(), pathStr.c_str());
 
+    std::vector<uint8_t> msg;
+    if (p->readAtomMessage("notify", msg)) {
+        std::string path, property;
+        if (p->extractPathFromAtomMessage(msg.data(), msg.size(), path, &property)) {
+            LOGD("Got file path '%s' for property '%s'", path.c_str(), property.c_str());
+        } else {
+            LOGE("Failed to extract file path from atom message for plugin %d", plugin);
+        }
+    } else {
+        LOGE ("Failed to read atom message from plugin %d after setting file path", plugin);
+    }
+
 }

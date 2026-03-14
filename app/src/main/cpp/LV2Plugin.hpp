@@ -525,8 +525,10 @@ public:
             if (p.atom_state->ui_to_dsp_pending.exchange(false, std::memory_order_acquire)) {
                 // Wrap UI data in LV2_Atom_Event and append to sequence
                 p.atom->atom.type = urids_.atom_Sequence;
-                p.atom->atom.size = 0;
-                
+                p.atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
+                p.atom->body.unit = 0;
+                p.atom->body.pad = 0;
+
                 const uint32_t body_size = p.atom_state->ui_to_dsp.size();
                 uint8_t evbuf[sizeof(LV2_Atom_Event) + body_size];
                 LV2_Atom_Event* ev = (LV2_Atom_Event*)evbuf;
@@ -537,7 +539,10 @@ public:
                 memcpy((uint8_t*)LV2_ATOM_BODY(&ev->body),
                        p.atom_state->ui_to_dsp.data(), body_size);
                 
-                lv2_atom_sequence_append_event(p.atom, p.atom_buf_size, ev);
+                if (!lv2_atom_sequence_append_event(p.atom, p.atom_buf_size, ev)) {
+                    LOGE("process: failed to append UI->DSP atom event (port=%s, body=%u)",
+                         p.symbol.c_str(), body_size);
+                }
             }
         }
 
@@ -551,7 +556,10 @@ public:
         for (auto& p : ports_) {
             // Reset input atom port for next cycle
             if (p.is_atom && p.is_input) {
-                p.atom->atom.size = 0;
+                p.atom->atom.type = urids_.atom_Sequence;
+                p.atom->atom.size = sizeof(LV2_Atom_Sequence_Body);
+                p.atom->body.unit = 0;
+                p.atom->body.pad = 0;
             }
 
             // Copy output atoms to ringbuffer
@@ -655,6 +663,54 @@ public:
         return true;
     }
 
+    bool extractPathFromAtomMessage(const uint8_t* msg,
+                                    size_t msgSize,
+                                    std::string& outPath,
+                                    std::string* outPropertyUri = nullptr) const {
+        if (!msg || msgSize < sizeof(LV2_Atom)) return false;
+
+        const auto* atom = reinterpret_cast<const LV2_Atom*>(msg);
+        const size_t total = sizeof(LV2_Atom) + atom->size;
+        if (total > msgSize) return false;
+
+        // Expected for patch:Set messages
+        if (atom->type != urids_.atom_Object) return false;
+
+        const auto* obj = reinterpret_cast<const LV2_Atom_Object*>(atom);
+        if (obj->body.otype != urids_.patch_Set) return false;
+
+        const LV2_Atom* property = nullptr;
+        const LV2_Atom* value = nullptr;
+
+        lv2_atom_object_get(
+                obj,
+                urids_.patch_property, &property,
+                urids_.patch_value, &value,
+                0);
+
+        if (!property || !value) return false;
+        if (property->type != urids_.atom_URID) return false;
+
+        // Optional: decode property URI
+        if (outPropertyUri) {
+            const auto* p = reinterpret_cast<const LV2_Atom_URID*>(property);
+            const char* propUri = unm_.unmap(unm_.handle, p->body);
+            *outPropertyUri = propUri ? propUri : "";
+        }
+
+        // Path is usually atom:Path, but some plugins may use atom:String
+        if (value->type != urids_.atom_Path && value->type != urids_.atom_String) {
+            return false;
+        }
+
+        const char* s = reinterpret_cast<const char*>(LV2_ATOM_BODY(value));
+        const size_t maxLen = value->size;               // includes NUL when forged as string/path
+        const size_t n = strnlen(s, maxLen);             // safe if missing NUL
+        outPath.assign(s, n);
+
+        return true;
+    }
+
     // Drain up to maxMessages from one atom output port.
     size_t readAtomMessages(const char* portSymbol,
                             std::vector<std::vector<uint8_t>>& outMessages,
@@ -706,26 +762,28 @@ public:
         return true;
     }
 
+// ========== URID Mapping ==========
+struct {
+    LV2_URID atom_eventTransfer;
+    LV2_URID atom_Sequence;
+    LV2_URID atom_Object;
+    LV2_URID atom_URID;
+    LV2_URID atom_String;
+    LV2_URID atom_Float;
+    LV2_URID atom_Int;
+    LV2_URID atom_Double;
+    LV2_URID midi_Event;
+    LV2_URID buf_maxBlock;
+    LV2_URID atom_Path;
+    LV2_URID patch_Get;
+    LV2_URID patch_Set;
+    LV2_URID patch_property;
+    LV2_URID patch_value;
+    LV2_URID atom_Blank;
+    LV2_URID atom_Chunk;
+    LV2_URID param_sampleRate;
+} urids_;
 private:
-    // ========== URID Mapping ==========
-    struct {
-        LV2_URID atom_eventTransfer;
-        LV2_URID atom_Sequence;
-        LV2_URID atom_Object;
-        LV2_URID atom_Float;
-        LV2_URID atom_Int;
-        LV2_URID atom_Double;
-        LV2_URID midi_Event;
-        LV2_URID buf_maxBlock;
-        LV2_URID atom_Path;
-        LV2_URID patch_Get;
-        LV2_URID patch_Set;
-        LV2_URID patch_property;
-        LV2_URID patch_value;
-        LV2_URID atom_Blank;
-        LV2_URID atom_Chunk;
-        LV2_URID param_sampleRate;
-    } urids_;
 
     void init_urids() {
         urids_.atom_eventTransfer = map_uri(LV2_ATOM__eventTransfer);
@@ -733,6 +791,8 @@ private:
         urids_.atom_Blank = map_uri(LV2_ATOM__Blank);
         urids_.atom_Chunk = map_uri(LV2_ATOM__Chunk);
         urids_.atom_Object = map_uri(LV2_ATOM__Object);
+        urids_.atom_URID = map_uri(LV2_ATOM__URID);
+        urids_.atom_String = map_uri(LV2_ATOM__String);
         urids_.atom_Float = map_uri(LV2_ATOM__Float);
         urids_.atom_Int = map_uri(LV2_ATOM__Int);
         urids_.atom_Double = map_uri(LV2_ATOM__Double);
