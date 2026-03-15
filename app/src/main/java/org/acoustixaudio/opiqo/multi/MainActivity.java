@@ -500,36 +500,41 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 AudioEngine.addPlugin(j, uri);
-                JSONObject writables = null;
                 JSONObject info = pluginInfoCopy.optJSONObject(uri);
                 Log.d(TAG, "loadPreset: " + info);
-                try {
-                    String ws = plugin1.getString("writables");
-                    Log.i(TAG, "-------| loadPreset: writables string: " + ws);
 
-                    if (ws.trim().isEmpty() || ws.equals("null")) {
-                        Log.w(TAG, "loadPreset: plugin" + j + " has no writables, skipping");
-                        ws = "{}";
-                    }
-                    writables = new JSONObject(ws);
-                    info.put("writables", writables);
-                    for (Iterator<String> it = writables.keys(); it.hasNext(); ) {
-                        String key = it.next();
-                        try {
-                            String filename = writables.getString(key);
-                            Log.d(TAG, "loadPreset: [writable] " + key + " : " + filename);
-                            AudioEngine.setFilePath(j, key, filename);
-                        } catch (JSONException e) {
-                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                            Log.e(TAG, "loadPreset: error parsing writables value for key " + key + ": ", e);
+                if (plugin1.has("writables")) {
+                    Log.d(TAG, "loadPreset: plugin" + j + " has writables: " + plugin1.optString("writables"));
+                    JSONObject writables = null;
+
+                    try {
+                        String ws = plugin1.getString("writables");
+                        Log.i(TAG, "-------| loadPreset: writables string: " + ws);
+
+                        if (ws.trim().isEmpty() || ws.equals("null")) {
+                            Log.w(TAG, "loadPreset: plugin" + j + " has no writables, skipping");
+                            ws = "{}";
                         }
+                        writables = new JSONObject(ws);
+                        info.put("writables", writables);
+                        for (Iterator<String> it = writables.keys(); it.hasNext(); ) {
+                            String key = it.next();
+                            try {
+                                String filename = writables.getString(key);
+                                Log.d(TAG, "loadPreset: [writable] " + key + " : " + filename);
+                                AudioEngine.setFilePath(j, key, filename);
+                            } catch (JSONException e) {
+                                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                Log.e(TAG, "loadPreset: error parsing writables value for key " + key + ": ", e);
+                            }
+                        }
+                    } catch (JSONException e) {
+                        Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "loadPreset: error parsing writables: ", e);
                     }
-                } catch (JSONException e) {
-                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "loadPreset: error parsing writables: ", e);
-                }
 
-                Log.d(TAG, "loadPreset: [writables] " + writables);
+                    Log.d(TAG, "loadPreset: [writables] " + writables);
+                }
 
                 JSONArray ports = info.optJSONArray("port");
                 for (int i = 0; i < ports.length(); i++) {
