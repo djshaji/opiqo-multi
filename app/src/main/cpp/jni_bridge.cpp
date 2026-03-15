@@ -716,6 +716,7 @@ json getPreset (int plugin) {
     }
 
     preset ["enabled"] = p->enabled;
+    preset ["writables"] = p->writables;
     return preset;
 }
 
@@ -733,6 +734,10 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPreset(JNIEnv *env, jclass cla
     return env->NewStringUTF(preset.dump().c_str());
 }
 
+/*  This function name is a misnomer.
+ *  It returns the active preset for each plugin slot, but it does not return a list of presets.
+ *  The preset for each plugin is a JSON object containing the plugin URI, control values, and enabled state.
+ */
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPresetList(JNIEnv *env, jclass clazz) {
@@ -822,4 +827,30 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setFilePath(JNIEnv *env, jclass c
         LOGE ("Failed to read atom message from plugin %d after setting file path", plugin);
     }
 
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getWritables(JNIEnv *env, jclass clazz,
+                                                            jint plugin) {
+    LV2Plugin * p = nullptr ;
+    switch (plugin) {
+        case 1:
+            p = engine->plugin1;
+            break;
+        case 2:
+            p = engine->plugin2;
+            break;
+        case 3:
+            p = engine->plugin3;
+            break;
+        case 4:
+            p = engine->plugin4;
+            break;
+        default:
+            LOGE("Unknown plugin index %d", plugin);
+            return env->NewStringUTF("{}");
+    }
+
+    return env->NewStringUTF(to_string(p->writables).c_str());
 }

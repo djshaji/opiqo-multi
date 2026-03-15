@@ -47,6 +47,8 @@
 #include <vector>
 #include <variant>
 
+#include "json.hpp"
+using json = nlohmann::json;
 // ============================================================================
 // PluginControl - Abstract Base Class & Factory
 // ============================================================================
@@ -308,6 +310,8 @@ private:
 
 class LV2Plugin {
 public:
+    json writables ;
+
     void send_path_parameter(const char* property_uri, const char* abs_path) {
         if (!property_uri || !*property_uri || !abs_path || !*abs_path) {
             LOGE("send_path_parameter: invalid property_uri or abs_path");
@@ -376,6 +380,8 @@ public:
         target->atom_state->ui_to_dsp_pending.store(true, std::memory_order_release);
         LOGD("send_path_parameter: sent path '%s' as atom:Object with property '%s' (URID %u) to port '%s'",
              abs_path, property_uri, property_urid, target->symbol.c_str());
+
+        writables[property_uri] = abs_path;
     }
 
 

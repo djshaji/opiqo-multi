@@ -14,6 +14,7 @@ public class AudioEngine {
     static native void setGain (float gain);
     static native void deletePlugin (int plugin);
     static native void setFilePath (int plugin, String uri, String path);
+    static native String getWritables ( int plugin );
     static native void setPluginEnabled (int plugin, boolean isEnabled);
     static native void bypass (boolean isBypassed);
     static native void printPreset (int plugin);

@@ -24,6 +24,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -87,8 +88,10 @@ public class MainActivity extends AppCompatActivity {
     private File presetsDirectory;
     private TextView patchLabel;
     private ActivityResultLauncher<String[]> persistentPicker;
-    private static class PendingFileRequest {
+    public static class PendingFileRequest {
         final int position;
+        public Spinner spinner;
+        public String filesDir;
         final String controlUri;
         final String range;
         final String type;
@@ -154,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "chooseFile: selected file: " + uri);
                     String path = copyFileToFilesDir(uri, req.pluginName, req.controlName);
                     AudioEngine.setFilePath(req.position, req.controlUri, path);
+                    UI.setSpinnerfromDirectory(context, req.spinner, req.filesDir);
                 }
         );
 
@@ -490,14 +494,51 @@ public class MainActivity extends AppCompatActivity {
             JSONObject plugin1 = presetJson.optJSONObject("plugin" + j);
             if (plugin1 != null) {
                 String uri = plugin1.optString("uri", null);
+                if (uri == null) {
+                    Log.e(TAG, "loadPreset: plugin" + j + " has no uri, skipping");
+                    continue;
+                }
+
+                AudioEngine.addPlugin(j, uri);
+                JSONObject writables = null;
                 JSONObject info = pluginInfoCopy.optJSONObject(uri);
                 Log.d(TAG, "loadPreset: " + info);
+                try {
+                    String ws = plugin1.getString("writables");
+                    Log.i(TAG, "-------| loadPreset: writables string: " + ws);
+
+                    if (ws.trim().isEmpty() || ws.equals("null")) {
+                        Log.w(TAG, "loadPreset: plugin" + j + " has no writables, skipping");
+                        ws = "{}";
+                    }
+                    writables = new JSONObject(ws);
+                    info.put("writables", writables);
+                    for (Iterator<String> it = writables.keys(); it.hasNext(); ) {
+                        String key = it.next();
+                        try {
+                            String filename = writables.getString(key);
+                            Log.d(TAG, "loadPreset: [writable] " + key + " : " + filename);
+                            AudioEngine.setFilePath(j, key, filename);
+                        } catch (JSONException e) {
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "loadPreset: error parsing writables value for key " + key + ": ", e);
+                        }
+                    }
+                } catch (JSONException e) {
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "loadPreset: error parsing writables: ", e);
+                }
+
+                Log.d(TAG, "loadPreset: [writables] " + writables);
+
                 JSONArray ports = info.optJSONArray("port");
                 for (int i = 0; i < ports.length(); i++) {
                     JSONObject port = ports.optJSONObject(i);
                     if (!port.optString("type").equals("audio")) {
                         try {
                             port.put("default", plugin1.getJSONObject("controls").get(port.optString("name")));
+                            double val = plugin1.getJSONObject("controls").getDouble(port.optString("name"));
+                            AudioEngine.setValue(j, port.optInt("index"), (float) val);
                         } catch (JSONException e) {
                             Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                             throw new RuntimeException(e);
@@ -771,14 +812,14 @@ public class MainActivity extends AppCompatActivity {
 
      */
 
-    public void chooseFile (int position, String plugin, String controlName, String controlUri, String range, String type) {
+    public void chooseFile (PendingFileRequest pendingFileRequest) {
         if (persistentPicker == null) {
             Log.e(TAG, "chooseFile: picker launcher is not initialized");
             return;
         }
 
-        pendingFileRequest = new PendingFileRequest(position, plugin, controlName, controlUri, range, type);
-
+        String type = pendingFileRequest.type;
+        String controlUri = pendingFileRequest.controlUri;
         type = type + "," + type.toUpperCase() + ",application/octet-stream,*/*";
         String[] mimeTypes = (type == null || type.trim().isEmpty())
                 ? new String[]{"*/*"}

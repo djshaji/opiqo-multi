@@ -109,6 +109,21 @@ public class UI extends LinearLayout {
                     String type = value.getString("type");
                     String controlName = value.getString("label");
                     Button sw = new Button(context);
+                    Spinner spinner = new Spinner(context);
+                    String filesDir = String.format ("%s/user/%s/%s", context.getFilesDir(), pluginName, controlName);
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                            String fileName = (String) spinner.getSelectedItem();
+                            String filePath = String.format("%s/%s", filesDir, fileName);
+                            AudioEngine.setFilePath(UI.this.position, key, filePath);
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> adapterView) {
+
+                        }
+                    });
 
                     sw.setCompoundDrawables(getResources().getDrawable(R.drawable.outline_file_open_24), null, null, null);
                     sw.setText("Choose file");
@@ -116,44 +131,42 @@ public class UI extends LinearLayout {
                         @Override
                         public void onClick(View view) {
                             Log.d(TAG, "onClick: do something with " + key + " range " + range + " plugin " + pluginName + " control " + controlName);
-                            ((MainActivity) context).chooseFile (position, pluginName, controlName, key, range, type);
+                            MainActivity.PendingFileRequest pendingFileRequest = new MainActivity.PendingFileRequest(position, pluginName, controlName, key, range, type);
+                            pendingFileRequest.filesDir = filesDir;
+                            pendingFileRequest.spinner = spinner;
+
+                            ((MainActivity) context).chooseFile (pendingFileRequest);
                         }
                     });
                     
                     layout.addView(sw);
                     addView(layout);
 
-                    String filesDir = String.format ("%s/user/%s/%s", context.getFilesDir(), pluginName, controlName);
-
                     File dir = new File(filesDir);
                     if (dir.exists()) {
-                        File[] files = dir.listFiles();
-                        ArrayList <String> fileNames = new ArrayList<>();
-                        if (files != null && files.length > 0) {
-                            for (int i = 0; i < files.length; i++) {
-                                File file = files[i];
-                                if (file.isFile()) {
-                                    fileNames.add(file.getName());
+                        // add drop down to select from previously chosen files
+                        setSpinnerfromDirectory(context, spinner, filesDir);
+                        if (spinner.getAdapter().getCount() > 0) {
+                            if (pluginInfo.has("writables")) {
+                                if (pluginInfo.getJSONObject("writables").has(key)) {
+                                    String currentFilePath = pluginInfo.getJSONObject("writables").getString(key);
+                                    String currentFileName = currentFilePath.substring(currentFilePath.lastIndexOf("/") + 1);
+                                    for (int i = 0; i < spinner.getAdapter().getCount(); i++) {
+                                        if (spinner.getItemAtPosition(i).equals(currentFileName)) {
+                                            spinner.setSelection(i);
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        // add drop down to select from previously chosen files
-                        Spinner spinner = new Spinner(context);
-                        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                                getContext(),
-                                android.R.layout.simple_spinner_item,
-                                fileNames
-                        );
-
-                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                        spinner.setAdapter(adapter);
                         TextView left = new TextView(context), right = new TextView(context);
                         left.setText("<");
                         right.setText(">");
 
-                        left.setPadding(20,10,20,10);
-                        right.setPadding(20,10,20,10);
+                        left.setPadding(30,10,30,10);
+                        right.setPadding(30,10,30,10);
 
                         left.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
                         right.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.material_dynamic_primary80));
@@ -175,6 +188,23 @@ public class UI extends LinearLayout {
                         spinnerParams.weight = 1;
                         spinner.setLayoutParams(spinnerParams);
 
+                        left.setOnClickListener(new OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                int max = spinner.getAdapter().getCount();
+                                int current = spinner.getSelectedItemPosition();
+                                spinner.setSelection((current - 1 + max) % max);
+                            }
+                        });
+
+                        right.setOnClickListener(new OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                int max = spinner.getAdapter().getCount();
+                                int current = spinner.getSelectedItemPosition();
+                                spinner.setSelection((current + 1) % max);
+                            }
+                        });
                     }
                 }
             }
@@ -363,5 +393,28 @@ public class UI extends LinearLayout {
         });
 
         addView(del);
+    }
+
+    static public void setSpinnerfromDirectory (Context context, Spinner spinner, String filesDir) {
+        File dir = new File(filesDir);
+        File[] files = dir.listFiles();
+        ArrayList <String> fileNames = new ArrayList<>();
+        if (files != null && files.length > 0) {
+            for (int i = 0; i < files.length; i++) {
+                File file = files[i];
+                if (file.isFile()) {
+                    fileNames.add(file.getName());
+                }
+            }
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                context,
+                android.R.layout.simple_spinner_item,
+                fileNames
+        );
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
     }
 }
