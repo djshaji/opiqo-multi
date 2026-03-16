@@ -24,6 +24,8 @@
 #include <mutex>
 #include "FullDuplexPass.h"
 #include "json.hpp"
+#include "LockFreeQueue.h"
+#include "FileWriter.h"
 
 using json = nlohmann::json;
 
@@ -55,6 +57,9 @@ public:
 
     bool setAudioApi(oboe::AudioApi);
     bool isAAudioRecommended(void);
+
+    LockFreeQueueManager queueManager;
+    FileWriter * fileWriter ;
 
     std::string cacheDir ;
     std::unique_ptr<FullDuplexPass> mDuplexStream;

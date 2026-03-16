@@ -74,18 +74,29 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
    echo "ndk.dir=/path/to/android/ndk" >> local.properties
    ```
 
-3. **Build the project**
+3. **Verify Gradle Wrapper**
+   Ensure you're using the included Gradle wrapper (not a system-wide installation):
+   ```bash
+   chmod +x ./gradlew
+   ```
+
+4. **Build the project**
    ```bash
    ./gradlew build
    ```
+   
+   > **Note on Oboe Configuration**: The project uses Google's Oboe library (v1.10.0) which is fetched as a Gradle dependency with prefab support. The `build.gradle` includes `buildFeatures { prefab true }` to enable CMake to discover Oboe via `find_package(oboe REQUIRED CONFIG)`. If you encounter CMake errors about finding Oboe, ensure:
+   > - Gradle sync completes successfully
+   > - The Oboe prefab package is downloaded (check `~/.gradle/caches/transforms-*/`)
+   > - You're using Android Gradle Plugin 9.0.0+ (supports prefab v2)
 
-4. **Generate APK**
+5. **Generate APK**
    ```bash
    ./gradlew assembleDebug    # For debug build
    ./gradlew assembleRelease  # For release build
    ```
 
-5. **Install on device/emulator**
+6. **Install on device/emulator**
    ```bash
    ./gradlew installDebug
    ```
@@ -166,6 +177,21 @@ Guitar / Microphone Input
     [Output Speaker / Headphones]
 ```
 
+### LV2 Plugin State & Atom Messaging
+
+The `LV2Plugin` class manages plugin state through:
+- **Parameter Ports**: Control inputs for plugin parameters (sliders)
+- **Audio Ports**: Input and output audio buffers
+- **Atom Ports**: Event/message communication for dynamic control (e.g., file paths)
+
+When sending file paths or other atom messages to plugins:
+1. **Write atom sequence** to the ring buffer with file path and port index
+2. **LV2Plugin reads** the message during real-time processing
+3. **Plugin processes** the atom message in the next audio cycle
+4. **State persists** until a new atom message is received
+
+> **Note on File Loading**: If a plugin loads an external file (via atom message), ensure you only send the file path once per file change. Some plugins may continue to reference the loaded file state. Clear or reset the file path message only when intentionally unloading the file.
+
 ## Usage
 
 ### Getting Started
@@ -222,6 +248,12 @@ The app requires the following Android permissions:
 - **RECORD_AUDIO**: Necessary to capture guitar audio input from the device microphone
 
 These permissions are requested at runtime on Android 6.0 (API level 23) and above.
+
+**Permission Request Timing**: The `RECORD_AUDIO` permission is requested when the user first attempts to:
+1. Tap the Power toggle to start the audio engine
+2. Load a plugin onto a pedal slot (if permission not yet granted)
+
+> **Important**: Permission requests must be registered before the Activity reaches `STARTED` state. If you encounter the error `LifecycleOwner is attempting to register while current state is RESUMED`, ensure that permission request launchers are registered in `onCreate()` or during Activity initialization, not during user interactions after the Activity is already running.
 
 ## Bundled LV2 Plugins
 
@@ -313,6 +345,57 @@ To bundle additional LV2 plugins with the app:
 
 > **Note:** The app copies all bundles from `assets/lv2/` to the app's private `files/lv2/` directory on first launch and passes this path to Lilv for plugin discovery. No changes to Java or C++ code are needed to add new bundles.
 
+### Querying LV2 Port Information with Lilv
+
+The app uses the Lilv library to discover and query LV2 plugin metadata. Common operations:
+
+**Get Port Information:**
+```c++
+LilvPlugin* plugin = lilv_plugins_get_by_uri(plugins, plugin_uri);
+LilvPorts* ports = lilv_plugin_get_ports(plugin);
+
+LILV_FOREACH(ports, i, ports) {
+    LilvPort* port = lilv_ports_get(ports, i);
+    const LilvNode* symbol = lilv_port_get_symbol(plugin, port);
+    const LilvNode* name = lilv_port_get_name(plugin, port);
+    int port_index = lilv_port_get_index(plugin, port);
+    
+    // Check port type (audio, control, atom, etc.)
+    bool is_audio = lilv_port_is_a(plugin, port, node_AudioPort);
+    bool is_control = lilv_port_is_a(plugin, port, node_ControlPort);
+    bool is_atom = lilv_port_is_a(plugin, port, node_AtomPort);
+}
+```
+
+**Get Port Range (for sliders):**
+```c++
+LilvNode* min_val = NULL;
+LilvNode* max_val = NULL;
+LilvNode* default_val = NULL;
+
+lilv_port_get_range(plugin, port, &default_val, &min_val, &max_val);
+float min = lilv_node_as_float(min_val);
+float max = lilv_node_as_float(max_val);
+float def = lilv_node_as_float(default_val);
+```
+
+**Pass File Path via Atom Message:**
+```c++
+// 1. Create atom sequence with file path
+LV2_Atom_Sequence* atom_seq = (LV2_Atom_Sequence*) buffer;
+atom_seq->atom.type = uris->Sequence;
+atom_seq->atom.size = sizeof(LV2_Atom_Sequence_Body);
+
+// 2. Add Path atom to sequence
+LV2_Atom* path_atom = (LV2_Atom*) ((char*)atom_seq + sizeof(LV2_Atom_Sequence_Body));
+path_atom->type = uris->Path;
+path_atom->size = strlen(file_path) + 1;
+strcpy((char*)(path_atom + 1), file_path);
+
+// 3. Write to plugin's atom input port
+plugin_instance->port_buffers[atom_input_port_index] = (float*)atom_seq;
+```
+
 ### Native Code Compilation
 
 The project uses CMake for native code compilation. Key files:
@@ -378,6 +461,40 @@ Located in `app/src/main/libs/`:
 
 ## Troubleshooting
 
+### Build & Compilation Issues
+
+#### CMake Oboe Configuration Error
+If you see: `Could not find a package configuration file provided by "oboe" (oboeConfig.cmake)`
+
+**Solution Steps:**
+1. **Force Gradle Sync**: In Android Studio, go to **File > Sync Now** to re-download all dependencies
+2. **Clear Gradle Cache**: 
+   ```bash
+   ./gradlew clean
+   rm -rf ~/.gradle/caches/transforms-*/
+   ```
+3. **Rebuild**:
+   ```bash
+   ./gradlew build
+   ```
+4. **Verify Gradle Version**: Ensure you're on Gradle 8.0+ (AGP 9.0.0+). Update in `gradle/wrapper/gradle-wrapper.properties` if needed:
+   ```properties
+   distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-all.zip
+   ```
+5. **Check build.gradle**: Verify `buildFeatures { prefab true }` is present in the `android {}` block
+6. **Use Gradle Wrapper**: Always use `./gradlew` instead of system `gradle` command
+
+#### Missing NDK or CMake
+- Ensure Android NDK is installed via SDK Manager
+- Update CMake to version 3.22.1 or newer via SDK Manager
+
+#### Other Build Failures
+- Clean and rebuild: `./gradlew clean build`
+- Check that all prebuilt libraries in `app/src/main/libs/` match your target architecture
+- Verify C++ standard is correctly set (`android.defaultConfig.externalNativeBuild.cmake.cppFlags`)
+
+### Audio & Permissions Issues
+
 ### No Audio Output
 - Verify RECORD_AUDIO permission is granted
 - Check device volume settings and the in-app Volume slider
@@ -390,11 +507,6 @@ Located in `app/src/main/libs/`:
 - Ensure the plugin's `.so` library is compiled for your device's ABI
 - Verify the plugin's `.ttl` manifest is valid and the URI matches
 
-### Build Failures
-- Ensure NDK is properly installed
-- Check CMake version compatibility (3.22.1+)
-- Verify all prebuilt libraries are present in `app/src/main/libs/`
-- Clean and rebuild: `./gradlew clean build`
 
 ### Plugin Discovery Issues
 - Verify LV2 plugin bundle is in `app/src/main/assets/lv2/`

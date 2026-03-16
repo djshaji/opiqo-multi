@@ -27,6 +27,7 @@ public:
     float * gain = nullptr;
     std::mutex* pluginMutex = nullptr;  // Points to engine's mutex for thread-safe plugin access
     LilvInstance *instance;
+    LockFreeQueueManager * lockFreeQueueManager;
     virtual oboe::DataCallbackResult
     onBothStreamsReady(
             const void *inputData,
@@ -53,7 +54,7 @@ public:
 //        }
 
         memcpy(outputFloats, inputFloats, samplesToProcess * sizeof(float));
-
+        queueManager->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
         /* Use mutex to protect plugin processing if plugins can be added/removed while the stream is running. */
         if (! *bypass) {
             if (pluginMutex) {

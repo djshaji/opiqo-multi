@@ -25,6 +25,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     String presetsDir;
 
     ArrayList <JSONObject> presets = new ArrayList<>();
+    String [] recFormats = {"wav", "mp3", "opus", "flac", "ogg"};
+    String [] bitRates = {"High", "Medium", "Low"};
 
     static {
         System.loadLibrary("multi");
@@ -109,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private PendingFileRequest pendingFileRequest;
+    Spinner recFormat, recQuality ;
 
     void runTest(int index) {
         switch (index) {
@@ -167,6 +171,14 @@ public class MainActivity extends AppCompatActivity {
         if (!presetsDirectory.exists() && !presetsDirectory.mkdirs()) {
             Log.e(TAG, "Failed to create presets directory: " + presetsDir);
         }
+
+        recQuality = findViewById(R.id.rec_bitrate);
+        SpinnerAdapter qualityAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bitRates);
+        recQuality.setAdapter(qualityAdapter);
+
+        recFormat = findViewById(R.id.rec_format);
+        SpinnerAdapter formatAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, recFormats);
+        recFormat.setAdapter(formatAdapter);
 
         TextView testButton = findViewById(R.id.power);
         testButton.setOnClickListener(new View.OnClickListener() {

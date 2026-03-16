@@ -38,6 +38,15 @@ set_target_properties(libserd PROPERTIES IMPORTED_LOCATION
 add_library(libjalv STATIC IMPORTED)
 set_target_properties(libjalv PROPERTIES IMPORTED_LOCATION
     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libjalv_static.a)
+add_library (lame STATIC IMPORTED)
+set_target_properties(lame PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libmp3lame.a)
+add_library (opus STATIC IMPORTED)
+set_target_properties(opus PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libopus.a)
+add_library (sndfile STATIC IMPORTED)
+set_target_properties(sndfile PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libsndfile.a)
 
 
 # Creates and names a library, sets it as either STATIC
@@ -60,6 +69,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
     LiveEffectEngine.cpp
     jalv.cpp
     multi.cpp
+    LockFreeQueue.cpp
+    FileWriter.cpp
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

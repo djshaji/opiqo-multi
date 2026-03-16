@@ -196,6 +196,29 @@
 
                 </LinearLayout>
             </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <ToggleButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textOff="Record"
+                    android:fontFamily="@font/anta"
+                    android:id="@+id/rec_toggle"
+                    android:drawableLeft="@drawable/baseline_fiber_manual_record_24"
+                    android:textOn="Stop"/>
+                <Spinner
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:id="@+id/rec_format"/>
+                <Spinner
+                    android:layout_weight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/rec_bitrate"/>
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

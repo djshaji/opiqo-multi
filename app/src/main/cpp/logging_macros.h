@@ -30,8 +30,11 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,MODULE_NAME, __VA_ARGS__)
 #define LOGF(...) __android_log_print(ANDROID_LOG_FATAL,MODULE_NAME, __VA_ARGS__)
 
+#define HERE __android_log_print(ANDROID_LOG_VERBOSE, "!!", "%s: %d", __FILE__, __LINE__) ;
+#define IN __android_log_print(ANDROID_LOG_VERBOSE, ">>", __PRETTY_FUNCTION__);
+#define OUT __android_log_print(ANDROID_LOG_VERBOSE, "<<", __PRETTY_FUNCTION__);
 
-#define HERE LOGE ("[here]: %s:%d", __FILE__, __LINE__);
+//#define HERE LOGE ("[here]: %s:%d", __FILE__, __LINE__);
 #define ASSERT(cond, ...) if (!(cond)) {__android_log_assert(#cond, MODULE_NAME, __VA_ARGS__);}
 #else
 
