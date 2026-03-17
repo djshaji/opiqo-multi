@@ -19,6 +19,7 @@
 
 #include "LV2Plugin.hpp"
 #include <mutex>
+#include "LockFreeQueue.h"
 
 class FullDuplexPass : public oboe::FullDuplexStream {
 public:
@@ -27,7 +28,7 @@ public:
     float * gain = nullptr;
     std::mutex* pluginMutex = nullptr;  // Points to engine's mutex for thread-safe plugin access
     LilvInstance *instance;
-    LockFreeQueueManager * lockFreeQueueManager;
+    LockFreeQueueManager * queueManager;
     virtual oboe::DataCallbackResult
     onBothStreamsReady(
             const void *inputData,
@@ -54,7 +55,6 @@ public:
 //        }
 
         memcpy(outputFloats, inputFloats, samplesToProcess * sizeof(float));
-        queueManager->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
         /* Use mutex to protect plugin processing if plugins can be added/removed while the stream is running. */
         if (! *bypass) {
             if (pluginMutex) {
@@ -80,6 +80,7 @@ public:
             }
         }
 
+        queueManager->process(const_cast<float *>(inputFloats), outputFloats, samplesToProcess);
         for (int32_t i = 0; i < samplesToProcess; i++) {
             *outputFloats++ *= *gain; // do some arbitrary processing
         }

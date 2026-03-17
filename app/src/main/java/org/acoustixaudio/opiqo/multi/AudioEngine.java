@@ -28,7 +28,7 @@ public class AudioEngine {
 
     static native void test (String dir);
 
-    static native boolean startRecording(String path, int fileType);
+    static native boolean startRecording(int fd, int fileType, int quality);
     static native void stopRecording();
     static native void setCacheDir(String path);
     static native void native_setDefaultStreamValues(int defaultSampleRate, int defaultFramesPerBurst);

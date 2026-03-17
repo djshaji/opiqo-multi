@@ -89,4 +89,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         libjalv
         libjackserver
         libjack
+        sndfile
     log)

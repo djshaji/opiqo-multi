@@ -7,6 +7,7 @@
 
 #include "logging_macros.h"
 #include "sndfile.h"
+#include "AudioBuffer.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -19,19 +20,20 @@ typedef enum {
 class FileWriter {
 public:
     int sampleRate;
-    int channels;
+    static int channels;
+    static SNDFILE *sndFile;
+    static bool recording ;
 
-    SNDFILE *sndFile = nullptr;
     SF_INFO sfInfo;
-    bool recording = false;
+    float quality = 1.f;
 
     FileWriter(int sampleRate, int channels);
 
     ~FileWriter();
 
-    bool open(const char *filePath, FileType fileType);
+    bool open(int fd, FileType fileType, int quality = 0);
 
-    bool write(const float *data, int numFrames);
+    static int write(AudioBuffer * buffer);
 
     void close();
 };

@@ -857,10 +857,11 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_getWritables(JNIEnv *env, jclass 
 extern "C"
 JNIEXPORT jboolean JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_startRecording(JNIEnv *env, jclass clazz,
-                                                              jstring path, jint file_type) {
-    return engine->fileWriter->open(env->GetStringUTFChars(path, nullptr),
-                                    static_cast<FileType>(file_type));
+                                                              jint fd, jint file_type, jint quality) {
+    return engine->fileWriter->open(fd,
+                                    static_cast<FileType>(file_type), quality);
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_stopRecording(JNIEnv *env, jclass clazz) {

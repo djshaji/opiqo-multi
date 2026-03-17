@@ -25,6 +25,7 @@ LiveEffectEngine::LiveEffectEngine() {
     *gain = 1.f ;
     queueManager.init(4096) ;
     fileWriter = new FileWriter(48000, mOutputChannelCount);
+    queueManager.add_function(fileWriter->write);
 }
 
 void LiveEffectEngine::initLV2 () {
@@ -119,7 +120,7 @@ oboe::Result  LiveEffectEngine::openStreams() {
     warnIfNotLowLatency(mRecordingStream);
 
     mDuplexStream = std::make_unique<FullDuplexPass>();
-    mDuplexStream->lockFreeQueueManager = &queueManager ;
+    mDuplexStream-> queueManager = &queueManager ;
     mDuplexStream -> plugin1 = plugin1 ;
     mDuplexStream -> plugin2 = plugin2 ;
     mDuplexStream -> plugin3 = plugin3 ;

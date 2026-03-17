@@ -16,7 +16,21 @@ FileWriter::~FileWriter() {
 
 }
 
-bool FileWriter::open(const char *filePath, FileType fileType) {
+bool FileWriter::open(int fd, FileType fileType, int _quality) {
+    switch (_quality) {
+        case 0:
+            quality = 1.f;
+            break;
+        case 1:
+            quality = 0.75f;
+            break;
+        case 2:
+            quality = .5f;
+            break;
+        default:
+            quality = 1.f; // Default to highest quality if invalid value provided
+    }
+
     switch (fileType) {
         case FILE_TYPE_WAV:
             sfInfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
@@ -37,13 +51,15 @@ bool FileWriter::open(const char *filePath, FileType fileType) {
             return false; // Unsupported file type
     }
 
-    sndFile = sf_open(filePath, SFM_WRITE, &sfInfo);
+    sndFile = sf_open_fd(fd, SFM_WRITE, &sfInfo, 0);
     if (!sndFile) {
         int errnum;
         const char *errstr = sf_strerror(nullptr);
-        LOGE("Error opening file '%s': %s", filePath, errstr);
+        LOGE("Error opening file '%d': %s", fd, errstr);
         return false; // Failed to open file
     } else {
+        sf_command(sndFile, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof(float));
+        sf_command(sndFile, SFC_SET_COMPRESSION_LEVEL, &quality, sizeof(float));
         recording = true;
         return true; // Successfully opened file
     }
@@ -59,24 +75,25 @@ void FileWriter::close() {
     }
 }
 
-bool FileWriter::write(const float *data, int numFrames) {
-    if (! recording) {
+int FileWriter::channels = 2;
+SNDFILE *FileWriter::sndFile = nullptr;
+bool FileWriter::recording = false;
+
+int FileWriter::write(AudioBuffer * buffer) {
+    if (! recording || !sndFile) {
         return false; // Cannot write if not recording
     }
 
-    if (!sndFile) {
-        LOGW("Attempted to write to file, but file is not open for recording.");
-        return false; // Cannot write if not recording
-    }
-
+    const float * data = buffer->data;
+    int numFrames = buffer->pos / channels; // Assuming pos is the total number of samples (frames * channels)
     sf_count_t framesWritten = sf_writef_float(sndFile, data, numFrames);
     if (framesWritten != numFrames) {
         int errnum;
         const char *errstr = sf_strerror(sndFile);
         LOGE("Error writing to file: %s", errstr);
-        return false; // Failed to write all frames
+        return 0; // Failed to write all frames
     }
 
-    return true; // Successfully wrote frames
+    return framesWritten; // Successfully wrote frames
 }
 

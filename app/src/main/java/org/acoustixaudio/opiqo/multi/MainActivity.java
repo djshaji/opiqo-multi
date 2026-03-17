@@ -5,15 +5,21 @@ import static android.view.View.GONE;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,7 +60,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -65,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList <JSONObject> presets = new ArrayList<>();
     String [] recFormats = {"wav", "mp3", "opus", "flac", "ogg"};
+    String [] mimeTypes = {"audio/x-wav", "audio/mpeg", "audio/opus", "audio/flac", "audio/ogg"};
     String [] bitRates = {"High", "Medium", "Low"};
 
     static {
@@ -72,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static final int PERMISSION_REQUEST_CODE = 100;
-    private ToggleButton onOff;
+    private ToggleButton onOff, recordToggle;
     private Context context;
 
     public JSONObject pluginInfo;
@@ -91,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
     private File presetsDirectory;
     private TextView patchLabel;
     private ActivityResultLauncher<String[]> persistentPicker;
+    private Uri currectRecordingUri;
+    private ParcelFileDescriptor pfd;
+
     public static class PendingFileRequest {
         final int position;
         public Spinner spinner;
@@ -328,6 +340,60 @@ public class MainActivity extends AppCompatActivity {
                     requestRecordAudioPermission();
                 else
                     AudioEngine.setEffectOn(b);
+            }
+        });
+
+        recordToggle = findViewById(R.id.rec_toggle);
+        recordToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    if (! onOff.isChecked())
+                        onOff.setChecked(true);
+
+                    ContentResolver resolver = getContentResolver();
+                    ContentValues values = new ContentValues();
+                    String filename = "opiqo-" + Instant.now ().toString() ;
+                    values.put(MediaStore.Audio.Media.DISPLAY_NAME, filename);
+                    values.put(MediaStore.Audio.Media.MIME_TYPE, mimeTypes [recFormat.getSelectedItemPosition()]);
+                    values.put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_RECORDINGS);
+
+                    currectRecordingUri = resolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values);
+                    int fileDescriptor = -1;
+                    Log.i(TAG, "onCheckedChanged: recording to " + currectRecordingUri);
+                    pfd = null;
+                    try {
+                        // Open the file descriptor using the ContentResolver
+                        pfd = context.getContentResolver().openFileDescriptor(currectRecordingUri, "w");
+                        if (pfd != null) {
+                            fileDescriptor = pfd.getFd();
+                            // Pass the file descriptor to a native function
+                            AudioEngine.startRecording(fileDescriptor, recFormat.getSelectedItemPosition(), recQuality.getSelectedItemPosition());
+
+                        }
+                    } catch (IOException e) {
+                        Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
+
+                } else {
+                    AudioEngine.stopRecording();
+                    if (pfd != null) {
+                        try {
+                            pfd.close();
+                        } catch (IOException e) {
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
+                    }
+
+                    Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+                    viewIntent.setData(currectRecordingUri);
+                    viewIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(viewIntent);
+
+                    currectRecordingUri = null;
+                }
             }
         });
 
