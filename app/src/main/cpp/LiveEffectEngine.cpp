@@ -25,7 +25,7 @@ LiveEffectEngine::LiveEffectEngine() {
     *gain = 1.f ;
     queueManager.init(4096) ;
     fileWriter = new FileWriter(48000, mOutputChannelCount);
-    queueManager.add_function(fileWriter->write);
+    queueManager.add_function(fileWriter->encode);
 }
 
 void LiveEffectEngine::initLV2 () {

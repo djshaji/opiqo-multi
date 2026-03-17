@@ -8,6 +8,7 @@
 #include "logging_macros.h"
 #include "sndfile.h"
 #include "AudioBuffer.h"
+#include "lame.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -27,15 +28,24 @@ public:
     SF_INFO sfInfo;
     float quality = 1.f;
 
+    static lame_global_flags * lameGlobalFlags;
+    static void * mp3_buffer ;
+    static int fileDescriptor;
+
     FileWriter(int sampleRate, int channels);
 
     ~FileWriter();
 
     bool open(int fd, FileType fileType, int quality = 0);
 
-    static int write(AudioBuffer * buffer);
+    static int encode(AudioBuffer * buffer);
 
     void close();
+
+    bool openSndfile(int fd, FileType fileType, int _quality);
+    bool openLame(int fd, FileType fileType, int _quality);
+
+    static size_t mp3bufSize ;//= ((384 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
 };
 
 #endif //OPIQO_GUITAR_MULTI_EFFECTS_PROCESSOR_FILEWRITER_H
