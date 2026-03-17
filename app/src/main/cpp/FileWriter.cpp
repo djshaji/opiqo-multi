@@ -96,6 +96,15 @@ void FileWriter::close() {
 
         lameGlobalFlags = nullptr;
     }
+
+    if (opusEncoder) {
+        opus_encoder_destroy(opusEncoder);
+        opusEncoder = nullptr;
+    }
+
+     if (fileDescriptor >= 0) {
+        fileDescriptor = -1;
+    }
 }
 
 int FileWriter::channels = 2;
@@ -105,6 +114,7 @@ lame_global_struct * FileWriter::lameGlobalFlags = nullptr;
 void * FileWriter::mp3_buffer = nullptr;
 int FileWriter::fileDescriptor = -1;
 size_t FileWriter::mp3bufSize = ((4096 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
+OpusEncoder * FileWriter::opusEncoder = nullptr;
 
 int FileWriter::encode(AudioBuffer * buffer) {
     if (! recording) {
@@ -139,6 +149,24 @@ int FileWriter::encode(AudioBuffer * buffer) {
 
 //        LOGD("Encoded %d frames into %d bytes of MP3 data", numFrames, written);
         return written; // Placeholder for MP3 encoding and writing logic
+    }
+
+    if (opusEncoder) {
+        unsigned char opusData[4000]; // Buffer for Opus encoded data
+        int opusDataSize = opus_encode_float(opusEncoder, data, numFrames, opusData, sizeof(opusData));
+        if (opusDataSize < 0) {
+            LOGE("Error encoding Opus data: %s", opus_strerror(opusDataSize));
+            return 0; // Failed to encode Opus data
+        }
+
+        // Write the encoded Opus data to the file descriptor
+        ssize_t bytesWritten = write(fileDescriptor, opusData, opusDataSize);
+        if (bytesWritten < 0) {
+            LOGE("Error writing Opus data: %s", strerror(errno));
+            return 0; // Failed to write Opus data
+        }
+
+        return bytesWritten; // Successfully encoded and wrote Opus data
     }
 
     return 0; // No file open to write to
@@ -190,5 +218,33 @@ bool FileWriter::openLame(int fd, FileType fileType, int _quality) {
     LOGD("Initialized LAME with sample rate: %d, channels: %d, quality: %f", sampleRate, channels, quality);
     // Do we write the MP3 header here? LAME doesn't have a specific function for writing the MP3 header, but it will generate the necessary headers when encoding the first chunk of PCM data. So we can just return true here and handle the encoding and writing in the write() function.
     return true; // Successfully initialized LAME for MP3 encoding
+}
+
+bool FileWriter::openOpus(int fd, FileType fileType, int _quality) {
+    int error = 0;
+    opusEncoder = opus_encoder_create(sampleRate, channels, OPUS_APPLICATION_AUDIO, & error);
+    if (error != OPUS_OK) {
+        LOGE("Failed to create Opus encoder: %s", opus_strerror(error));
+        return false;
+    }
+
+    // Set Opus encoder parameters based on quality
+    switch (_quality) {
+        case 0:
+        default:
+//            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(OPUS_AUTO));
+            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(OPUS_BITRATE_MAX));
+            break;
+        case 1:
+            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(64000)); // 64 kbps for medium quality
+            break;
+        case 2:
+            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(32000)); // 32 kbps for lower quality
+            break;
+    }
+
+    recording = true;
+    LOGD("Initialized Opus encoder with sample rate: %d, channels: %d, quality: %d", sampleRate, channels, _quality);
+    return true; // Successfully initialized Opus encoder for encoding
 }
 

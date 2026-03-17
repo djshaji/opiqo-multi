@@ -340,6 +340,10 @@ public class MainActivity extends AppCompatActivity {
                     requestRecordAudioPermission();
                 else
                     AudioEngine.setEffectOn(b);
+
+                if (recordToggle.isChecked() && !b) {
+                    recordToggle.setChecked(false);
+                }
             }
         });
 

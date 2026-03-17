@@ -9,6 +9,7 @@
 #include "sndfile.h"
 #include "AudioBuffer.h"
 #include "lame.h"
+#include "opus/opus.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -32,6 +33,8 @@ public:
     static void * mp3_buffer ;
     static int fileDescriptor;
 
+    static OpusEncoder *opusEncoder ;
+
     FileWriter(int sampleRate, int channels);
 
     ~FileWriter();
@@ -44,6 +47,7 @@ public:
 
     bool openSndfile(int fd, FileType fileType, int _quality);
     bool openLame(int fd, FileType fileType, int _quality);
+    bool openOpus(int fd, FileType fileType, int _quality);
 
     static size_t mp3bufSize ;//= ((384 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
 };
