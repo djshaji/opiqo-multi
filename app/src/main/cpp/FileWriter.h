@@ -10,6 +10,7 @@
 #include "AudioBuffer.h"
 #include "lame.h"
 #include "opus/opusenc.h"
+#include "FLAC/stream_encoder.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -32,6 +33,9 @@ public:
     static lame_global_flags * lameGlobalFlags;
     static void * mp3_buffer ;
     static int fileDescriptor;
+    static FLAC__StreamEncoder *flacEncoder;
+    static FLAC__int32 *flacBuffer;
+    static size_t flacBufferSamples;
 
     static OggOpusEnc *opusEncoder ;
 
@@ -48,7 +52,7 @@ public:
     bool openSndfile(int fd, FileType fileType, int _quality);
     bool openLame(int fd, FileType fileType, int _quality);
     bool openOpus(int fd, FileType fileType, int _quality);
-
+    bool openFlac(int fd, FileType fileType, int _quality);
     static size_t mp3bufSize ;//= ((384 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
 };
 

@@ -7,6 +7,8 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 ## Features
 
 ### Core Capabilities
+- **Floating point precision audio processing** for high-quality sound
+- **32 bit wav / flac file recording support** for lossless audio recording and playback
 - **LV2 Plugin Host**: Full support for standard LV2 (LADSPA Version 2) audio plugins
 - **Real-time Audio Processing**: Low-latency audio I/O using Google's Oboe library
 - **Guitar Effects**: Process guitar audio through a chain of up to 4 LV2 effects plugins simultaneously

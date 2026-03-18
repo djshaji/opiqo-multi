@@ -5,8 +5,43 @@
 #include <errno.h>
 #include <string.h>
 #include <malloc.h>
+#include <math.h>
 #include <unistd.h>
 #include "FileWriter.h"
+
+static FLAC__StreamEncoderWriteStatus flacWriteCallback(const FLAC__StreamEncoder *encoder,
+                                                        const FLAC__byte buffer[],
+                                                        size_t bytes,
+                                                        unsigned samples,
+                                                        unsigned current_frame,
+                                                        void *client_data) {
+    int fd = *reinterpret_cast<int *>(client_data);
+    ssize_t written = write(fd, buffer, bytes);
+    if (written < 0 || static_cast<size_t>(written) != bytes) {
+        return FLAC__STREAM_ENCODER_WRITE_STATUS_FATAL_ERROR;
+    }
+    return FLAC__STREAM_ENCODER_WRITE_STATUS_OK;
+}
+
+static FLAC__StreamEncoderSeekStatus flacSeekCallback(const FLAC__StreamEncoder *encoder,
+                                                      FLAC__uint64 absolute_byte_offset,
+                                                      void *client_data) {
+    int fd = *reinterpret_cast<int *>(client_data);
+    off_t result = lseek(fd, static_cast<off_t>(absolute_byte_offset), SEEK_SET);
+    return (result < 0) ? FLAC__STREAM_ENCODER_SEEK_STATUS_ERROR : FLAC__STREAM_ENCODER_SEEK_STATUS_OK;
+}
+
+static FLAC__StreamEncoderTellStatus flacTellCallback(const FLAC__StreamEncoder *encoder,
+                                                      FLAC__uint64 *absolute_byte_offset,
+                                                      void *client_data) {
+    int fd = *reinterpret_cast<int *>(client_data);
+    off_t result = lseek(fd, 0, SEEK_CUR);
+    if (result < 0) {
+        return FLAC__STREAM_ENCODER_TELL_STATUS_ERROR;
+    }
+    *absolute_byte_offset = static_cast<FLAC__uint64>(result);
+    return FLAC__STREAM_ENCODER_TELL_STATUS_OK;
+}
 
 lame_report_function logg = [](const char *format, va_list args) {
     char buffer[1024];
@@ -17,9 +52,6 @@ lame_report_function logg = [](const char *format, va_list args) {
 FileWriter::FileWriter(int _sampleRate, int _channels) {
     sampleRate = _sampleRate;
     channels = _channels;
-    sfInfo.samplerate = sampleRate;
-    sfInfo.channels = channels;
-    sfInfo.format = 0; // Will be set in open()
 
 }
 
@@ -28,6 +60,11 @@ FileWriter::~FileWriter() {
 }
 
 bool FileWriter::openSndfile(int fd, FileType fileType, int _quality) {
+    sfInfo = {0};
+    sfInfo.samplerate = sampleRate;
+    sfInfo.channels = channels;
+    sfInfo.format = 0; // Will be set in open()
+
     switch (_quality) {
         case 0:
             quality = 1.f;
@@ -44,7 +81,7 @@ bool FileWriter::openSndfile(int fd, FileType fileType, int _quality) {
 
     switch (fileType) {
         case FILE_TYPE_WAV:
-            sfInfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+            sfInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
             break;
         case FILE_TYPE_MP3:
             sfInfo.format = SF_FORMAT_MPEG;
@@ -53,7 +90,7 @@ bool FileWriter::openSndfile(int fd, FileType fileType, int _quality) {
             sfInfo.format = SF_FORMAT_OPUS;
             break;
         case FILE_TYPE_FLAC:
-            sfInfo.format = SF_FORMAT_FLAC;
+            sfInfo.format = SF_FORMAT_FLAC | SF_FORMAT_PCM_16;
             break;
         case FILE_TYPE_OGG:
             sfInfo.format = SF_FORMAT_OGG | SF_FORMAT_VORBIS;
@@ -103,6 +140,18 @@ void FileWriter::close() {
         opusEncoder = nullptr;
     }
 
+    if (flacEncoder) {
+        FLAC__stream_encoder_finish(flacEncoder);
+        FLAC__stream_encoder_delete(flacEncoder);
+        flacEncoder = nullptr;
+    }
+
+    if (flacBuffer) {
+        free(flacBuffer);
+        flacBuffer = nullptr;
+        flacBufferSamples = 0;
+    }
+
      if (fileDescriptor >= 0) {
         fileDescriptor = -1;
     }
@@ -116,6 +165,9 @@ void * FileWriter::mp3_buffer = nullptr;
 int FileWriter::fileDescriptor = -1;
 size_t FileWriter::mp3bufSize = ((4096 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
 OggOpusEnc * FileWriter::opusEncoder = nullptr;
+FLAC__StreamEncoder * FileWriter::flacEncoder = nullptr;
+FLAC__int32 * FileWriter::flacBuffer = nullptr;
+size_t FileWriter::flacBufferSamples = 0;
 
 int FileWriter::encode(AudioBuffer * buffer) {
     if (! recording) {
@@ -161,6 +213,41 @@ int FileWriter::encode(AudioBuffer * buffer) {
         return numFrames;
     }
 
+    if (flacEncoder) {
+        const size_t requiredSamples = static_cast<size_t>(numFrames) * static_cast<size_t>(channels);
+        if (requiredSamples == 0) {
+            return 0;
+        }
+
+        if (requiredSamples > flacBufferSamples) {
+            FLAC__int32 *newBuffer = static_cast<FLAC__int32 *>(realloc(flacBuffer, requiredSamples * sizeof(FLAC__int32)));
+            if (!newBuffer) {
+                LOGE("Unable to allocate FLAC conversion buffer for %zu samples", requiredSamples);
+                return 0;
+            }
+            flacBuffer = newBuffer;
+            flacBufferSamples = requiredSamples;
+        }
+
+        for (size_t i = 0; i < requiredSamples; ++i) {
+            float v = data[i];
+            if (v > 1.0f) {
+                v = 1.0f;
+            } else if (v < -1.0f) {
+                v = -1.0f;
+            }
+            flacBuffer[i] = static_cast<FLAC__int32>(lrintf(v * 32767.0f));
+        }
+
+        FLAC__bool ok = FLAC__stream_encoder_process_interleaved(flacEncoder, flacBuffer, static_cast<unsigned>(numFrames));
+        if (!ok) {
+            LOGE("Error encoding FLAC data: %s", FLAC__StreamEncoderStateString[FLAC__stream_encoder_get_state(flacEncoder)]);
+            return 0;
+        }
+
+        return numFrames;
+    }
+
     return 0; // No file open to write to
 }
 
@@ -168,13 +255,14 @@ bool FileWriter::open(int fd, FileType fileType, int quality) {
     fileDescriptor = fd;
     switch (fileType) {
         case FILE_TYPE_WAV:
-        case FILE_TYPE_FLAC:
         case FILE_TYPE_OGG:
             return openSndfile(fd, fileType, quality);
         case FILE_TYPE_OPUS:
             return openOpus(fd, fileType, quality);
         case FILE_TYPE_MP3:
             return openLame(fd, fileType, quality);
+        case FILE_TYPE_FLAC:
+            return openFlac(fd, fileType, quality);
         default:
             return false; // Unsupported file type
     }
@@ -253,3 +341,52 @@ bool FileWriter::openOpus(int fd, FileType fileType, int _quality) {
     return true;
 }
 
+bool FileWriter::openFlac(int fd, FileType fileType, int _quality) {
+    if (fileType != FILE_TYPE_FLAC) {
+        return false;
+    }
+
+    flacEncoder = FLAC__stream_encoder_new();
+    if (!flacEncoder) {
+        LOGE("Failed to create FLAC stream encoder");
+        return false;
+    }
+
+    FLAC__stream_encoder_set_channels(flacEncoder, channels);
+    FLAC__stream_encoder_set_sample_rate(flacEncoder, sampleRate);
+    FLAC__stream_encoder_set_bits_per_sample(flacEncoder, 16);
+
+    unsigned compressionLevel = 8;
+    switch (_quality) {
+        case 0:
+        default:
+            compressionLevel = 8;
+            break;
+        case 1:
+            compressionLevel = 5;
+            break;
+        case 2:
+            compressionLevel = 2;
+            break;
+    }
+    FLAC__stream_encoder_set_compression_level(flacEncoder, compressionLevel);
+
+    FLAC__StreamEncoderInitStatus status = FLAC__stream_encoder_init_stream(
+            flacEncoder,
+            flacWriteCallback,
+            flacSeekCallback,
+            flacTellCallback,
+            nullptr,
+            &fileDescriptor);
+
+    if (status != FLAC__STREAM_ENCODER_INIT_STATUS_OK) {
+        LOGE("Failed to initialize FLAC stream encoder: %s", FLAC__StreamEncoderInitStatusString[status]);
+        FLAC__stream_encoder_delete(flacEncoder);
+        flacEncoder = nullptr;
+        return false;
+    }
+
+    recording = true;
+    LOGD("Initialized FLAC encoder with sample rate: %d, channels: %d, compression: %u", sampleRate, channels, compressionLevel);
+    return true;
+}

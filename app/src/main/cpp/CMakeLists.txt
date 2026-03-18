@@ -50,6 +50,9 @@ set_target_properties(sndfile PROPERTIES IMPORTED_LOCATION
 add_library (libopusenc STATIC IMPORTED)
 set_target_properties(libopusenc PROPERTIES IMPORTED_LOCATION
     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libopusenc.a)
+add_library (flac STATIC IMPORTED)
+set_target_properties(flac PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libFLAC.a)
 
 
 # Creates and names a library, sets it as either STATIC
@@ -96,4 +99,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         lame
         libopusenc
         opus
+        flac
     log)

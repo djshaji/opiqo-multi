@@ -83,7 +83,7 @@ public class Test {
         for (int i = 0; i < mainActivity.pluginUris.size(); i++) {
             AudioEngine.addPlugin(1, mainActivity.pluginUris.get(i));
             Log.d(TAG, "stressTestPlugins: testing plugin " + mainActivity.pluginUris.get(i));
-            JSONObject ports = mainActivity.pluginInfo.getJSONObject(mainActivity.pluginUris.get(i)).optJSONObject("ports");
+            JSONObject ports = mainActivity.pluginInfo.getJSONObject(mainActivity.pluginUris.get(i)).optJSONObject("port");
             String key = ports.keys().next();
             while (key != null) {
                 JSONObject port = ports.optJSONObject(key);
