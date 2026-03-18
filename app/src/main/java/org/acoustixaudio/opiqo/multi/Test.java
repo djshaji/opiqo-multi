@@ -6,6 +6,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.stream.IntStream;
 
@@ -75,7 +78,7 @@ public class Test {
         AudioEngine.printPreset(1);
     }
 
-    void stressTestPlugins () {
+    void stressTestPlugins () throws JSONException {
         Log.d(TAG, "stressTestPlugins: checking whether plugins crash when controls are changed");
         for (int i = 0; i < mainActivity.pluginUris.size(); i++) {
             AudioEngine.addPlugin(1, mainActivity.pluginUris.get(i));
@@ -90,7 +93,7 @@ public class Test {
                     int min = port.optInt("min");
                     int max = port.optInt("max");
                     for (int value = min; value <= max; value += (max - min) / 10) {
-                        AudioEngine.setPortValue(1, index, value);
+                        AudioEngine.setValue(1, index, value);
                         Log.d(TAG, "stressTestPlugins: set control " + key + " to " + value);
                     }
                 }

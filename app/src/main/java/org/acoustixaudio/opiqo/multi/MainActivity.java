@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList <JSONObject> presets = new ArrayList<>();
     String [] recFormats = {"wav", "mp3", "opus", "flac", "ogg"};
-    String [] mimeTypes = {"audio/x-wav", "audio/mpeg", "audio/opus", "audio/flac", "audio/ogg"};
+    String [] mimeTypes = {"audio/x-wav", "audio/mpeg", "audio/ogg", "audio/flac", "audio/ogg"};
     String [] bitRates = {"High", "Medium", "Low"};
 
     static {
@@ -139,7 +139,11 @@ public class MainActivity extends AppCompatActivity {
                 loadPreset();
                 break;
             case 3:
-                new Test(this).stressTestPlugins();
+                try {
+                    new Test(this).stressTestPlugins();
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
