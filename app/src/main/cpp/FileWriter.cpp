@@ -98,7 +98,8 @@ void FileWriter::close() {
     }
 
     if (opusEncoder) {
-        opus_encoder_destroy(opusEncoder);
+        ope_encoder_drain(opusEncoder);
+        ope_encoder_destroy(opusEncoder);
         opusEncoder = nullptr;
     }
 
@@ -114,7 +115,7 @@ lame_global_struct * FileWriter::lameGlobalFlags = nullptr;
 void * FileWriter::mp3_buffer = nullptr;
 int FileWriter::fileDescriptor = -1;
 size_t FileWriter::mp3bufSize = ((4096 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
-OpusEncoder * FileWriter::opusEncoder = nullptr;
+OggOpusEnc * FileWriter::opusEncoder = nullptr;
 
 int FileWriter::encode(AudioBuffer * buffer) {
     if (! recording) {
@@ -152,21 +153,12 @@ int FileWriter::encode(AudioBuffer * buffer) {
     }
 
     if (opusEncoder) {
-        unsigned char opusData[4000]; // Buffer for Opus encoded data
-        int opusDataSize = opus_encode_float(opusEncoder, data, numFrames, opusData, sizeof(opusData));
-        if (opusDataSize < 0) {
-            LOGE("Error encoding Opus data: %s", opus_strerror(opusDataSize));
-            return 0; // Failed to encode Opus data
+        int result = ope_encoder_write_float(opusEncoder, data, numFrames);
+        if (result != OPE_OK) {
+            LOGE("Error encoding Opus data: %s", ope_strerror(result));
+            return 0;
         }
-
-        // Write the encoded Opus data to the file descriptor
-        ssize_t bytesWritten = write(fileDescriptor, opusData, opusDataSize);
-        if (bytesWritten < 0) {
-            LOGE("Error writing Opus data: %s", strerror(errno));
-            return 0; // Failed to write Opus data
-        }
-
-        return bytesWritten; // Successfully encoded and wrote Opus data
+        return numFrames;
     }
 
     return 0; // No file open to write to
@@ -176,10 +168,11 @@ bool FileWriter::open(int fd, FileType fileType, int quality) {
     fileDescriptor = fd;
     switch (fileType) {
         case FILE_TYPE_WAV:
-        case FILE_TYPE_OPUS:
         case FILE_TYPE_FLAC:
         case FILE_TYPE_OGG:
             return openSndfile(fd, fileType, quality);
+        case FILE_TYPE_OPUS:
+            return openOpus(fd, fileType, quality);
         case FILE_TYPE_MP3:
             return openLame(fd, fileType, quality);
         default:
@@ -220,31 +213,43 @@ bool FileWriter::openLame(int fd, FileType fileType, int _quality) {
     return true; // Successfully initialized LAME for MP3 encoding
 }
 
+static int opusWriteCallback(void *user_data, const unsigned char *ptr, opus_int32 len) {
+    int fd = *reinterpret_cast<int *>(user_data);
+    ssize_t written = write(fd, ptr, len);
+    return (written < 0) ? 1 : 0;
+}
+
+static int opusCloseCallback(void *user_data) {
+    return 0; // fd lifecycle is managed by the caller
+}
+
 bool FileWriter::openOpus(int fd, FileType fileType, int _quality) {
-    int error = 0;
-    opusEncoder = opus_encoder_create(sampleRate, channels, OPUS_APPLICATION_AUDIO, & error);
-    if (error != OPUS_OK) {
-        LOGE("Failed to create Opus encoder: %s", opus_strerror(error));
+    int error = OPE_OK;
+    OggOpusComments *comments = ope_comments_create();
+    OpusEncCallbacks callbacks = { opusWriteCallback, opusCloseCallback };
+    opusEncoder = ope_encoder_create_callbacks(&callbacks, &fileDescriptor, comments, sampleRate, channels, 0, &error);
+    ope_comments_destroy(comments);
+
+    if (error != OPE_OK) {
+        LOGE("Failed to create Opus encoder: %s", ope_strerror(error));
         return false;
     }
 
-    // Set Opus encoder parameters based on quality
     switch (_quality) {
         case 0:
         default:
-//            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(OPUS_AUTO));
-            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(OPUS_BITRATE_MAX));
+            ope_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(OPUS_BITRATE_MAX));
             break;
         case 1:
-            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(64000)); // 64 kbps for medium quality
+            ope_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(64000));
             break;
         case 2:
-            opus_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(32000)); // 32 kbps for lower quality
+            ope_encoder_ctl(opusEncoder, OPUS_SET_BITRATE(32000));
             break;
     }
 
     recording = true;
     LOGD("Initialized Opus encoder with sample rate: %d, channels: %d, quality: %d", sampleRate, channels, _quality);
-    return true; // Successfully initialized Opus encoder for encoding
+    return true;
 }
 

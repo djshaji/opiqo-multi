@@ -9,7 +9,7 @@
 #include "sndfile.h"
 #include "AudioBuffer.h"
 #include "lame.h"
-#include "opus/opus.h"
+#include "opus/opusenc.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -33,7 +33,7 @@ public:
     static void * mp3_buffer ;
     static int fileDescriptor;
 
-    static OpusEncoder *opusEncoder ;
+    static OggOpusEnc *opusEncoder ;
 
     FileWriter(int sampleRate, int channels);
 
