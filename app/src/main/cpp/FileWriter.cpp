@@ -6,8 +6,47 @@
 #include <string.h>
 #include <malloc.h>
 #include <math.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "FileWriter.h"
+
+static bool writeAllBytes(int fd, const void *buffer, size_t length) {
+    const unsigned char *ptr = static_cast<const unsigned char *>(buffer);
+    size_t remaining = length;
+    while (remaining > 0) {
+        ssize_t written = write(fd, ptr, remaining);
+        if (written <= 0) {
+            return false;
+        }
+        ptr += written;
+        remaining -= static_cast<size_t>(written);
+    }
+    return true;
+}
+
+static bool writeOggPage(int fd, ogg_page *page) {
+    return writeAllBytes(fd, page->header, static_cast<size_t>(page->header_len))
+        && writeAllBytes(fd, page->body, static_cast<size_t>(page->body_len));
+}
+
+static bool drainVorbisStream(bool forceFlush) {
+    ogg_page page;
+    int pageResult = forceFlush
+        ? ogg_stream_flush(&FileWriter::oggStream, &page)
+        : ogg_stream_pageout(&FileWriter::oggStream, &page);
+
+    while (pageResult != 0) {
+        if (!writeOggPage(FileWriter::fileDescriptor, &page)) {
+            LOGE("Failed to write Ogg page: %s", strerror(errno));
+            return false;
+        }
+        pageResult = forceFlush
+            ? ogg_stream_flush(&FileWriter::oggStream, &page)
+            : ogg_stream_pageout(&FileWriter::oggStream, &page);
+    }
+
+    return true;
+}
 
 static FLAC__StreamEncoderWriteStatus flacWriteCallback(const FLAC__StreamEncoder *encoder,
                                                         const FLAC__byte buffer[],
@@ -152,6 +191,29 @@ void FileWriter::close() {
         flacBufferSamples = 0;
     }
 
+    if (vorbisInitialized) {
+        vorbis_analysis_wrote(&vorbisDsp, 0);
+        while (vorbis_analysis_blockout(&vorbisDsp, &vorbisBlock) == 1) {
+            vorbis_analysis(&vorbisBlock, nullptr);
+            vorbis_bitrate_addblock(&vorbisBlock);
+
+            ogg_packet packet;
+            while (vorbis_bitrate_flushpacket(&vorbisDsp, &packet)) {
+                ogg_stream_packetin(&oggStream, &packet);
+                if (!drainVorbisStream(true)) {
+                    break;
+                }
+            }
+        }
+
+        ogg_stream_clear(&oggStream);
+        vorbis_block_clear(&vorbisBlock);
+        vorbis_dsp_clear(&vorbisDsp);
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        vorbisInitialized = false;
+    }
+
      if (fileDescriptor >= 0) {
         fileDescriptor = -1;
     }
@@ -168,6 +230,12 @@ OggOpusEnc * FileWriter::opusEncoder = nullptr;
 FLAC__StreamEncoder * FileWriter::flacEncoder = nullptr;
 FLAC__int32 * FileWriter::flacBuffer = nullptr;
 size_t FileWriter::flacBufferSamples = 0;
+bool FileWriter::vorbisInitialized = false;
+vorbis_info FileWriter::vorbisInfo;
+vorbis_comment FileWriter::vorbisComment;
+vorbis_dsp_state FileWriter::vorbisDsp;
+vorbis_block FileWriter::vorbisBlock;
+ogg_stream_state FileWriter::oggStream;
 
 int FileWriter::encode(AudioBuffer * buffer) {
     if (! recording) {
@@ -248,6 +316,35 @@ int FileWriter::encode(AudioBuffer * buffer) {
         return numFrames;
     }
 
+    if (vorbisInitialized) {
+        if (numFrames <= 0) {
+            return 0;
+        }
+
+        float **analysisBuffer = vorbis_analysis_buffer(&vorbisDsp, numFrames);
+        for (int i = 0; i < numFrames; ++i) {
+            for (int ch = 0; ch < channels; ++ch) {
+                analysisBuffer[ch][i] = data[(i * channels) + ch];
+            }
+        }
+        vorbis_analysis_wrote(&vorbisDsp, numFrames);
+
+        while (vorbis_analysis_blockout(&vorbisDsp, &vorbisBlock) == 1) {
+            vorbis_analysis(&vorbisBlock, nullptr);
+            vorbis_bitrate_addblock(&vorbisBlock);
+
+            ogg_packet packet;
+            while (vorbis_bitrate_flushpacket(&vorbisDsp, &packet)) {
+                ogg_stream_packetin(&oggStream, &packet);
+                if (!drainVorbisStream(false)) {
+                    return 0;
+                }
+            }
+        }
+
+        return numFrames;
+    }
+
     return 0; // No file open to write to
 }
 
@@ -255,7 +352,6 @@ bool FileWriter::open(int fd, FileType fileType, int quality) {
     fileDescriptor = fd;
     switch (fileType) {
         case FILE_TYPE_WAV:
-        case FILE_TYPE_OGG:
             return openSndfile(fd, fileType, quality);
         case FILE_TYPE_OPUS:
             return openOpus(fd, fileType, quality);
@@ -263,6 +359,8 @@ bool FileWriter::open(int fd, FileType fileType, int quality) {
             return openLame(fd, fileType, quality);
         case FILE_TYPE_FLAC:
             return openFlac(fd, fileType, quality);
+        case FILE_TYPE_OGG:
+            return openVorbis(fd, fileType, quality);
         default:
             return false; // Unsupported file type
     }
@@ -388,5 +486,92 @@ bool FileWriter::openFlac(int fd, FileType fileType, int _quality) {
 
     recording = true;
     LOGD("Initialized FLAC encoder with sample rate: %d, channels: %d, compression: %u", sampleRate, channels, compressionLevel);
+    return true;
+}
+
+bool FileWriter::openVorbis(int fd, FileType fileType, int _quality) {
+    if (fileType != FILE_TYPE_OGG) {
+        return false;
+    }
+
+    vorbis_info_init(&vorbisInfo);
+
+    float vorbisQuality;
+    switch (_quality) {
+        case 0:
+        default:
+            vorbisQuality = 1.f;
+            break;
+        case 1:
+            vorbisQuality = 0.6f;
+            break;
+        case 2:
+            vorbisQuality = 0.3f;
+            break;
+    }
+
+    if (vorbis_encode_init_vbr(&vorbisInfo, channels, sampleRate, vorbisQuality) != 0) {
+        LOGE("Failed to initialize Vorbis VBR encoder");
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    vorbis_comment_init(&vorbisComment);
+    vorbis_comment_add_tag(&vorbisComment, "ENCODER", "opiqo");
+
+    if (vorbis_analysis_init(&vorbisDsp, &vorbisInfo) != 0) {
+        LOGE("Failed to initialize Vorbis analysis state");
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    if (vorbis_block_init(&vorbisDsp, &vorbisBlock) != 0) {
+        LOGE("Failed to initialize Vorbis block state");
+        vorbis_dsp_clear(&vorbisDsp);
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    const int serial = (fd << 16) ^ sampleRate ^ channels;
+    if (ogg_stream_init(&oggStream, serial) != 0) {
+        LOGE("Failed to initialize Ogg stream");
+        vorbis_block_clear(&vorbisBlock);
+        vorbis_dsp_clear(&vorbisDsp);
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    ogg_packet header;
+    ogg_packet headerComment;
+    ogg_packet headerCode;
+    if (vorbis_analysis_headerout(&vorbisDsp, &vorbisComment, &header, &headerComment, &headerCode) != 0) {
+        LOGE("Failed to generate Vorbis header packets");
+        ogg_stream_clear(&oggStream);
+        vorbis_block_clear(&vorbisBlock);
+        vorbis_dsp_clear(&vorbisDsp);
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    ogg_stream_packetin(&oggStream, &header);
+    ogg_stream_packetin(&oggStream, &headerComment);
+    ogg_stream_packetin(&oggStream, &headerCode);
+
+    if (!drainVorbisStream(true)) {
+        ogg_stream_clear(&oggStream);
+        vorbis_block_clear(&vorbisBlock);
+        vorbis_dsp_clear(&vorbisDsp);
+        vorbis_comment_clear(&vorbisComment);
+        vorbis_info_clear(&vorbisInfo);
+        return false;
+    }
+
+    vorbisInitialized = true;
+    recording = true;
+    LOGD("Initialized Ogg Vorbis encoder with sample rate: %d, channels: %d, quality: %.2f", sampleRate, channels, vorbisQuality);
     return true;
 }

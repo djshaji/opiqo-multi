@@ -11,6 +11,8 @@
 #include "lame.h"
 #include "opus/opusenc.h"
 #include "FLAC/stream_encoder.h"
+#include "vorbis/vorbisenc.h"
+#include "ogg/ogg.h"
 
 typedef enum {
     FILE_TYPE_WAV,
@@ -36,6 +38,12 @@ public:
     static FLAC__StreamEncoder *flacEncoder;
     static FLAC__int32 *flacBuffer;
     static size_t flacBufferSamples;
+    static bool vorbisInitialized;
+    static vorbis_info vorbisInfo;
+    static vorbis_comment vorbisComment;
+    static vorbis_dsp_state vorbisDsp;
+    static vorbis_block vorbisBlock;
+    static ogg_stream_state oggStream;
 
     static OggOpusEnc *opusEncoder ;
 
@@ -53,6 +61,7 @@ public:
     bool openLame(int fd, FileType fileType, int _quality);
     bool openOpus(int fd, FileType fileType, int _quality);
     bool openFlac(int fd, FileType fileType, int _quality);
+    bool openVorbis(int fd, FileType fileType, int _quality);
     static size_t mp3bufSize ;//= ((384 * 1.25) + 7200) * 2; // Buffer size for MP3 encoding (stereo)
 };
 

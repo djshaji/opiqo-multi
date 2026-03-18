@@ -53,6 +53,15 @@ set_target_properties(libopusenc PROPERTIES IMPORTED_LOCATION
 add_library (flac STATIC IMPORTED)
 set_target_properties(flac PROPERTIES IMPORTED_LOCATION
     ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libFLAC.a)
+add_library (ogg STATIC IMPORTED)
+set_target_properties(ogg PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libogg.a)
+add_library (vorbis STATIC IMPORTED)
+set_target_properties(vorbis PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libvorbis.a)
+add_library (vorbisenc STATIC IMPORTED)
+set_target_properties(vorbisenc PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${ANDROID_ABI}/libvorbisenc.a)
 
 
 # Creates and names a library, sets it as either STATIC
@@ -100,4 +109,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         libopusenc
         opus
         flac
+        ogg
+        vorbisenc
+        vorbis
     log)
