@@ -6,10 +6,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.stream.IntStream;
 
 public class Test {
@@ -80,26 +82,34 @@ public class Test {
 
     void stressTestPlugins () throws JSONException {
         Log.d(TAG, "stressTestPlugins: checking whether plugins crash when controls are changed");
-        for (int i = 0; i < mainActivity.pluginUris.size(); i++) {
-            AudioEngine.addPlugin(1, mainActivity.pluginUris.get(i));
-            Log.d(TAG, "stressTestPlugins: testing plugin " + mainActivity.pluginUris.get(i));
-            JSONObject ports = mainActivity.pluginInfo.getJSONObject(mainActivity.pluginUris.get(i)).optJSONObject("port");
-            String key = ports.keys().next();
-            while (key != null) {
-                JSONObject port = ports.optJSONObject(key);
-                if (! port.optString("type").equals("audio") && ! port.optString("type").equals("atom")) {
-                    Log.d(TAG, "stressTestPlugins: changing control " + key);
-                    int index = port.optInt("index");
-                    int min = port.optInt("min");
-                    int max = port.optInt("max");
-                    for (int value = min; value <= max; value += (max - min) / 10) {
-                        AudioEngine.setValue(1, index, value);
-                        Log.d(TAG, "stressTestPlugins: set control " + key + " to " + value);
-                    }
+        Iterator<String> keys = mainActivity.pluginInfo.keys();
+        String plugin = null;
+        while(keys.hasNext()) {
+            String key = keys.next();
+            plugin = key;
+            AudioEngine.addPlugin(1, key);
+            Log.d(TAG, "--------------------------------");
+            Log.d(TAG, "stressTestPlugins: testing plugin " + key);
+            JSONArray ports = mainActivity.pluginInfo.getJSONObject(key).getJSONArray("port");
+            for (int i = 0; i < ports.length(); i++) {
+                JSONObject port = ports.getJSONObject(i);
+                Log.d(TAG, "stressTestPlugins: " + port);
+                if (! port.has("type") || port.getString("type").equals("audio") || port.getString("type").equals("atom")) {
+                    continue;
                 }
-                
-                key = ports.keys().hasNext() ? ports.keys().next() : null;
+
+                Log.d(TAG, "stressTestPlugins: testing control " + port.getString("name"));
+                int min = port.getInt("min");
+                int max = port.getInt("max");
+                int range = max - min;
+                for (int j = 0; j < 50; j++) {
+                    int value = min + (int)(Math.random() * range);
+//                    Log.d(TAG, "stressTestPlugins: setting control " + port.getString("name") + " to " + value);
+                    AudioEngine.setValue(1, port.getInt("index"),  value);
+                }
             }
+
+             AudioEngine.deletePlugin(1);
         }
     } 
 }
