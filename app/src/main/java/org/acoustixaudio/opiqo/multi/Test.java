@@ -74,4 +74,29 @@ public class Test {
         Log.d(TAG, "printPreset: checking whether printPreset works");
         AudioEngine.printPreset(1);
     }
+
+    void stressTestPlugins () {
+        Log.d(TAG, "stressTestPlugins: checking whether plugins crash when controls are changed");
+        for (int i = 0; i < mainActivity.pluginUris.size(); i++) {
+            AudioEngine.addPlugin(1, mainActivity.pluginUris.get(i));
+            Log.d(TAG, "stressTestPlugins: testing plugin " + mainActivity.pluginUris.get(i));
+            JSONObject ports = mainActivity.pluginInfo.getJSONObject(mainActivity.pluginUris.get(i)).optJSONObject("ports");
+            String key = ports.keys().next();
+            while (key != null) {
+                JSONObject port = ports.optJSONObject(key);
+                if (! port.optString("type").equals("audio") && ! port.optString("type").equals("atom")) {
+                    Log.d(TAG, "stressTestPlugins: changing control " + key);
+                    int index = port.optInt("index");
+                    int min = port.optInt("min");
+                    int max = port.optInt("max");
+                    for (int value = min; value <= max; value += (max - min) / 10) {
+                        AudioEngine.setPortValue(1, index, value);
+                        Log.d(TAG, "stressTestPlugins: set control " + key + " to " + value);
+                    }
+                }
+                
+                key = ports.keys().hasNext() ? ports.keys().next() : null;
+            }
+        }
+    } 
 }

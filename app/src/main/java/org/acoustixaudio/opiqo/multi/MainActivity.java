@@ -94,7 +94,8 @@ public class MainActivity extends AppCompatActivity {
     String [] tests = {
             "Plugin Loader Test",
             "Preset Save Test",
-            "Preset Load Test"
+            "Preset Load Test",
+            "Plugins Stress Test"
     };
     private Slider gainSlider;
     private File presetsDirectory;
@@ -136,6 +137,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 2:
                 loadPreset();
+                break;
+            case 3:
+                new Test(this).stressTestPlugins();
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
