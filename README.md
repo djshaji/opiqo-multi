@@ -25,6 +25,12 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 - **Output Device Selection**: Spinner to choose the playback (output) audio device from all connected outputs
 - **Master Volume**: Slider to adjust the overall output gain
 
+### Audio Recording
+- **Multi-Format Recording**: Record processed audio output directly from the app in your preferred format
+- **Supported Formats**: WAV (lossless), MP3, Opus, FLAC (lossless), OGG Vorbis
+- **Post-FX Capture**: Recordings capture the full processed signal — after all active pedal effects and master volume
+- **On-Device Storage**: Recordings are saved to the device's storage for easy access and sharing
+
 ### Technical Features
 - **Google Oboe Integration**: Modern, low-latency audio API for Android
 - **NDK Support**: High-performance native code compilation
@@ -552,6 +558,11 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - **Wiki**: [Project Wiki]
 
 ## Changelog
+
+### Version 0.8
+- **Audio recording**: Record processed audio to WAV, MP3, Opus, FLAC, or OGG Vorbis formats directly from the app
+- Post-FX recording captures the full effects chain output
+- On-device storage with easy access and sharing
 
 ### Version 0.7
 - **Multi-pedal chain**: 4 independent pedal slots in a swipeable tab UI
