@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 public class Test {
     MainActivity mainActivity;
     String TAG = "Test";
+    int TEST_CASES = 50;
 
     Test (MainActivity _mainActivity) {
         mainActivity = _mainActivity;
@@ -163,7 +164,7 @@ public class Test {
         for (String key : keys) {
             Slider slider = sliders.get(key);
             Log.d(TAG, "testSliders: testing slider " + key);
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < TEST_CASES; i++) {
                 assert slider != null;
                 float value = slider.getValue();
                 float min = slider.getValueFrom();
@@ -197,7 +198,7 @@ public class Test {
             }
 
             int count = spinner.getAdapter().getCount();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < TEST_CASES; i++) {
                 int newValue = (int) (Math.random() * count);
                 int finalI = i;
                 mainActivity.runOnUiThread(new Runnable() {

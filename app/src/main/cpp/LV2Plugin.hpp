@@ -41,6 +41,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -243,6 +244,7 @@ struct AtomState {
     std::vector<uint8_t> ui_to_dsp;
     uint32_t ui_to_dsp_type = 0;
     std::atomic<bool> ui_to_dsp_pending{false};
+    mutable std::mutex ui_to_dsp_mutex;
     lv2_ringbuffer_t* dsp_to_ui = nullptr;
     
     AtomState(size_t ringbuffer_size = 16384) {
@@ -279,7 +281,10 @@ public:
         try {
             auto data = std::get<std::vector<uint8_t>>(val);
             // TODO: how to get type? For now, store data and wait for caller to set type
-            atom_state_->ui_to_dsp = data;
+            {
+                std::lock_guard<std::mutex> lock(atom_state_->ui_to_dsp_mutex);
+                atom_state_->ui_to_dsp = std::move(data);
+            }
             atom_state_->ui_to_dsp_pending.store(true, std::memory_order_release);
         } catch (const std::bad_variant_access&) {
             // Type mismatch, ignore
@@ -287,13 +292,17 @@ public:
     }
     
     std::variant<float, bool, std::vector<uint8_t>> getValue() const override {
+        std::lock_guard<std::mutex> lock(atom_state_->ui_to_dsp_mutex);
         return atom_state_->ui_to_dsp;
     }
     
     Type getType() const override { return Type::AtomPort; }
     const char* getSymbol() const override { return symbol_.c_str(); }
     const LilvPort* getPort() const override { return port_; }
-    void reset() override { atom_state_->ui_to_dsp.clear(); }
+    void reset() override {
+        std::lock_guard<std::mutex> lock(atom_state_->ui_to_dsp_mutex);
+        atom_state_->ui_to_dsp.clear();
+    }
     
     AtomState* getAtomState() { return atom_state_; }
     void setMessageType(uint32_t type_urid) { atom_state_->ui_to_dsp_type = type_urid; }
@@ -375,8 +384,11 @@ public:
 
         // process() wraps queued bytes as the event body, so store only the atom body.
         const uint8_t* body = reinterpret_cast<const uint8_t*>(LV2_ATOM_BODY(atom));
-        target->atom_state->ui_to_dsp.assign(body, body + atom->size);
-        target->atom_state->ui_to_dsp_type = atom->type;  // atom:Object
+        {
+            std::lock_guard<std::mutex> lock(target->atom_state->ui_to_dsp_mutex);
+            target->atom_state->ui_to_dsp.assign(body, body + atom->size);
+            target->atom_state->ui_to_dsp_type = atom->type;  // atom:Object
+        }
         target->atom_state->ui_to_dsp_pending.store(true, std::memory_order_release);
         LOGD("send_path_parameter: sent path '%s' as atom:Object with property '%s' (URID %u) to port '%s'",
              abs_path, property_uri, property_urid, target->symbol.c_str());
@@ -470,6 +482,7 @@ public:
 
     void closePlugin() {
         IN
+        shutdown_.store(true, std::memory_order_release);
         stop_worker();
 
         if (instance_) {
@@ -528,6 +541,7 @@ public:
         // --- Step B: Process incoming UI→DSP atom messages ---
         for (auto& p : ports_) {
             if (!p.is_atom || !p.is_input) continue;
+            if (!p.atom_state || !p.atom) continue;
             
             // Check for pending UI message
             if (p.atom_state->ui_to_dsp_pending.exchange(false, std::memory_order_acquire)) {
@@ -537,15 +551,36 @@ public:
                 p.atom->body.unit = 0;
                 p.atom->body.pad = 0;
 
-                const uint32_t body_size = p.atom_state->ui_to_dsp.size();
-                uint8_t evbuf[sizeof(LV2_Atom_Event) + body_size];
-                LV2_Atom_Event* ev = (LV2_Atom_Event*)evbuf;
+                std::vector<uint8_t> payload;
+                uint32_t message_type = 0;
+                {
+                    std::lock_guard<std::mutex> lock(p.atom_state->ui_to_dsp_mutex);
+                    payload = p.atom_state->ui_to_dsp;
+                    message_type = p.atom_state->ui_to_dsp_type;
+                }
+
+                const uint32_t body_size = static_cast<uint32_t>(payload.size());
+                const uint32_t event_size = static_cast<uint32_t>(sizeof(LV2_Atom_Event)) + body_size;
+                const uint32_t max_event_space =
+                    (p.atom_buf_size > sizeof(LV2_Atom_Sequence_Body))
+                        ? (p.atom_buf_size - sizeof(LV2_Atom_Sequence_Body))
+                        : 0;
+
+                if (event_size > max_event_space) {
+                    LOGE("process: dropping oversized UI->DSP atom event (port=%s, event=%u, max=%u)",
+                         p.symbol.c_str(), event_size, max_event_space);
+                    continue;
+                }
+
+                std::vector<uint8_t> evbuf(event_size);
+                LV2_Atom_Event* ev = reinterpret_cast<LV2_Atom_Event*>(evbuf.data());
                 
                 ev->time.frames = 0;
-                ev->body.type = p.atom_state->ui_to_dsp_type;
+                ev->body.type = message_type;
                 ev->body.size = body_size;
-                memcpy((uint8_t*)LV2_ATOM_BODY(&ev->body),
-                       p.atom_state->ui_to_dsp.data(), body_size);
+                if (body_size > 0 && !payload.empty()) {
+                    memcpy((uint8_t*)LV2_ATOM_BODY(&ev->body), payload.data(), body_size);
+                }
                 
                 if (!lv2_atom_sequence_append_event(p.atom, p.atom_buf_size, ev)) {
                     LOGE("process: failed to append UI->DSP atom event (port=%s, body=%u)",
@@ -557,8 +592,22 @@ public:
         // --- Step C: Run plugin ---
         lilv_instance_run(instance_, numFrames);
 
-        // --- Step D: Deliver worker responses ---
-        if (host_worker_.iface) deliver_worker_responses();
+        // --- Step D: Deliver worker responses and finalize worker cycle ---
+        if (host_worker_.enabled.load(std::memory_order_acquire)) {
+            host_worker_.rt_readers.fetch_add(1, std::memory_order_acq_rel);
+
+            if (host_worker_.enabled.load(std::memory_order_acquire)) {
+                const LV2_Worker_Interface* iface = host_worker_.iface.load(std::memory_order_acquire);
+                if (iface) {
+                    deliver_worker_responses();
+                    if (iface->end_run) {
+                        iface->end_run(host_worker_.dsp_handle);
+                    }
+                }
+            }
+
+            host_worker_.rt_readers.fetch_sub(1, std::memory_order_acq_rel);
+        }
 
         // --- Step E: Read outgoing DSP→UI atom messages ---
         for (auto& p : ports_) {
@@ -1061,6 +1110,20 @@ private:
 
         LV2_Feature opt_f { LV2_OPTIONS__options, options };
 
+        // Pre-allocate ringbuffers BEFORE plugin instantiation (Fix #3)
+        // This ensures feature is valid if plugin calls schedule_work during init
+        lv2_ringbuffer_t* ring_req = lv2_ringbuffer_create(8192);
+        lv2_ringbuffer_t* ring_resp = lv2_ringbuffer_create(8192);
+        
+        if (ring_req && ring_resp) {
+            host_worker_.requests.store(ring_req, std::memory_order_release);
+            host_worker_.responses.store(ring_resp, std::memory_order_release);
+        } else {
+            LOGE("Failed to pre-allocate worker ringbuffers; worker support disabled");
+            if (ring_req) lv2_ringbuffer_free(ring_req);
+            if (ring_resp) lv2_ringbuffer_free(ring_resp);
+        }
+
         LV2_Feature* feats[] = { &features_.um_f, &features_.unm_f, &opt_f,
                     &features_.bbl_feature, &features_.map_path_feature,
                     &features_.make_path_feature, &features_.free_path_feature,
@@ -1082,13 +1145,28 @@ private:
             lilv_instance_get_extension_data(instance_, LV2_WORKER__interface);
 
         if (iface) {
-            host_worker_.iface = iface;
-            host_worker_.dsp_handle = lilv_instance_get_handle(instance_);
-            host_worker_.requests = lv2_ringbuffer_create(8192);
-            host_worker_.responses = lv2_ringbuffer_create(8192);
-            host_worker_.response_buffer.resize(8192);
-            host_worker_.running.store(true);
-            host_worker_.worker_thread = std::thread(worker_thread_func, &host_worker_);
+            lv2_ringbuffer_t* req = host_worker_.requests.load(std::memory_order_acquire);
+            lv2_ringbuffer_t* resp = host_worker_.responses.load(std::memory_order_acquire);
+            
+            if (req && resp) {
+                // Ringbuffers were pre-allocated, now enable worker
+                host_worker_.dsp_handle = lilv_instance_get_handle(instance_);
+                host_worker_.iface.store(iface, std::memory_order_release);
+                host_worker_.running.store(true, std::memory_order_release);
+                host_worker_.worker_thread = std::thread(worker_thread_func, &host_worker_);
+                host_worker_.enabled.store(true, std::memory_order_release);
+                host_worker_.response_buffer.resize(8192);
+            } else {
+                LOGE("Worker ringbuffers not available; worker support disabled for this plugin instance");
+                host_worker_.dsp_handle = nullptr;
+                host_worker_.enabled.store(false, std::memory_order_release);
+            }
+        } else {
+            // Plugin doesn't support worker interface; clear pre-allocated ringbuffers
+            lv2_ringbuffer_t* req = host_worker_.requests.exchange(nullptr, std::memory_order_acq_rel);
+            lv2_ringbuffer_t* resp = host_worker_.responses.exchange(nullptr, std::memory_order_acq_rel);
+            if (req) lv2_ringbuffer_free(req);
+            if (resp) lv2_ringbuffer_free(resp);
         }
 
         // Connect control and atom ports
@@ -1112,16 +1190,19 @@ private:
 
     // ========== Worker Thread ==========
     struct LV2HostWorker {
-        lv2_ringbuffer_t* requests = nullptr;
-        lv2_ringbuffer_t* responses = nullptr;
+        std::atomic<lv2_ringbuffer_t*> requests{nullptr};
+        std::atomic<lv2_ringbuffer_t*> responses{nullptr};
 
         LV2_Worker_Schedule schedule;
         LV2_Feature feature;
-        const LV2_Worker_Interface* iface = nullptr;
+        std::atomic<const LV2_Worker_Interface*> iface{nullptr};
         LV2_Handle dsp_handle;
 
+        std::atomic<bool> enabled{false};
         std::atomic<bool> running{false};
-        std::atomic<bool> work_pending{false};
+        std::atomic<uint32_t> rt_readers{0};
+        std::atomic<uint32_t> scheduler_readers{0};
+        std::atomic<uint32_t> responder_readers{0};
         std::thread worker_thread;
 
         std::vector<uint8_t> response_buffer;
@@ -1131,35 +1212,64 @@ private:
         LV2_Worker_Schedule_Handle handle, uint32_t size, const void* data) {
         
         auto* w = (LV2HostWorker*)handle;
-        const size_t total = sizeof(uint32_t) + size;
-        if (lv2_ringbuffer_write_space(w->requests) < total)
+        if (!w) {
             return LV2_WORKER_ERR_NO_SPACE;
+        }
+        
+        // Gate: plugin must not schedule work after shutdown begins
+        if (!w->enabled.load(std::memory_order_acquire)) {
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
+        
+        // Track incoming scheduler calls to prevent use-after-free race
+        w->scheduler_readers.fetch_add(1, std::memory_order_acq_rel);
+        
+        // Load atomic pointer safely
+        lv2_ringbuffer_t* req = w->requests.load(std::memory_order_acquire);
+        if (!req) {
+            w->scheduler_readers.fetch_sub(1, std::memory_order_acq_rel);
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
 
-        lv2_ringbuffer_write(w->requests, (const char*)&size, sizeof(uint32_t));
-        lv2_ringbuffer_write(w->requests, (const char*)data, size);
-        w->work_pending.store(true, std::memory_order_release);
+        const size_t total = sizeof(uint32_t) + size;
+        if (lv2_ringbuffer_write_space(req) < total) {
+            w->scheduler_readers.fetch_sub(1, std::memory_order_acq_rel);
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
 
+        lv2_ringbuffer_write(req, (const char*)&size, sizeof(uint32_t));
+        lv2_ringbuffer_write(req, (const char*)data, size);
+        
+        w->scheduler_readers.fetch_sub(1, std::memory_order_acq_rel);
         return LV2_WORKER_SUCCESS;
     }
 
     static void worker_thread_func(LV2HostWorker* w) {
-        while (w->running.load()) {
-            if (lv2_ringbuffer_read_space(w->requests) < sizeof(uint32_t)) {
+        while (w->running.load(std::memory_order_acquire)) {
+            lv2_ringbuffer_t* req = w->requests.load(std::memory_order_acquire);
+            const LV2_Worker_Interface* iface = w->iface.load(std::memory_order_acquire);
+            if (!req || !iface) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            if (lv2_ringbuffer_read_space(req) < sizeof(uint32_t)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
             }
 
             uint32_t size;
-            lv2_ringbuffer_peek(w->requests, (char*)&size, sizeof(uint32_t));
+            lv2_ringbuffer_peek(req, (char*)&size, sizeof(uint32_t));
 
-            if (lv2_ringbuffer_read_space(w->requests) < sizeof(uint32_t) + size) {
+            if (lv2_ringbuffer_read_space(req) < sizeof(uint32_t) + size) {
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
                 continue;
             }
 
-            lv2_ringbuffer_read(w->requests, (char*)&size, sizeof(uint32_t));
+            lv2_ringbuffer_read(req, (char*)&size, sizeof(uint32_t));
             std::vector<uint8_t> buf(size);
-            lv2_ringbuffer_read(w->requests, (char*)buf.data(), size);
-            w->iface->work(w->dsp_handle, host_respond, w, size, buf.data());
+            lv2_ringbuffer_read(req, (char*)buf.data(), size);
+            iface->work(w->dsp_handle, host_respond, w, size, buf.data());
         }
     }
 
@@ -1167,69 +1277,100 @@ private:
         LV2_Worker_Respond_Handle handle, uint32_t size, const void* data) {
         
         auto* w = (LV2HostWorker*)handle;
+        if (!w) {
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
+
+        // Track responder calls to prevent ringbuffer use-after-free during shutdown
+        w->responder_readers.fetch_add(1, std::memory_order_acq_rel);
+
+        lv2_ringbuffer_t* resp = w->responses.load(std::memory_order_acquire);
+        if (!resp) {
+            w->responder_readers.fetch_sub(1, std::memory_order_acq_rel);
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
+
         const size_t total = sizeof(uint32_t) + size;
 
-        if (lv2_ringbuffer_write_space(w->responses) < total)
+        if (lv2_ringbuffer_write_space(resp) < total) {
+            w->responder_readers.fetch_sub(1, std::memory_order_acq_rel);
             return LV2_WORKER_ERR_NO_SPACE;
+        }
 
-        lv2_ringbuffer_write(w->responses, (const char*)&size, sizeof(uint32_t));
-        lv2_ringbuffer_write(w->responses, (const char*)data, size);
+        lv2_ringbuffer_write(resp, (const char*)&size, sizeof(uint32_t));
+        lv2_ringbuffer_write(resp, (const char*)data, size);
 
+        w->responder_readers.fetch_sub(1, std::memory_order_acq_rel);
         return LV2_WORKER_SUCCESS;
     }
 
     void deliver_worker_responses() {
-        constexpr size_t kDrainChunk = 256;
-        uint8_t scratch[kDrainChunk];
-        
+        lv2_ringbuffer_t* resp = host_worker_.responses.load(std::memory_order_acquire);
+        const LV2_Worker_Interface* iface = host_worker_.iface.load(std::memory_order_acquire);
+        if (!resp || !iface) {
+            return;
+        }
+
         while (true) {
-            if (lv2_ringbuffer_read_space(host_worker_.responses) < sizeof(uint32_t)) break;
+            if (lv2_ringbuffer_read_space(resp) < sizeof(uint32_t)) break;
 
             uint32_t size;
-            lv2_ringbuffer_peek(host_worker_.responses, (char*)&size, sizeof(uint32_t));
+            lv2_ringbuffer_peek(resp, (char*)&size, sizeof(uint32_t));
 
-            if (lv2_ringbuffer_read_space(host_worker_.responses) < sizeof(uint32_t) + size) break;
+            if (lv2_ringbuffer_read_space(resp) < sizeof(uint32_t) + size) break;
 
-            lv2_ringbuffer_read(host_worker_.responses, (char*)&size, sizeof(uint32_t));
+            lv2_ringbuffer_read(resp, (char*)&size, sizeof(uint32_t));
 
-            if (size <= host_worker_.response_buffer.size()) {
-                lv2_ringbuffer_read(host_worker_.responses, (char*)host_worker_.response_buffer.data(), size);
-                host_worker_.iface->work_response(host_worker_.dsp_handle, size, host_worker_.response_buffer.data());
-                continue;
+            if (size > host_worker_.response_buffer.size()) {
+                host_worker_.response_buffer.resize(size);
             }
 
-            size_t remaining = size;
-            while (remaining > 0) {
-                const size_t chunk = std::min(remaining, kDrainChunk);
-                lv2_ringbuffer_read(host_worker_.responses, (char*)scratch, chunk);
-                remaining -= chunk;
-            }
+            lv2_ringbuffer_read(resp, (char*)host_worker_.response_buffer.data(), size);
+            iface->work_response(host_worker_.dsp_handle, size, host_worker_.response_buffer.data());
         }
     }
 
     void stop_worker() {
         IN
-//        assert(host_worker_.iface != nullptr);
-        if (! host_worker_.iface || !host_worker_.running.exchange(false)) {
-            LOGD ("Worker thread not running, no need to stop");
-            OUT
-            return;
+        // Gate: prevent new schedule_work() calls
+        host_worker_.enabled.store(false, std::memory_order_release);
+
+        // Wait for in-flight deliver_worker_responses() calls (process path)
+        while (host_worker_.rt_readers.load(std::memory_order_acquire) != 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
+        
+        // Wait for in-flight host_schedule_work() calls (plugin direct path)
+        while (host_worker_.scheduler_readers.load(std::memory_order_acquire) != 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        const bool was_running = host_worker_.running.exchange(false, std::memory_order_acq_rel);
 
         if (host_worker_.worker_thread.joinable())
             host_worker_.worker_thread.join();
 
-        if (host_worker_.requests) {
-            lv2_ringbuffer_free(host_worker_.requests);
-            host_worker_.requests = nullptr;
+        if (!was_running) {
+            LOGD ("Worker thread not running, cleaning up worker resources");
         }
 
-        if (host_worker_.responses) {
-            lv2_ringbuffer_free(host_worker_.responses);
-            host_worker_.responses = nullptr;
+        // Wait for any in-flight host_respond() calls from plugin work() callbacks
+        while (host_worker_.responder_readers.load(std::memory_order_acquire) != 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        host_worker_.iface = nullptr;
+        // Load and clear atomic pointers safely
+        lv2_ringbuffer_t* req = host_worker_.requests.exchange(nullptr, std::memory_order_acq_rel);
+        if (req) {
+            lv2_ringbuffer_free(req);
+        }
+
+        lv2_ringbuffer_t* resp = host_worker_.responses.exchange(nullptr, std::memory_order_acq_rel);
+        if (resp) {
+            lv2_ringbuffer_free(resp);
+        }
+
+        host_worker_.iface.store(nullptr, std::memory_order_release);
         host_worker_.dsp_handle = nullptr;
         OUT
     }

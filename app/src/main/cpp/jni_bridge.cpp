@@ -258,8 +258,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setCacheDir(JNIEnv *env, jclass c
         return;
     }
 
-    engine->cacheDir = std::string (env->GetStringUTFChars(path, nullptr));
-    free((void*)env->GetStringUTFChars(path, nullptr));
+    const char* cachePath = env->GetStringUTFChars(path, nullptr);
+    if (!cachePath) {
+        LOGE("setCacheDir: failed to get UTF chars");
+        return;
+    }
+    engine->cacheDir = std::string(cachePath);
+    env->ReleaseStringUTFChars(path, cachePath);
 
 }
 extern "C"
@@ -313,6 +318,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
 
     engine -> bypass = true ;
 
+    const char* uriChars = env->GetStringUTFChars(uri, nullptr);
+    if (!uriChars) {
+        LOGE("addPlugin: failed to get UTF chars for plugin uri");
+        engine -> bypass = false ;
+        return -1;
+    }
+
     {
         std::lock_guard<std::mutex> lock(engine->pluginMutex);
 
@@ -350,18 +362,18 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
 
         if (plugin != nullptr) {
             plugin ->closePlugin();
-            free(plugin);
+            delete plugin;
         }
 
-        plugin = new LV2Plugin(engine -> world, env->GetStringUTFChars(uri, nullptr), engine -> sampleRate, 4096);
+        plugin = new LV2Plugin(engine -> world, uriChars, engine -> sampleRate, 4096);
         LOGD("[plugin %s] Created plugin %s at position %d", lilv_node_as_string(
-                lilv_plugin_get_library_uri(plugin->plugin_)) , env->GetStringUTFChars(uri, nullptr), position);
+            lilv_plugin_get_library_uri(plugin->plugin_)) , uriChars, position);
 
         if ( !plugin->initialize()) {
-            LOGE("[load plugin] Failed to initialize plugin %s", env->GetStringUTFChars(uri, nullptr));
+            LOGE("[load plugin] Failed to initialize plugin %s", uriChars);
             char * libname = const_cast<char *>(basename(
                     lilv_node_as_string(lilv_plugin_get_library_uri(plugin->plugin_))));
-            LOGE("[load plugin] Failed to initialize plugin %s from library %s", env->GetStringUTFChars(uri, nullptr), libname);
+            LOGE("[load plugin] Failed to initialize plugin %s from library %s", uriChars, libname);
             void * lib = dlopen (libname, RTLD_NOW | RTLD_LOCAL);
             if (lib == nullptr) {
                 LOGE("[load plugin] Failed to load library %s: %s", libname, dlerror());
@@ -377,12 +389,12 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
                 dlclose(lib);
             }
 
-            free ((void*)env->GetStringUTFChars(uri, nullptr));
+            env->ReleaseStringUTFChars(uri, uriChars);
             engine -> bypass = false ;
             return -1;
         } else {
             plugin->start();
-            LOGD("Successfully added plugin %s at position %d", env->GetStringUTFChars(uri, nullptr), position);
+            LOGD("Successfully added plugin %s at position %d", uriChars, position);
 //            LOGD ("[plugininfo] %s", engine->pluginInfo[env->GetStringUTFChars(uri, nullptr)].dump(4).c_str());
             int portsTotal = lilv_plugin_get_num_ports(plugin->plugin_);
 //            LOGD("[debug] Plugin %s has [%d/%d] ports", env->GetStringUTFChars(uri, nullptr), plugin->ports_.size(), portsTotal);
@@ -411,12 +423,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
                 break;
             default:
                 LOGE("Unknown plugin index %d", position);
+                env->ReleaseStringUTFChars(uri, uriChars);
                 engine -> bypass = false ;
                 return -1;
         }
-
-        free ((void*)env->GetStringUTFChars(uri, nullptr));
     }
+
+    env->ReleaseStringUTFChars(uri, uriChars);
 
     engine -> bypass = false ;
     return 0 ;
@@ -601,7 +614,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
                     if (engine -> mDuplexStream)
                         engine->mDuplexStream->plugin1 = nullptr;
                     engine->plugin1->closePlugin();
-                    free(engine->plugin1);
+                    delete engine->plugin1;
                     engine->plugin1 = nullptr;
                 }
                 break;
@@ -610,7 +623,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
                     if (engine -> mDuplexStream)
                         engine->mDuplexStream->plugin2 = nullptr;
                     engine->plugin2->closePlugin();
-                    free(engine->plugin2);
+                    delete engine->plugin2;
                     engine->plugin2 = nullptr;
                 }
                 break ;
@@ -619,7 +632,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
                     if (engine -> mDuplexStream)
                         engine->mDuplexStream->plugin3 = nullptr;
                     engine->plugin3->closePlugin();
-                    free(engine->plugin3);
+                    delete engine->plugin3;
                     engine->plugin3 = nullptr;
                 }
                 break ;
@@ -628,7 +641,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
                     if (engine -> mDuplexStream)
                         engine->mDuplexStream->plugin4 = nullptr;
                     engine->plugin4->closePlugin();
-                    free(engine->plugin4);
+                    delete engine->plugin4;
                     engine->plugin4 = nullptr;
                 }
                 break;
