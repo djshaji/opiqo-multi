@@ -5,12 +5,17 @@ import static androidx.core.util.SparseIntArrayKt.contains;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+
+import com.google.android.material.slider.Slider;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.stream.IntStream;
 
@@ -111,5 +116,99 @@ public class Test {
 
              AudioEngine.deletePlugin(1);
         }
-    } 
+    }
+
+    void stressTestPluginUI () throws JSONException {
+        Log.d(TAG, "stressTestPluginUI: checking whether plugins crash when UI is opened and closed");
+        Iterator<String> keys = mainActivity.pluginInfo.keys();
+        LinearLayout container = (LinearLayout) mainActivity.pluginUIContainers.get(1);
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            JSONObject info = mainActivity.pluginInfo.getJSONObject(key);
+
+            mainActivity.addPlugin(info, 1);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            for (int j = 0; j < 5; j++) {
+                Log.d(TAG, "--------------------------------");
+                Log.d(TAG, String.format("[test %d/5] %s", j, key));
+                mainActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        assert container != null;
+                        UI pluginUI = container.getChildAt(0) instanceof UI ? (UI) container.getChildAt(0) : null;
+                        testSliders(pluginUI != null ? pluginUI.sliders : new HashMap<>());
+                        testSpinners(pluginUI != null ? pluginUI.spinners : new HashMap<>());
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
+            Log.d(TAG, "test [ok]: finished testing plugin " + key);
+        }
+    }
+
+    void testSliders (HashMap<String, Slider> sliders) {
+        String [] keys = sliders.keySet().toArray(new String[0]);
+        for (String key : keys) {
+            Slider slider = sliders.get(key);
+            Log.d(TAG, "testSliders: testing slider " + key);
+            for (int i = 0; i < 50; i++) {
+                assert slider != null;
+                float value = slider.getValue();
+                float min = slider.getValueFrom();
+                float max = slider.getValueTo();
+                float range = max - min;
+                float newValue = min + (float) (Math.random() * range);
+                mainActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "run: setting slider " + key + " to " + newValue);
+                        slider.setValue(newValue);
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    void testSpinners (HashMap <String, Spinner> spinners) {
+        String [] keys = spinners.keySet().toArray(new String[0]);
+        for (String key : keys) {
+            Spinner spinner = spinners.get(key);
+            Log.d(TAG, "testSpinners: testing spinner " + key);
+            int count = spinner.getAdapter().getCount();
+            for (int i = 0; i < 50; i++) {
+                int newValue = (int) (Math.random() * count);
+                int finalI = i;
+                mainActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "[spinner " + finalI + "/50] " + key + " to " + newValue);
+                        spinner.setSelection(newValue);
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+
 }

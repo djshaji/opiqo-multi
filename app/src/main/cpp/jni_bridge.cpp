@@ -589,6 +589,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass clazz,
                                                             jint plugin) {
+    IN
     engine -> bypass = true ;
 
     {
@@ -631,10 +632,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
                     engine->plugin4 = nullptr;
                 }
                 break;
+            default:
+                LOGE("Unknown plugin index %d", plugin);
         }
     }
 
     engine -> bypass = false ;
+    OUT
 }
 extern "C"
 JNIEXPORT void JNICALL

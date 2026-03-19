@@ -95,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
             "Plugin Loader Test",
             "Preset Save Test",
             "Preset Load Test",
-            "Plugins Stress Test"
+            "Plugins Stress Test",
+            "Plugin UI Stress Test"
     };
     private Slider gainSlider;
     private File presetsDirectory;
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<String[]> persistentPicker;
     private Uri currectRecordingUri;
     private ParcelFileDescriptor pfd;
+    public FrameLayout pager_layout;
 
     public static class PendingFileRequest {
         final int position;
@@ -141,6 +143,13 @@ public class MainActivity extends AppCompatActivity {
             case 3:
                 try {
                     new Test(this).stressTestPlugins();
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            case 4:
+                try {
+                    new Test(this).stressTestPluginUI();
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
@@ -304,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Request record audio permission if not already granted
         requestRecordAudioPermission();
-        FrameLayout pager_layout = findViewById(R.id.pager_container);
+        pager_layout = findViewById(R.id.pager_container);
 
         collectionFragment = new CollectionFragment(this);
         getSupportFragmentManager().beginTransaction()
@@ -978,5 +987,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 //        onOff.setChecked(true);
+    }
+
+    public void addPlugin (JSONObject info, int j) {
+        Log.d(TAG, "addPlugin: " + info + " to position " + j);
+        AudioEngine.deletePlugin(1);
+        AudioEngine.deletePlugin(2);
+        AudioEngine.deletePlugin(3);
+        AudioEngine.deletePlugin(4);
+
+        deleteUIs();
+
+        AudioEngine.addPlugin(j, info.optString("uri", null));
+        UI pluginUI = new UI(context, info.toString(), j);
+        LinearLayout container = (LinearLayout) pluginUIContainers.get(j);
+
+        assert container != null;
+        container.removeAllViews();
+        container.addView(pluginUI);
+
+        pluginUI.add = ((ConstraintLayout) container.getParent()).findViewById(R.id.add);
+        pluginUI.add.setVisibility(GONE);
     }
 }

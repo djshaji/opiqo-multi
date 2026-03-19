@@ -29,6 +29,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class UI extends LinearLayout {
@@ -36,6 +37,9 @@ public class UI extends LinearLayout {
     JSONObject pluginInfo;
     String pluginName;
     Context context;
+    HashMap <String, Slider> sliders = new HashMap<>();
+    HashMap<String, ToggleButton> toggles = new HashMap<>();
+    HashMap <String, Spinner> spinners = new HashMap<>();
     static final String TAG = "UI";
     public View add = null ;
 
@@ -90,6 +94,31 @@ public class UI extends LinearLayout {
             addView(header);
             header.addView(bypass);
 
+            ImageButton debug = new ImageButton(context);
+            debug.setImageResource(R.drawable.outline_bug_report_24);
+            debug.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+            header.addView(debug);
+            debug.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Plugin name: ").append(pluginName).append("\n");
+                    sb.append("Position: ").append(position).append("\n");
+                    sb.append("Ports:\n");
+                    for (int i = 0; i < ports.length(); i++) {
+                        try {
+                            JSONObject port = ports.getJSONObject(i);
+                            sb.append("  - ").append(port.getString("name")).append(" (type: ").append(port.getString("type")).append(")\n");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    new Test((MainActivity) context).testSliders(sliders);
+                    new Test((MainActivity) context).testSpinners(spinners);
+                }
+            });
+
             if (pluginInfo.has("writableParams")) {
                 JSONObject writableParams = pluginInfo.getJSONObject("writableParams");
                 Iterator<String> keys = writableParams.keys();
@@ -110,6 +139,7 @@ public class UI extends LinearLayout {
                     String controlName = value.getString("label");
                     Button sw = new Button(context);
                     Spinner spinner = new Spinner(context);
+                    spinners.put(key, spinner);
                     String filesDir = String.format ("%s/user/%s/%s", context.getFilesDir(), pluginName, controlName);
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -218,6 +248,7 @@ public class UI extends LinearLayout {
 
                 if (port.getString("type").equals("control")) {
                     Slider slider = new Slider(context);
+                    sliders.put(port.getString("name"), slider);
                     slider.setValueFrom((float) port.getDouble("min"));
                     slider.setValueTo((float) port.getDouble("max"));
                     slider.setValue((float) port.getDouble("default"));
@@ -242,6 +273,7 @@ public class UI extends LinearLayout {
                     addView(label);
                 } else if (port.getString("type").equals("toggled")) {
                     ToggleButton sw = new ToggleButton(context);
+                    toggles.put(port.getString("name"), sw);
                     sw.setTextOn("ON");
                     sw.setChecked(port.getInt("default") == 1);
                     sw.setTextOff("OFF");
@@ -273,6 +305,7 @@ public class UI extends LinearLayout {
                     }
 
                     Spinner spinner = new Spinner(context);
+                    spinners.put(port.getString("name"), spinner);
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(
                             getContext(),
                             android.R.layout.simple_spinner_item,
