@@ -40,6 +40,15 @@ android {
                 debugSymbolLevel 'FULL' // or 'FULL'
             }
         }
+
+        debug {
+            // Retains full debug symbols in the .so file
+            ndk {
+                debugSymbolLevel 'FULL' // or 'FULL'
+            }
+
+        }
+
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11

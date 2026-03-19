@@ -425,7 +425,7 @@ public:
     }
 
     ~LV2Plugin() {
-        closePlugin();
+        // closePlugin();
     }
 
     // Initialize plugin: discover ports, create controls, instantiate instance
