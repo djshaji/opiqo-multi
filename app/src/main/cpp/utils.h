@@ -10,6 +10,7 @@
 
 const char * __no_load__ [] = {
         "http://rakarrack.sourceforge.net/effects.html#awha",
+        "http://VeJaPlugins.com/plugins/Release/BassCab",
         nullptr
 };
 

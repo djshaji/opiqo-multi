@@ -223,7 +223,11 @@ public class UI extends LinearLayout {
                             public void onClick(View view) {
                                 int max = spinner.getAdapter().getCount();
                                 int current = spinner.getSelectedItemPosition();
-                                spinner.setSelection((current - 1 + max) % max);
+                                if (current > 0) {
+                                    spinner.setSelection(current - 1);
+                                } else {
+                                    spinner.setSelection(max - 1);
+                                }
                             }
                         });
 
@@ -232,7 +236,11 @@ public class UI extends LinearLayout {
                             public void onClick(View view) {
                                 int max = spinner.getAdapter().getCount();
                                 int current = spinner.getSelectedItemPosition();
-                                spinner.setSelection((current + 1) % max);
+                                if (current < max - 1) {
+                                    spinner.setSelection(current + 1);
+                                } else {
+                                    spinner.setSelection(0);
+                                }
                             }
                         });
                     }
@@ -296,12 +304,14 @@ public class UI extends LinearLayout {
                     layout.addView(sw);
                     addView(layout);
                 } else if (port.getString("type").equals("dropdown")) {
+                    Log.d(TAG, "build: building dropdown for port " + port.getString("name"));
                     JSONArray options = port.getJSONArray("options");
                     ArrayList <String> optionNames = new ArrayList<>();
                     ArrayList <Integer> optionValues = new ArrayList<>();
                     for (int j = 0; j < options.length(); j++) {
                         optionNames.add(options.getJSONObject(j).getString("label"));
                         optionValues.add(options.getJSONObject(j).getInt("value"));
+                        Log.d(TAG, "build: option [" + j + "] " + optionNames.get(j) + " value " + optionValues.get(j));
                     }
 
                     Spinner spinner = new Spinner(context);
@@ -349,18 +359,26 @@ public class UI extends LinearLayout {
                     left.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            int max = optionNames.size();
+                            int max = spinner.getAdapter().getCount();
                             int current = spinner.getSelectedItemPosition();
-                            spinner.setSelection((current - 1 + max) % max);
+                            if (current > 0) {
+                                spinner.setSelection(current - 1);
+                            } else {
+                                spinner.setSelection(max - 1);
+                            }
                         }
                     });
 
                     right.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            int max = optionNames.size();
+                            int max = spinner.getAdapter().getCount();
                             int current = spinner.getSelectedItemPosition();
-                            spinner.setSelection((current + 1) % max);
+                            if (current < max - 1) {
+                                spinner.setSelection(current + 1);
+                            } else {
+                                spinner.setSelection(0);
+                            }
                         }
                     });
 

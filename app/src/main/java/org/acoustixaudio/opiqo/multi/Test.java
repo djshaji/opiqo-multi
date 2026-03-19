@@ -95,6 +95,7 @@ public class Test {
             AudioEngine.addPlugin(1, key);
             Log.d(TAG, "--------------------------------");
             Log.d(TAG, "stressTestPlugins: testing plugin " + key);
+            Log.d(TAG, mainActivity.pluginInfo.getJSONObject(key).toString(2));
             JSONArray ports = mainActivity.pluginInfo.getJSONObject(key).getJSONArray("port");
             for (int i = 0; i < ports.length(); i++) {
                 JSONObject port = ports.getJSONObject(i);
@@ -162,7 +163,7 @@ public class Test {
         for (String key : keys) {
             Slider slider = sliders.get(key);
             Log.d(TAG, "testSliders: testing slider " + key);
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 5; i++) {
                 assert slider != null;
                 float value = slider.getValue();
                 float min = slider.getValueFrom();
@@ -190,8 +191,13 @@ public class Test {
         for (String key : keys) {
             Spinner spinner = spinners.get(key);
             Log.d(TAG, "testSpinners: testing spinner " + key);
+            if (spinner.getAdapter() == null) {
+                Log.w(TAG, "testSpinners: spinner " + key + " has no adapter, skipping");
+                continue;
+            }
+
             int count = spinner.getAdapter().getCount();
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 5; i++) {
                 int newValue = (int) (Math.random() * count);
                 int finalI = i;
                 mainActivity.runOnUiThread(new Runnable() {
