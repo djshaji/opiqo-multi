@@ -413,7 +413,8 @@ public:
     }
 
     ~LV2Plugin() {
-        closePlugin();
+        // We do this manually elsewhere, so
+//        closePlugin();
     }
 
     // Initialize plugin: discover ports, create controls, instantiate instance
@@ -469,6 +470,7 @@ public:
     }
 
     void closePlugin() {
+        IN
         stop_worker();
 
         if (instance_) {
@@ -495,6 +497,7 @@ public:
         if (atom_class_) lilv_node_free(atom_class_);
         if (input_class_) lilv_node_free(input_class_);
         if (rsz_minimumSize_) lilv_node_free(rsz_minimumSize_);
+        OUT
     }
 
     // RT-safe audio processing with atom message handling
@@ -1206,9 +1209,13 @@ private:
     }
 
     void stop_worker() {
+        IN
 //        assert(host_worker_.iface != nullptr);
-        if (! host_worker_.iface || !host_worker_.running.exchange(false))
+        if (! host_worker_.iface || !host_worker_.running.exchange(false)) {
+            LOGD ("Worker thread not running, no need to stop");
+            OUT
             return;
+        }
 
         if (host_worker_.worker_thread.joinable())
             host_worker_.worker_thread.join();
@@ -1225,6 +1232,7 @@ private:
 
         host_worker_.iface = nullptr;
         host_worker_.dsp_handle = nullptr;
+        OUT
     }
 
     // ========== Member variables ==========
