@@ -147,6 +147,27 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_native_1setDefaultStreamValues(JN
     oboe::DefaultStreamValues::SampleRate = (int32_t) sampleRate;
     oboe::DefaultStreamValues::FramesPerBurst = (int32_t) framesPerBurst;
 }
+
+/*
+How to use:
+
+Stop effect: AudioEngine.setEffectOn(false)
+Set block size: AudioEngine.setPluginBlockSize(128) or 256
+Re-enable effect: AudioEngine.setEffectOn(true)
+
+*/
+JNIEXPORT jboolean JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginBlockSize(
+    JNIEnv *env, jclass type, jint blockFrames) {
+    if (engine == nullptr) {
+        LOGE(
+            "Engine is null, you must call createEngine "
+            "before calling this method");
+        return JNI_FALSE;
+    }
+
+    return engine->setPluginBlockSize((int32_t) blockFrames) ? JNI_TRUE : JNI_FALSE;
+}
 } // extern "C"
 
 

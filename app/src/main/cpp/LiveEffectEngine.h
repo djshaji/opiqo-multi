@@ -56,6 +56,7 @@ public:
     void onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error) override;
 
     bool setAudioApi(oboe::AudioApi);
+    bool setPluginBlockSize(int32_t frames);
     bool isAAudioRecommended(void);
 
     LockFreeQueueManager queueManager;

@@ -60,6 +60,27 @@ bool LiveEffectEngine::setAudioApi(oboe::AudioApi api) {
     return true;
 }
 
+bool LiveEffectEngine::setPluginBlockSize(int32_t frames) {
+    // Block size should be changed only while effect is stopped, otherwise
+    // existing plugin instances may have been created with a different max block length.
+    if (mIsEffectOn) {
+        LOGE("Cannot change plugin block size while effect is running");
+        return false;
+    }
+
+    if (frames <= 0 || frames > 8192) {
+        LOGE("Invalid plugin block size: %d", frames);
+        return false;
+    }
+
+    blockSize = frames;
+    if (mDuplexStream) {
+        mDuplexStream->setPluginBlockFrames(blockSize);
+    }
+    LOGD("Plugin block size set to %d frames", blockSize);
+    return true;
+}
+
 bool LiveEffectEngine::setEffectOn(bool isOn) {
     bool success = true;
     if (isOn != mIsEffectOn) {
@@ -131,7 +152,10 @@ oboe::Result  LiveEffectEngine::openStreams() {
     mDuplexStream->pluginMutex = &pluginMutex;  // Share the engine's mutex with the duplex stream
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
-    blockSize = mRecordingStream->getFramesPerBurst() ;
+    if (blockSize <= 0) {
+        blockSize = mRecordingStream->getFramesPerBurst();
+    }
+    mDuplexStream->setPluginBlockFrames(blockSize);
     mDuplexStream->start();
     return result;
 }

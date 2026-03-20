@@ -33,6 +33,7 @@ public class AudioEngine {
     static native void stopRecording();
     static native void setCacheDir(String path);
     static native void native_setDefaultStreamValues(int defaultSampleRate, int defaultFramesPerBurst);
+    static native boolean setPluginBlockSize(int blockFrames);
 
     static void setDefaultStreamValues(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
