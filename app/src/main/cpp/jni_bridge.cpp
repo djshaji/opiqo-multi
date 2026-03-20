@@ -884,3 +884,25 @@ JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_stopRecording(JNIEnv *env, jclass clazz) {
     engine->fileWriter->close();
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_stressTest(JNIEnv *env) {
+    const char * uri = "http://guitarix.sourceforge.net/plugins/gx_amp#GUITARIX";
+    LV2Plugin plugin(engine->world, uri, 48000., 4096);
+    if (plugin.initialize()) {
+        plugin.start();
+    } else {
+        LOGE("Failed to initialize plugin");
+    }
+    
+    float input[512] = {0.5};
+    float output[512] = {0.5};
+    int t = 0;
+    while (true) {
+        LOGD("Running test iteration %d\n", t++);
+        plugin.process(input, output, 512);
+        usleep (10000); // Sleep for 100ms to simulate time between process calls
+    }
+
+}

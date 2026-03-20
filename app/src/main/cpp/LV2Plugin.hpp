@@ -19,7 +19,9 @@
 
 #pragma once
 
-#include "logging_macros.h"
+#if defined(__ANDROID__)
+    #include "logging_macros.h"
+#endif
 #include "lv2_ringbuffer.h"
 #include <lilv/lilv.h>
 

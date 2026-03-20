@@ -96,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
             "Preset Save Test",
             "Preset Load Test",
             "Plugins Stress Test",
-            "Plugin UI Stress Test"
+            "Plugin UI Stress Test",
+            "GxAmp Test"
     };
     private Slider gainSlider;
     private File presetsDirectory;
@@ -153,6 +154,9 @@ public class MainActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
+                break;
+            case 5:
+                new Test(this).gxAmpTest();
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);

@@ -217,5 +217,8 @@ public class Test {
         }
     }
 
-
+    void gxAmpTest () {
+        Log.d(TAG, "gxAmpTest: checking whether GxAmp plugin works");
+        AudioEngine.stressTest();
+    }
 }

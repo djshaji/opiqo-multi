@@ -27,7 +27,8 @@ public class AudioEngine {
     static native void delete();
 
     static native void test (String dir);
-
+    static native void stressTest();
+    
     static native boolean startRecording(int fd, int fileType, int quality);
     static native void stopRecording();
     static native void setCacheDir(String path);
