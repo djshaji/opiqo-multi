@@ -365,7 +365,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
             delete plugin;
         }
 
-        plugin = new LV2Plugin(engine -> world, uriChars, engine -> sampleRate, 4096);
+        plugin = new LV2Plugin(engine -> world, uriChars, engine -> sampleRate, engine -> blockSize);
         LOGD("[plugin %s] Created plugin %s at position %d", lilv_node_as_string(
             lilv_plugin_get_library_uri(plugin->plugin_)) , uriChars, position);
 

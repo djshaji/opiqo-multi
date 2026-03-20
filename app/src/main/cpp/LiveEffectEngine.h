@@ -82,6 +82,7 @@ public:
     float * gain = nullptr ;
     int pluginCount = 0 ;
     bool bypass = false ;
+    int blockSize = 4096 ;
 
 private:
     bool              mIsEffectOn = false;

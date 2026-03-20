@@ -831,6 +831,9 @@ struct {
     LV2_URID atom_Double;
     LV2_URID midi_Event;
     LV2_URID buf_maxBlock;
+    LV2_URID buf_minBlock;
+    LV2_URID buf_nominalBlock;
+    LV2_URID buf_seqSize;
     LV2_URID atom_Path;
     LV2_URID patch_Get;
     LV2_URID patch_Set;
@@ -854,7 +857,10 @@ private:
         urids_.atom_Int = map_uri(LV2_ATOM__Int);
         urids_.atom_Double = map_uri(LV2_ATOM__Double);
         urids_.midi_Event = map_uri(LV2_MIDI__MidiEvent);
-        urids_.buf_maxBlock = map_uri(LV2_BUF_SIZE__maxBlockLength);
+        urids_.buf_maxBlock     = map_uri(LV2_BUF_SIZE__maxBlockLength);
+        urids_.buf_minBlock     = map_uri(LV2_BUF_SIZE__minBlockLength);
+        urids_.buf_nominalBlock = map_uri(LV2_BUF_SIZE__nominalBlockLength);
+        urids_.buf_seqSize      = map_uri(LV2_BUF_SIZE__sequenceSize);
         urids_.atom_Path = map_uri(LV2_ATOM__Path);
         urids_.patch_Get = map_uri(LV2_PATCH__Get);
         urids_.patch_Set = map_uri(LV2_PATCH__Set);
@@ -1097,14 +1103,10 @@ private:
     // ========== Plugin Instantiation ==========
     bool init_instance() {
         LV2_Options_Option options[] = {
-            {
-                LV2_OPTIONS_INSTANCE,
-                0,
-                urids_.buf_maxBlock,
-                sizeof(uint32_t),
-                urids_.atom_Int,
-                &max_block_length_
-            },
+            { LV2_OPTIONS_INSTANCE, 0, urids_.buf_minBlock,     sizeof(uint32_t), urids_.atom_Int, &max_block_length_ },
+            { LV2_OPTIONS_INSTANCE, 0, urids_.buf_maxBlock,     sizeof(uint32_t), urids_.atom_Int, &max_block_length_ },
+            { LV2_OPTIONS_INSTANCE, 0, urids_.buf_nominalBlock, sizeof(uint32_t), urids_.atom_Int, &max_block_length_ },
+            { LV2_OPTIONS_INSTANCE, 0, urids_.buf_seqSize,      sizeof(uint32_t), urids_.atom_Int, &required_atom_size_ },
             { LV2_OPTIONS_INSTANCE, 0, 0, 0, 0, nullptr }
         };
 
