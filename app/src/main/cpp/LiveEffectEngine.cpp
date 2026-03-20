@@ -131,7 +131,7 @@ oboe::Result  LiveEffectEngine::openStreams() {
     mDuplexStream->pluginMutex = &pluginMutex;  // Share the engine's mutex with the duplex stream
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
-    engine -> blockSize = mRecordingStream->getFramesPerBurst() ;
+    blockSize = mRecordingStream->getFramesPerBurst() ;
     mDuplexStream->start();
     return result;
 }
