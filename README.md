@@ -37,6 +37,7 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 - **Google Oboe Integration**: Modern, low-latency audio API for Android
 - **NDK Support**: High-performance native code compilation
 - **LV2 Plugin Standards**: Compatible with standard LV2 plugins (JACK, Lilv, Sord libraries)
+- **LV2 buf-size Compliance**: Correctly advertises `bufsz:boundedBlockLength` with `minBlockLength`, `maxBlockLength`, `nominalBlockLength`, and `sequenceSize` options sourced from the real Oboe burst size at runtime
 - **Multi-threaded Audio**: Efficient full-duplex background audio processing via `FullDuplexPass`
 - **Android 12+**: Optimized for modern Android devices (API level 31+)
 - **54 Bundled Plugins**: Ships with a curated library of guitar effects ready to use out of the box
@@ -560,6 +561,11 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - **Wiki**: [Project Wiki]
 
 ## Changelog
+
+### Version 0.9
+- **LV2 buf-size spec compliance**: Host now advertises `bufsz:boundedBlockLength` with a complete `options:options` array including `minBlockLength`, `maxBlockLength`, `nominalBlockLength`, and `sequenceSize`
+- **Runtime block size**: Block size communicated to plugins is now the real Oboe `framesPerBurst` value, not a hardcoded fallback
+- **URID completeness**: All buf-size URIDs (`minBlockLength`, `nominalBlockLength`, `sequenceSize`) are now registered in the URID map
 
 ### Version 0.8
 - **Audio recording**: Record processed audio to WAV, MP3, Opus, FLAC, or OGG Vorbis formats directly from the app
