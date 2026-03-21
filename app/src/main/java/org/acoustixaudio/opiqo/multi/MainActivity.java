@@ -213,12 +213,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         recQuality = findViewById(R.id.rec_bitrate);
-        SpinnerAdapter qualityAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bitRates);
-        recQuality.setAdapter(qualityAdapter);
+        SpinnerAdapter qualityAdapter = new android.widget.ArrayAdapter<>(this, R.layout.spinner_item, bitRates);
         ((ArrayAdapter) qualityAdapter).setDropDownViewResource(R.layout.audio_devices);
+        recQuality.setAdapter(qualityAdapter);
 
         recFormat = findViewById(R.id.rec_format);
-        SpinnerAdapter formatAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, recFormats);
+        SpinnerAdapter formatAdapter = new android.widget.ArrayAdapter<>(this, R.layout.spinner_item, recFormats);
         ((ArrayAdapter) formatAdapter).setDropDownViewResource(R.layout.audio_devices);
         recFormat.setAdapter(formatAdapter);
 

@@ -5,11 +5,11 @@
     <color name="md_theme_onPrimaryContainer">#736100</color>
     <color name="md_theme_secondary">#6B5E24</color>
     <color name="md_theme_onSecondary">#FFFFFF</color>
-    <color name="md_theme_secondaryContainer">#F2DF98</color>
+    <color name="md_theme_secondaryContainer">@color/material_dynamic_tertiary90</color>
     <color name="md_theme_onSecondaryContainer">#6F6228</color>
     <color name="md_theme_tertiary">#4D6700</color>
     <color name="md_theme_onTertiary">#FFFFFF</color>
-    <color name="md_theme_tertiaryContainer">#C6ED6B</color>
+    <color name="md_theme_tertiaryContainer">@color/material_dynamic_primary90</color>
     <color name="md_theme_onTertiaryContainer">#506B00</color>
     <color name="md_theme_error">#BA1A1A</color>
     <color name="md_theme_onError">#FFFFFF</color>
