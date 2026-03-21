@@ -11,6 +11,15 @@
 const char * __no_load__ [] = {
         "http://rakarrack.sourceforge.net/effects.html#awha",
         "http://VeJaPlugins.com/plugins/Release/BassCab",
+        "http://plugin.org.uk/swh-plugins/ringmod_1i1o1l",
+        "http://rakarrack.sourceforge.net/effects.html#DistBand",
+        "http://rakarrack.sourceforge.net/effects.html#Echotron",
+        "http://rakarrack.sourceforge.net/effects.html#Echoverse",
+        "http://rakarrack.sourceforge.net/effects.html#Dual_Flange",
+        "http://rakarrack.sourceforge.net/effects.html#CompBand",
+        "http://rakarrack.sourceforge.net/effects.html#Exciter",
+        "http://rakarrack.sourceforge.net/effects.html#Expander",
+        "http://ssj71.github.io/infamousPlugins/plugs.html#octolo",
         nullptr
 };
 

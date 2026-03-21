@@ -15,7 +15,7 @@ android {
         minSdk 34
         targetSdk 36
         versionCode 1
-        versionName '0.7'
+        versionName '0.9'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -28,7 +28,7 @@ android {
         ndk {
             debugSymbolLevel 'FULL' // or 'FULL'
         }
-        versionNameSuffix 'Jane'
+        versionNameSuffix 'Jag-Stang'
     }
 
     buildTypes {

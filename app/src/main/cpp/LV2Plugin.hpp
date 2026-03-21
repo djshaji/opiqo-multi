@@ -408,6 +408,8 @@ public:
     LV2Plugin(LilvWorld* world, LilvPlugin* plugin, double sample_rate, uint32_t max_block_length)
         : world_(world), plugin_(plugin), sample_rate_(sample_rate),
           max_block_length_(max_block_length), instance_(nullptr),
+          audio_class_(nullptr), control_class_(nullptr), atom_class_(nullptr),
+          input_class_(nullptr), rsz_minimumSize_(nullptr),
           required_atom_size_(8192), shutdown_(false) {
     }
 
@@ -415,6 +417,8 @@ public:
     LV2Plugin(LilvWorld* world, const char* plugin_uri, double sample_rate, uint32_t max_block_length)
         : world_(world), plugin_(nullptr), sample_rate_(sample_rate),
           max_block_length_(max_block_length), instance_(nullptr),
+          audio_class_(nullptr), control_class_(nullptr), atom_class_(nullptr),
+          input_class_(nullptr), rsz_minimumSize_(nullptr),
           required_atom_size_(8192), shutdown_(false) {
         if (world_ && plugin_uri) {
             const LilvPlugins* plugins = lilv_world_get_all_plugins(world_);
@@ -484,6 +488,14 @@ public:
 
     void closePlugin() {
         IN
+
+        const bool was_closed = closed_.exchange(true, std::memory_order_acq_rel);
+        if (was_closed) {
+            LOGD("closePlugin: plugin already closed, skipping duplicate cleanup");
+            OUT
+            return;
+        }
+
         shutdown_.store(true, std::memory_order_release);
         stop_worker();
 
@@ -506,11 +518,26 @@ public:
         controls_.clear();
 
         // Free Lilv nodes (but NOT world or plugin—caller owns those)
-        if (audio_class_) lilv_node_free(audio_class_);
-        if (control_class_) lilv_node_free(control_class_);
-        if (atom_class_) lilv_node_free(atom_class_);
-        if (input_class_) lilv_node_free(input_class_);
-        if (rsz_minimumSize_) lilv_node_free(rsz_minimumSize_);
+        if (audio_class_) {
+            lilv_node_free(audio_class_);
+            audio_class_ = nullptr;
+        }
+        if (control_class_) {
+            lilv_node_free(control_class_);
+            control_class_ = nullptr;
+        }
+        if (atom_class_) {
+            lilv_node_free(atom_class_);
+            atom_class_ = nullptr;
+        }
+        if (input_class_) {
+            lilv_node_free(input_class_);
+            input_class_ = nullptr;
+        }
+        if (rsz_minimumSize_) {
+            lilv_node_free(rsz_minimumSize_);
+            rsz_minimumSize_ = nullptr;
+        }
         OUT
     }
 
@@ -1210,6 +1237,20 @@ private:
         std::thread worker_thread;
 
         std::vector<uint8_t> response_buffer;
+
+        ~LV2HostWorker() {
+            // Safety net: stop_worker() should have been called first, but guard against
+            // a joinable thread reaching the destructor (e.g. race between init and close).
+            running.store(false, std::memory_order_release);
+            if (worker_thread.joinable()) {
+                LOGE("LV2HostWorker: thread still joinable in destructor — joining now");
+                worker_thread.join();
+            }
+            lv2_ringbuffer_t* req = requests.exchange(nullptr, std::memory_order_acq_rel);
+            if (req) lv2_ringbuffer_free(req);
+            lv2_ringbuffer_t* resp = responses.exchange(nullptr, std::memory_order_acq_rel);
+            if (resp) lv2_ringbuffer_free(resp);
+        }
     };
 
     static LV2_Worker_Status host_schedule_work(
@@ -1336,6 +1377,14 @@ private:
 
     void stop_worker() {
         IN
+
+        const bool already_stopped = worker_stopped.exchange(true, std::memory_order_acq_rel);
+        if (already_stopped) {
+            LOGD("stop_worker: worker cleanup already completed, skipping duplicate call");
+            OUT
+            return;
+        }
+
         // Gate: prevent new schedule_work() calls
         host_worker_.enabled.store(false, std::memory_order_release);
 
@@ -1398,6 +1447,8 @@ private:
     LV2HostWorker host_worker_;
 
     std::atomic<bool> shutdown_;
+    std::atomic<bool> closed_;
+    std::atomic<bool> worker_stopped{false};
 };
 
 // ============================================================================

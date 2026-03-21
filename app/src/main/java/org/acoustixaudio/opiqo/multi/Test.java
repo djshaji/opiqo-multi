@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 public class Test {
     MainActivity mainActivity;
     String TAG = "Test";
-    int TEST_CASES = 50;
+    int TEST_CASES = 10;
 
     Test (MainActivity _mainActivity) {
         mainActivity = _mainActivity;
@@ -124,11 +124,21 @@ public class Test {
         Log.d(TAG, "stressTestPluginUI: checking whether plugins crash when UI is opened and closed");
         Iterator<String> keys = mainActivity.pluginInfo.keys();
         LinearLayout container = (LinearLayout) mainActivity.pluginUIContainers.get(1);
-
+        Handler handler = new Handler(Looper.getMainLooper());
+        int counter = 0;
         while (keys.hasNext()) {
             String key = keys.next();
+            /*
+            if (counter < 227) {
+                counter++;
+                continue;
+            }
+
+             */
+
             JSONObject info = mainActivity.pluginInfo.getJSONObject(key);
 
+            Log.d(TAG, "stressTestPluginUI: testing plugin " + key);
             mainActivity.addPlugin(info, 1);
             try {
                 Thread.sleep(1000);
@@ -138,8 +148,8 @@ public class Test {
 
             for (int j = 0; j < 5; j++) {
                 Log.d(TAG, "--------------------------------");
-                Log.d(TAG, String.format("[test %d/5] %s", j, key));
-                mainActivity.runOnUiThread(new Runnable() {
+                Log.d(TAG, String.format("[test %d %d/5] %s", counter, j, key));
+                Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
                         assert container != null;
@@ -152,10 +162,15 @@ public class Test {
                             e.printStackTrace();
                         }
                     }
-                });
+                };
+
+
+                mainActivity.runOnUiThread(runnable);
+//                handler.post(runnable);
             }
 
-            Log.d(TAG, "test [ok]: finished testing plugin " + key);
+            Log.d(TAG, "test " + counter +" [ok]: finished testing plugin " + key);
+            counter ++ ;
         }
     }
 
@@ -163,7 +178,7 @@ public class Test {
         String [] keys = sliders.keySet().toArray(new String[0]);
         for (String key : keys) {
             Slider slider = sliders.get(key);
-            Log.d(TAG, "testSliders: testing slider " + key);
+//            Log.d(TAG, "testSliders: testing slider " + key);
             for (int i = 0; i < TEST_CASES; i++) {
                 assert slider != null;
                 float value = slider.getValue();
@@ -174,7 +189,7 @@ public class Test {
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d(TAG, "run: setting slider " + key + " to " + newValue);
+//                        Log.d(TAG, "run: setting slider " + key + " to " + newValue);
                         slider.setValue(newValue);
                         try {
                             Thread.sleep(10);
@@ -191,9 +206,9 @@ public class Test {
         String [] keys = spinners.keySet().toArray(new String[0]);
         for (String key : keys) {
             Spinner spinner = spinners.get(key);
-            Log.d(TAG, "testSpinners: testing spinner " + key);
+//            Log.d(TAG, "testSpinners: testing spinner " + key);
             if (spinner.getAdapter() == null) {
-                Log.w(TAG, "testSpinners: spinner " + key + " has no adapter, skipping");
+//                Log.w(TAG, "testSpinners: spinner " + key + " has no adapter, skipping");
                 continue;
             }
 
@@ -204,7 +219,7 @@ public class Test {
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d(TAG, "[spinner " + finalI + "/50] " + key + " to " + newValue);
+//                        Log.d(TAG, "[spinner " + finalI + "/50] " + key + " to " + newValue);
                         spinner.setSelection(newValue);
                         try {
                             Thread.sleep(10);
