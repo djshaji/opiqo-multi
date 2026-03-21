@@ -1,6 +1,7 @@
 package org.acoustixaudio.opiqo.multi;
 
 import static android.view.View.GONE;
+import static android.widget.LinearLayout.VERTICAL;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -11,6 +12,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -20,9 +22,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
@@ -107,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
     private Uri currectRecordingUri;
     private ParcelFileDescriptor pfd;
     public FrameLayout pager_layout;
+    private LinearLayout controlBar;
 
     public static class PendingFileRequest {
         final int position;
@@ -432,6 +437,14 @@ public class MainActivity extends AppCompatActivity {
 
         loadAllPresetsFromPresetsDir();
 //        setFirstPreset();
+
+        controlBar = findViewById(R.id.control_bar);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int width = displayMetrics.widthPixels;
+        int height = displayMetrics.heightPixels;
+        if (width > height)
+            rotateLandscape();
     }
 
     /**
@@ -1020,5 +1033,41 @@ public class MainActivity extends AppCompatActivity {
 
         pluginUI.add = ((ConstraintLayout) container.getParent()).findViewById(R.id.add);
         pluginUI.add.setVisibility(GONE);
+    }
+
+    void rotateLandscape () {
+        controlBar.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams pagerLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                1f
+        );
+
+//        ((LinearLayout) pager_layout.getParent()) .setOrientation(LinearLayout.HORIZONTAL);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        params.setMargins(16, 16, 16, 16);
+//        ((View) pager_layout.getParent()).setLayoutParams(params);
+
+//        controlBar.setLayoutParams(params);
+        ((LinearLayout) controlBar.getChildAt(0)). setOrientation(LinearLayout.HORIZONTAL);
+//        ((LinearLayout) controlBar.getChildAt(1)). setOrientation(LinearLayout.HORIZONTAL);
+        ((LinearLayout) controlBar.getChildAt(2)). setOrientation(VERTICAL);
+
+        controlBar.getChildAt(0). setLayoutParams(params);
+        controlBar.getChildAt(1). setLayoutParams(params);
+        controlBar.getChildAt(2). setLayoutParams(params);
+
+        LinearLayout.LayoutParams gainParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        gainParams.width = 400;
+        gainSlider.setLayoutParams(gainParams);
     }
 }
