@@ -29,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -214,9 +215,11 @@ public class MainActivity extends AppCompatActivity {
         recQuality = findViewById(R.id.rec_bitrate);
         SpinnerAdapter qualityAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, bitRates);
         recQuality.setAdapter(qualityAdapter);
+        ((ArrayAdapter) qualityAdapter).setDropDownViewResource(R.layout.audio_devices);
 
         recFormat = findViewById(R.id.rec_format);
         SpinnerAdapter formatAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, recFormats);
+        ((ArrayAdapter) formatAdapter).setDropDownViewResource(R.layout.audio_devices);
         recFormat.setAdapter(formatAdapter);
 
         TextView testButton = findViewById(R.id.power);

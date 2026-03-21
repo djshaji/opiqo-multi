@@ -4,7 +4,6 @@
     android:shape="rectangle">
 
     <!-- Semi-transparent color: #AARRGGBB (e.g., 50% Black) -->
-    <solid android:color="#80ffffff" />
     <solid android:color="@color/material_dynamic_primary95"/>
 
     <!-- Curved corners -->

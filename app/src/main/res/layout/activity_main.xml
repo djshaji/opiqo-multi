@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/material_dynamic_tertiary90"
+    android:background="@color/md_theme_tertiaryContainer"
     tools:context=".MainActivity">
 
     <LinearLayout
@@ -81,10 +81,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/material_dynamic_secondary90"
+                android:background="@color/md_theme_surfaceVariant"
                 android:fontFamily="@font/vt323"
                 android:textAlignment="center"
                 android:layout_gravity="center"
+                android:textColor="@color/md_theme_onSurface"
                 android:text="@string/app_name"
                 android:textSize="20dp" />
             <ImageButton
@@ -116,7 +117,7 @@
             android:id="@+id/control_bar"
             android:padding="10dp"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:background="@color/material_dynamic_primary90"
+            android:background="@color/md_theme_tertiaryContainer"
             android:orientation="vertical">
 
             <LinearLayout
@@ -124,6 +125,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <TextView
+                    android:textColor="@color/md_theme_onSurface"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/anta"
@@ -148,10 +150,12 @@
                         android:value="1"
                         android:layout_height="wrap_content"/>
                     <TextView
+                        android:visibility="visible"
                         android:layout_margin="0dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Volume"
+                        android:textColor="@color/md_theme_onSurface"
                         android:fontFamily="@font/anta"
                         android:textAlignment="center"/>
                 </LinearLayout>
@@ -167,6 +171,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView
+                        android:textColor="@color/md_theme_onSurface"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/anta"
@@ -183,6 +188,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView
+                        android:textColor="@color/md_theme_onSurface"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/anta"
