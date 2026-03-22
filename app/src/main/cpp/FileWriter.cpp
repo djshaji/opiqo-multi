@@ -452,7 +452,7 @@ bool FileWriter::openFlac(int fd, FileType fileType, int _quality) {
 
     FLAC__stream_encoder_set_channels(flacEncoder, channels);
     FLAC__stream_encoder_set_sample_rate(flacEncoder, sampleRate);
-    FLAC__stream_encoder_set_bits_per_sample(flacEncoder, 16);
+    FLAC__stream_encoder_set_bits_per_sample(flacEncoder, 32);
 
     unsigned compressionLevel = 8;
     switch (_quality) {

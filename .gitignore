@@ -14,3 +14,5 @@
 .cxx
 local.properties
 app/src/main/cpp/test
+app/build
+app/release

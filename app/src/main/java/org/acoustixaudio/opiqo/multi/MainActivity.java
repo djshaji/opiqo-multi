@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 100;
     private ToggleButton onOff, recordToggle;
-    private Context context;
+    static Context context;
 
     public JSONObject pluginInfo;
     ArrayList <String> pluginNames;
@@ -115,6 +115,10 @@ public class MainActivity extends AppCompatActivity {
     private ParcelFileDescriptor pfd;
     public FrameLayout pager_layout;
     private LinearLayout controlBar;
+
+    public static MainActivity getInstance() {
+        return (MainActivity) context;
+    }
 
     public static class PendingFileRequest {
         final int position;
@@ -450,6 +454,15 @@ public class MainActivity extends AppCompatActivity {
 
         controlBar = findViewById(R.id.control_bar);
         applyRotationLayout(getResources().getConfiguration().orientation);
+
+        ImageButton settingsButton = findViewById(R.id.settings_button);
+        settingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(context, SettingsActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -1030,6 +1043,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (controlBar != null) {
+            applyRotationLayout(getResources().getConfiguration().orientation);
+        }
 //        onOff.setChecked(true);
     }
 

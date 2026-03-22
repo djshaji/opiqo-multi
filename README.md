@@ -33,6 +33,11 @@ A professional-grade **Guitar Multi-Effects Processor** for Android that hosts a
 - **Post-FX Capture**: Recordings capture the full processed signal — after all active pedal effects and master volume
 - **On-Device Storage**: Recordings are saved to the device's storage for easy access and sharing
 
+### Preset Management
+- **Preset Backup and Restore**: Export all saved presets to a single JSON file from the Settings screen
+- **System Document Picker Integration**: Choose any writable location when exporting and any readable JSON file when importing
+- **Automatic Preset Reload**: Imported presets are written into the app's presets directory and reloaded immediately
+
 ### Technical Features
 - **Google Oboe Integration**: Modern, low-latency audio API for Android
 - **NDK Support**: High-performance native code compilation
@@ -120,6 +125,7 @@ opiqo-multi/
 │   │   ├── main/
 │   │   │   ├── java/org/acoustixaudio/opiqo/multi/
 │   │   │   │   ├── MainActivity.java          # Main UI activity; permission handling, plugin loading
+│   │   │   │   ├── SettingsActivity.java      # Settings UI; audio options and preset import/export
 │   │   │   │   ├── AudioEngine.java           # JNI declarations for the native audio engine
 │   │   │   │   ├── CollectionFragment.java    # Tab-pager fragment (hosts 4 pedal tabs)
 │   │   │   │   ├── CollectionAdapter.java     # ViewPager2 adapter (4 pedal slots)
@@ -240,6 +246,20 @@ When sending file paths or other atom messages to plugins:
 8. **Adjust Master Volume**
    - Move the **Volume** slider (bottom bar) to scale the overall output level
 
+9. **Open Settings**
+   - Tap the **Settings** button on the main screen to open the preferences screen
+   - Use this screen to adjust audio-related options and manage preset import/export
+
+10. **Export Presets**
+   - In **Settings > Presets**, tap **Export**
+   - Choose where to save the generated `presets.json` file using Android's document picker
+   - The exported file contains all saved presets from the app's internal presets directory
+
+11. **Import Presets**
+   - In **Settings > Presets**, tap **Import**
+   - Pick a previously exported JSON file
+   - The app restores each preset file and reloads the preset list immediately
+
 ### UI Components
 - **Power Toggle**: Master switch to start/stop the audio engine and all plugin processing
 - **Volume Slider**: Controls master output gain
@@ -249,6 +269,7 @@ When sending file paths or other atom messages to plugins:
 - **Plugin Parameter Sliders**: One slider per control port; labels and ranges from the plugin
 - **Delete Button**: Removes and unloads the plugin from its slot
 - **Input / Output Device Spinners**: Select which audio hardware to use
+- **Settings Button**: Opens the preferences screen for audio options and preset management
 
 ## Permissions
 

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>opiqo Guitar Multi Effects Pedal for Android</title>
+	<meta name="description" content="Open source Android guitar multi-effects processor with LV2 plugin hosting, low-latency Oboe audio, preset management, and on-device recording.">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg: #f3efe4;
+			--bg-strong: #e3dac4;
+			--panel: rgba(255, 252, 245, 0.82);
+			--panel-strong: #fffaf0;
+			--text: #1f1f18;
+			--muted: #635c49;
+			--accent: #bb4d00;
+			--accent-dark: #8f3900;
+			--line: rgba(31, 31, 24, 0.12);
+			--shadow: 0 20px 50px rgba(57, 38, 14, 0.12);
+			--radius: 24px;
+			--max: 1180px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			scroll-behavior: smooth;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Space Grotesk", sans-serif;
+			color: var(--text);
+			background:
+				radial-gradient(circle at top left, rgba(244, 116, 38, 0.18), transparent 28%),
+				radial-gradient(circle at top right, rgba(120, 98, 55, 0.14), transparent 24%),
+				linear-gradient(180deg, #f9f4ea 0%, var(--bg) 42%, #efe6d5 100%);
+		}
+
+		a {
+			color: inherit;
+		}
+
+		.shell {
+			width: min(calc(100% - 32px), var(--max));
+			margin: 0 auto;
+		}
+
+		.topbar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+			padding: 22px 0;
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			text-decoration: none;
+		}
+
+		.brand-mark {
+			width: 48px;
+			height: 48px;
+			border-radius: 16px;
+			display: grid;
+			place-items: center;
+			background: linear-gradient(145deg, #1a1a14, #4d2600);
+			color: #fff5e8;
+			font-size: 1.2rem;
+			font-weight: 700;
+			box-shadow: var(--shadow);
+		}
+
+		.brand-copy strong,
+		.hero-copy h1,
+		.section-title h2,
+		.cta-card h2,
+		.oss-card h2 {
+			font-family: "Instrument Serif", serif;
+			font-weight: 400;
+			letter-spacing: 0.01em;
+		}
+
+		.brand-copy {
+			line-height: 1.1;
+		}
+
+		.brand-copy strong {
+			display: block;
+			font-size: 1.55rem;
+		}
+
+		.brand-copy span,
+		.eyebrow,
+		.lede,
+		.stat-label,
+		.card p,
+		.signal-card p,
+		.list li,
+		.footer,
+		.feature-note {
+			color: var(--muted);
+		}
+
+		.nav {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.nav a,
+		.button,
+		.button-secondary {
+			text-decoration: none;
+			border-radius: 999px;
+			transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+		}
+
+		.nav a {
+			padding: 10px 14px;
+			color: var(--muted);
+		}
+
+		.nav a:hover,
+		.button:hover,
+		.button-secondary:hover {
+			transform: translateY(-2px);
+		}
+
+		.button,
+		.button-secondary {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 14px 20px;
+			font-weight: 700;
+		}
+
+		.button {
+			color: #fff7ef;
+			background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+			box-shadow: 0 18px 30px rgba(187, 77, 0, 0.24);
+		}
+
+		.button-secondary {
+			background: rgba(255, 250, 240, 0.78);
+			border: 1px solid var(--line);
+		}
+
+		.hero {
+			position: relative;
+			overflow: hidden;
+			padding: 26px;
+			border-radius: calc(var(--radius) + 8px);
+			background: linear-gradient(160deg, rgba(255, 250, 241, 0.92), rgba(232, 221, 196, 0.88));
+			border: 1px solid rgba(255, 255, 255, 0.5);
+			box-shadow: var(--shadow);
+		}
+
+		.hero::before,
+		.hero::after {
+			content: "";
+			position: absolute;
+			border-radius: 50%;
+			filter: blur(8px);
+			opacity: 0.8;
+		}
+
+		.hero::before {
+			width: 340px;
+			height: 340px;
+			right: -90px;
+			top: -90px;
+			background: radial-gradient(circle, rgba(187, 77, 0, 0.18), transparent 70%);
+		}
+
+		.hero::after {
+			width: 260px;
+			height: 260px;
+			left: -90px;
+			bottom: -120px;
+			background: radial-gradient(circle, rgba(58, 44, 15, 0.12), transparent 70%);
+		}
+
+		.hero-grid {
+			position: relative;
+			z-index: 1;
+			display: grid;
+			grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+			gap: 26px;
+			align-items: center;
+		}
+
+		.eyebrow {
+			text-transform: uppercase;
+			letter-spacing: 0.18em;
+			font-size: 0.82rem;
+			margin: 0 0 14px;
+		}
+
+		.hero-copy h1 {
+			margin: 0;
+			font-size: clamp(3rem, 7vw, 5.6rem);
+			line-height: 0.94;
+		}
+
+		.lede {
+			max-width: 640px;
+			font-size: 1.08rem;
+			line-height: 1.7;
+			margin: 22px 0 0;
+		}
+
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 14px;
+			margin-top: 28px;
+		}
+
+		.stats {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 14px;
+			margin-top: 28px;
+		}
+
+		.stat {
+			background: rgba(255, 251, 244, 0.76);
+			border: 1px solid var(--line);
+			border-radius: 20px;
+			padding: 16px;
+		}
+
+		.stat strong {
+			display: block;
+			font-size: 2rem;
+		}
+
+		.hero-panel {
+			padding: 22px;
+			border-radius: 26px;
+			background: rgba(28, 21, 14, 0.92);
+			color: #f6efe4;
+			box-shadow: 0 24px 50px rgba(28, 21, 14, 0.24);
+		}
+
+		.hero-panel h2 {
+			margin-top: 0;
+			margin-bottom: 14px;
+			font-size: 1.05rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: #d8c29d;
+		}
+
+		.chain {
+			display: grid;
+			gap: 10px;
+		}
+
+		.chain span {
+			display: block;
+			padding: 12px 14px;
+			border-radius: 16px;
+			background: rgba(255, 255, 255, 0.06);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+		}
+
+		.chain .arrow {
+			text-align: center;
+			color: #d8c29d;
+			background: transparent;
+			border: 0;
+			padding: 0;
+		}
+
+		section {
+			padding: 72px 0 0;
+		}
+
+		.section-title {
+			display: flex;
+			justify-content: space-between;
+			gap: 20px;
+			align-items: end;
+			margin-bottom: 24px;
+		}
+
+		.section-title h2 {
+			margin: 0;
+			font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+		}
+
+		.section-title p {
+			max-width: 540px;
+			margin: 0;
+			color: var(--muted);
+			line-height: 1.65;
+		}
+
+		.cards {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 18px;
+		}
+
+		.card,
+		.signal-card,
+		.oss-card,
+		.cta-card {
+			background: var(--panel);
+			backdrop-filter: blur(12px);
+			border: 1px solid rgba(255, 255, 255, 0.5);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+		}
+
+		.card {
+			padding: 22px;
+		}
+
+		.card strong,
+		.signal-card strong {
+			display: block;
+			margin-bottom: 10px;
+			font-size: 1.08rem;
+		}
+
+		.card p,
+		.signal-card p {
+			margin: 0;
+			line-height: 1.65;
+		}
+
+		.signal-grid {
+			display: grid;
+			grid-template-columns: 1.1fr 0.9fr;
+			gap: 18px;
+		}
+
+		.signal-card {
+			padding: 24px;
+		}
+
+		.flow {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-top: 18px;
+		}
+
+		.flow span {
+			padding: 11px 14px;
+			border-radius: 999px;
+			background: rgba(187, 77, 0, 0.08);
+			border: 1px solid rgba(187, 77, 0, 0.12);
+		}
+
+		.list {
+			margin: 18px 0 0;
+			padding-left: 20px;
+			line-height: 1.75;
+		}
+
+		.oss-card,
+		.cta-card {
+			padding: 28px;
+		}
+
+		.oss-card h2,
+		.cta-card h2 {
+			margin: 0 0 14px;
+			font-size: clamp(2rem, 3.8vw, 3rem);
+		}
+
+		.oss-card p,
+		.cta-card p {
+			margin: 0 0 20px;
+			color: var(--muted);
+			line-height: 1.7;
+		}
+
+		.cta-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 18px;
+		}
+
+		.footer {
+			padding: 38px 0 46px;
+			font-size: 0.95rem;
+		}
+
+		@media (max-width: 980px) {
+			.hero-grid,
+			.signal-grid,
+			.cta-row,
+			.cards {
+				grid-template-columns: 1fr;
+			}
+
+			.section-title {
+				align-items: start;
+				flex-direction: column;
+			}
+		}
+
+		@media (max-width: 720px) {
+			.topbar {
+				flex-direction: column;
+				align-items: start;
+			}
+
+			.hero {
+				padding: 20px;
+			}
+
+			.hero-copy h1 {
+				font-size: clamp(2.5rem, 13vw, 4.2rem);
+			}
+
+			.stats {
+				grid-template-columns: 1fr;
+			}
+
+			.nav {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<header class="topbar">
+			<a class="brand" href="./index.html" aria-label="opiqo home">
+				<div class="brand-mark">OP</div>
+				<div class="brand-copy">
+					<strong>opiqo</strong>
+					<span>Guitar Multi Effects Pedal for Android</span>
+				</div>
+			</a>
+			<nav class="nav" aria-label="Primary">
+				<a href="#features">Features</a>
+				<a href="#open-source">Open source</a>
+				<a href="#build">Build</a>
+				<a href="./privacy.html">Privacy</a>
+				<a class="button-secondary" href="https://github.com/djshaji/opiqo-multi" target="_blank" rel="noreferrer">GitHub</a>
+			</nav>
+		</header>
+
+		<main>
+			<section class="hero">
+				<div class="hero-grid">
+					<div class="hero-copy">
+						<p class="eyebrow">Open Source Android Audio Tool</p>
+						<h1>LV2 guitar processing on a phone, without the toy feel.</h1>
+						<p class="lede">
+							opiqo turns an Android device into a real-time guitar multi-effects processor with a four-pedal chain,
+							low-latency audio through Google Oboe, bundled LV2 effects, preset backup and restore, and direct
+							recording in WAV, MP3, Opus, FLAC, and OGG Vorbis.
+						</p>
+						<div class="hero-actions">
+							<a class="button" href="https://github.com/djshaji/opiqo-multi" target="_blank" rel="noreferrer">View on GitHub</a>
+							<a class="button-secondary" href="./privacy.html">Read Privacy Policy</a>
+						</div>
+						<div class="stats" aria-label="Project highlights">
+							<div class="stat">
+								<strong>200+</strong>
+								<span class="stat-label">Bundled LV2 plugins</span>
+							</div>
+							<div class="stat">
+								<strong>4</strong>
+								<span class="stat-label">Pedal slots per chain</span>
+							</div>
+							<div class="stat">
+								<strong>32-bit</strong>
+								<span class="stat-label">WAV and FLAC recording support</span>
+							</div>
+						</div>
+					</div>
+
+					<aside class="hero-panel" aria-label="Audio chain overview">
+						<h2>Signal Path</h2>
+						<div class="chain">
+							<span>Guitar / microphone input</span>
+							<span class="arrow">↓</span>
+							<span>Oboe full-duplex audio stream</span>
+							<span class="arrow">↓</span>
+							<span>LV2 pedal 1 → 2 → 3 → 4</span>
+							<span class="arrow">↓</span>
+							<span>Master gain and recording</span>
+							<span class="arrow">↓</span>
+							<span>Speaker, headphones, or interface output</span>
+						</div>
+					</aside>
+				</div>
+			</section>
+
+			<section id="features">
+				<div class="section-title">
+					<h2>Built for real audio work</h2>
+					<p>
+						The project is not a skin over canned effects. It is an Android LV2 host with native processing,
+						dynamic plugin loading, per-pedal bypass, hardware device selection, and preset portability.
+					</p>
+				</div>
+				<div class="cards">
+					<article class="card">
+						<strong>Native audio engine</strong>
+						<p>Audio processing runs in C++ with Google Oboe and a full-duplex engine designed for low-latency real-time work on Android 12 and newer.</p>
+					</article>
+					<article class="card">
+						<strong>Real pedal-chain workflow</strong>
+						<p>Swipe across four pedal slots, load LV2 effects per slot, bypass them independently, and delete or replace plugins without rebuilding the chain.</p>
+					</article>
+					<article class="card">
+						<strong>On-device recording</strong>
+						<p>Capture the post-effects signal directly from the app in multiple formats, including lossless WAV and FLAC plus compressed MP3, Opus, and OGG.</p>
+					</article>
+					<article class="card">
+						<strong>Preset import and export</strong>
+						<p>Back up all saved presets to JSON, restore them with Android's document picker, and reload the pedal setup immediately after import.</p>
+					</article>
+					<article class="card">
+						<strong>Bundled guitar voices</strong>
+						<p>The app ships with distortion, overdrive, fuzz, amp simulation, modulation, and filter plugins ready to use out of the box.</p>
+					</article>
+					<article class="card">
+						<strong>Inspectable and modifiable</strong>
+						<p class="feature-note">MIT-licensed source, documented build steps, LV2 bundle structure, and native code exposed in the repository for anyone who wants to extend it.</p>
+					</article>
+				</div>
+			</section>
+
+			<section>
+				<div class="signal-grid">
+					<article class="signal-card">
+						<strong>How it works</strong>
+						<p>
+							Audio enters through the selected input device, crosses the JNI bridge into the native engine, and moves through up to four LV2 plugins before master gain and output routing.
+						</p>
+						<div class="flow" aria-label="Processing flow chips">
+							<span>Input device selection</span>
+							<span>Oboe stream</span>
+							<span>JNI bridge</span>
+							<span>LV2 slot chain</span>
+							<span>Master volume</span>
+							<span>Recording</span>
+							<span>Output device</span>
+						</div>
+					</article>
+					<article class="signal-card" id="build">
+						<strong>Build requirements</strong>
+						<p>Android 12+, JDK 11+, Android NDK, CMake 3.22.1+, and the included Gradle wrapper are the core prerequisites described in the project README.</p>
+						<ul class="list">
+							<li>Android Gradle Plugin 9.x with prefab support for Oboe</li>
+							<li>Native LV2 support through Lilv, Serd, Sord, Sratom, Zix, and JACK components</li>
+							<li>Debug and release builds available through Gradle tasks</li>
+						</ul>
+					</article>
+				</div>
+			</section>
+
+			<section id="open-source">
+				<div class="cta-row">
+					<article class="oss-card">
+						<h2>Open source by design</h2>
+						<p>
+							opiqo is released under the MIT License. The Android app, native engine, LV2 hosting layer, and UI are all available in the public repository, which makes the project's behavior inspectable instead of opaque.
+						</p>
+						<a class="button" href="https://github.com/djshaji/opiqo-multi" target="_blank" rel="noreferrer">Browse the repository</a>
+					</article>
+					<article class="cta-card">
+						<h2>Need the data policy?</h2>
+						<p>
+							The privacy page summarizes the current code-backed behavior: microphone permission for audio capture, recordings and presets stored locally or exported only when the user chooses to, and no ad or analytics SDKs in the Android build files.
+						</p>
+						<a class="button-secondary" href="./privacy.html">Open privacy policy</a>
+					</article>
+				</div>
+			</section>
+		</main>
+
+		<footer class="footer">
+			opiqo Guitar Multi Effects Pedal for Android. Open source project on <a href="https://github.com/djshaji/opiqo-multi" target="_blank" rel="noreferrer">GitHub</a>.
+		</footer>
+	</div>
+</body>
+</html>

@@ -15,7 +15,7 @@ android {
         minSdk 34
         targetSdk 36
         versionCode 1
-        versionName '0.9'
+        versionName '0.91'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -72,6 +72,7 @@ dependencies {
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
+    implementation libs.preference
     testImplementation libs.junit
     implementation 'com.google.oboe:oboe:1.10.0'
 
