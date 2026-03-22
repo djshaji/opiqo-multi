@@ -18,12 +18,9 @@ public class CollectionFragment extends Fragment {
     // representing an object in the collection.
     CollectionAdapter collectionAdapter;
     ViewPager2 viewPager;
-    public MainActivity mainActivity ;
     public TabLayout tabLayout;
 
-    public CollectionFragment(MainActivity _mainActivity) {
-        mainActivity = _mainActivity;
-    }
+    public CollectionFragment() {}
 
     @Nullable
     @Override
@@ -34,8 +31,9 @@ public class CollectionFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        MainActivity mainActivity = (MainActivity) requireActivity();
         tabLayout = view.findViewById(R.id.tab_layout);
-        collectionAdapter = new CollectionAdapter(this, mainActivity);
+        collectionAdapter = new CollectionAdapter(this);
         collectionAdapter.mainActivity = mainActivity;
         viewPager = view.findViewById(R.id.pager);
         viewPager.setAdapter(collectionAdapter);

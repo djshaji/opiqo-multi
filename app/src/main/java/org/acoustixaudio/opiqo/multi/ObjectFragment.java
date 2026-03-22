@@ -21,9 +21,7 @@ public class ObjectFragment extends Fragment {
     int position;
     private String TAG = "ObjectFragment";
 
-    public ObjectFragment(MainActivity _mainActivity) {
-        mainActivity = _mainActivity;
-    }
+    public ObjectFragment() {}
 
     @Nullable
     @Override
@@ -34,6 +32,7 @@ public class ObjectFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        mainActivity = (MainActivity) requireActivity();
         Bundle args = getArguments();
         ((TextView) view.findViewById(R.id.text1))
                 .setText(Integer.toString(args.getInt(ARG_OBJECT)));

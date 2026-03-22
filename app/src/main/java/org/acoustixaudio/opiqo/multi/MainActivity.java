@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
@@ -328,10 +329,14 @@ public class MainActivity extends AppCompatActivity {
         requestRecordAudioPermission();
         pager_layout = findViewById(R.id.pager_container);
 
-        collectionFragment = new CollectionFragment(this);
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.pager_container, collectionFragment)
-                .commit();
+        if (savedInstanceState == null) {
+            collectionFragment = new CollectionFragment();
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.pager_container, collectionFragment)
+                    .commit();
+        } else {
+            collectionFragment = (CollectionFragment) getSupportFragmentManager().findFragmentById(R.id.pager_container);
+        }
 
         String path = getFilesDir() + "/lv2";
         Log.d(TAG, "onCreate: [lv2 path] " + path);
@@ -442,12 +447,21 @@ public class MainActivity extends AppCompatActivity {
 //        setFirstPreset();
 
         controlBar = findViewById(R.id.control_bar);
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int width = displayMetrics.widthPixels;
-        int height = displayMetrics.heightPixels;
-        if (width > height)
+        applyRotationLayout(getResources().getConfiguration().orientation);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        applyRotationLayout(newConfig.orientation);
+    }
+
+    private void applyRotationLayout(int orientation) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             rotateLandscape();
+        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            rotatePortrait();
+        }
     }
 
     /**
@@ -1042,7 +1056,7 @@ public class MainActivity extends AppCompatActivity {
         controlBar.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams pagerLayoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
         );
 
@@ -1071,6 +1085,29 @@ public class MainActivity extends AppCompatActivity {
         );
 
         gainParams.width = 400;
+        gainSlider.setLayoutParams(gainParams);
+    }
+    void rotatePortrait () {
+        controlBar.setOrientation(LinearLayout.VERTICAL);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(16, 16, 16, 16);
+        ((LinearLayout) controlBar.getChildAt(0)). setOrientation(LinearLayout.HORIZONTAL);
+        ((LinearLayout) controlBar.getChildAt(2)). setOrientation(LinearLayout.HORIZONTAL);
+
+        controlBar.getChildAt(0). setLayoutParams(params);
+        controlBar.getChildAt(1). setLayoutParams(params);
+        controlBar.getChildAt(2). setLayoutParams(params);
+
+        LinearLayout.LayoutParams gainParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        gainParams.width = LinearLayout.LayoutParams.MATCH_PARENT;
         gainSlider.setLayoutParams(gainParams);
     }
 }
