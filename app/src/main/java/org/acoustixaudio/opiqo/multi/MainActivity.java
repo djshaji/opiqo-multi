@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
             "GxAmp Test"
     };
     private Slider gainSlider;
+    TextView gainLabel;
     private File presetsDirectory;
     private TextView patchLabel;
     private ActivityResultLauncher<String[]> persistentPicker;
@@ -283,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         gainSlider = findViewById(R.id.volume_slider);
+        gainLabel = findViewById(R.id.gain_label);
         gainSlider.addOnChangeListener(new Slider.OnChangeListener() {
             @Override
             public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
@@ -1086,6 +1088,7 @@ public class MainActivity extends AppCompatActivity {
 
         gainParams.width = 400;
         gainSlider.setLayoutParams(gainParams);
+        gainLabel.setVisibility(View.VISIBLE);
     }
     void rotatePortrait () {
         controlBar.setOrientation(LinearLayout.VERTICAL);
@@ -1109,5 +1112,6 @@ public class MainActivity extends AppCompatActivity {
 
         gainParams.width = LinearLayout.LayoutParams.MATCH_PARENT;
         gainSlider.setLayoutParams(gainParams);
+        gainLabel.setVisibility(GONE);
     }
 }

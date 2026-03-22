@@ -155,6 +155,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Volume"
+                        android:id="@+id/gain_label"
                         android:textColor="@color/md_theme_onSurface"
                         android:fontFamily="@font/anta"
                         android:textAlignment="center"/>
