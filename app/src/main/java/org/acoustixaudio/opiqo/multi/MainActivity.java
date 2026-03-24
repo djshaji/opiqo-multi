@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private ToggleButton onOff, recordToggle;
     static Context context;
+    public static boolean proVersion = false;
 
     public JSONObject pluginInfo;
     ArrayList <String> pluginNames;
@@ -188,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        proVersion = getSharedPreferences("core", MODE_PRIVATE).getBoolean("is_pro", false);
         // Must be registered before STARTED; chooseFile() only launches this instance.
         persistentPicker = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),

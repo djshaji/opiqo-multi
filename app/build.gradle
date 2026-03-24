@@ -14,8 +14,8 @@ android {
         applicationId "org.acoustixaudio.opiqo.multi"
         minSdk 34
         targetSdk 36
-        versionCode 1
-        versionName '0.91'
+        versionCode 2
+        versionName '0.92'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -28,7 +28,7 @@ android {
         ndk {
             debugSymbolLevel 'FULL' // or 'FULL'
         }
-        versionNameSuffix 'Jag-Stang'
+        versionNameSuffix '-Jag-Stang'
     }
 
     buildTypes {
@@ -75,6 +75,7 @@ dependencies {
     implementation libs.preference
     testImplementation libs.junit
     implementation 'com.google.oboe:oboe:1.10.0'
+    implementation libs.billing
 
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
