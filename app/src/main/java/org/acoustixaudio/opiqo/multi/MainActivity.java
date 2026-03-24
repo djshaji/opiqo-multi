@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
             "GxAmp Test"
     };
     private Slider gainSlider;
+    public boolean tips = true;
     TextView gainLabel;
     private File presetsDirectory;
     private TextView patchLabel;
@@ -307,6 +308,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 selectPresetFromLoadedPresetsWithDialog();
+                
+                if (tips)
+                    Toast.makeText(MainActivity.this, "Long press to delete this preset.", Toast.LENGTH_SHORT).show();
             }
         });
 

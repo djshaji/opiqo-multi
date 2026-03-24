@@ -442,6 +442,8 @@ public class UI extends LinearLayout {
                  add.setVisibility(View.VISIBLE);
 
             ((LinearLayout) getParent()).removeView(this);
+            if (((MainActivity) context).tips)
+                Toast.makeText(context, "Long press to delete all plugins.", Toast.LENGTH_SHORT).show();
         });
 
         del.setOnLongClickListener(new OnLongClickListener() {
