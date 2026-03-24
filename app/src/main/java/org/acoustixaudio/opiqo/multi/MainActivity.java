@@ -121,6 +121,11 @@ public class MainActivity extends AppCompatActivity {
         return (MainActivity) context;
     }
 
+    public void showUpgradeDialog() {
+        Intent intent = new Intent(this, Purchase.class);
+        startActivity(intent);
+    }
+
     public static class PendingFileRequest {
         final int position;
         public Spinner spinner;
@@ -225,10 +230,39 @@ public class MainActivity extends AppCompatActivity {
         ((ArrayAdapter) qualityAdapter).setDropDownViewResource(R.layout.audio_devices);
         recQuality.setAdapter(qualityAdapter);
 
+        recQuality.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (! proVersion && i != 0) {
+                    recQuality.setSelection(0);
+                    showUpgradeDialog();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
         recFormat = findViewById(R.id.rec_format);
         SpinnerAdapter formatAdapter = new android.widget.ArrayAdapter<>(this, R.layout.spinner_item, recFormats);
         ((ArrayAdapter) formatAdapter).setDropDownViewResource(R.layout.audio_devices);
         recFormat.setAdapter(formatAdapter);
+        recFormat.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (! proVersion && i != 0) {
+                    recFormat.setSelection(0);
+                    showUpgradeDialog();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
         TextView testButton = findViewById(R.id.power);
         testButton.setOnClickListener(new View.OnClickListener() {
@@ -1131,5 +1165,12 @@ public class MainActivity extends AppCompatActivity {
         gainParams.width = LinearLayout.LayoutParams.MATCH_PARENT;
         gainSlider.setLayoutParams(gainParams);
         gainLabel.setVisibility(GONE);
+    }
+
+    void deleteAllPlugins () {
+        for (int i = 1 ; i < 5 ; i ++) {
+            AudioEngine.deletePlugin(i);
+        }
+        deleteUIs();
     }
 }

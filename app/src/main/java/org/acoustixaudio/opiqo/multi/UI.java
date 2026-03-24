@@ -1,5 +1,6 @@
 package org.acoustixaudio.opiqo.multi;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.util.Log;
 import android.view.Gravity;
@@ -441,6 +442,22 @@ public class UI extends LinearLayout {
                  add.setVisibility(View.VISIBLE);
 
             ((LinearLayout) getParent()).removeView(this);
+        });
+
+        del.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                AlertDialog .Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Delete all plugin");
+                builder.setMessage("Are you sure you want to delete all plugins? This action cannot be undone.");
+                builder.setPositiveButton("Delete All", (dialogInterface, i) -> {
+                    ((MainActivity) context).deleteAllPlugins();
+                });
+
+                builder.setNegativeButton("Cancel", null);
+                builder.show();
+                return false;
+            }
         });
 
         addView(del);

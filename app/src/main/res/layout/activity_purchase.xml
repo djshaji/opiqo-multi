@@ -9,8 +9,8 @@
 
     <TextView
         android:id="@+id/tv_title"
-        famif
         android:layout_width="0dp"
+        android:fontFamily="@font/anta"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="48dp"
@@ -19,6 +19,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textStyle="bold"
         android:gravity="center"
+        android:drawableTop="@mipmap/ic_launcher_round"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -31,6 +32,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
         android:gravity="center"
+        android:fontFamily="@font/anta"
         android:text="Unlock unlimited presets, all effects, and future updates."
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintEnd_toEndOf="parent"
@@ -39,6 +41,7 @@
 
     <TextView
         android:id="@+id/tv_price"
+        android:fontFamily="@font/anta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -56,7 +59,9 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="32dp"
+        android:fontFamily="@font/anta"
         android:text="Buy Pro"
+        android:textSize="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_price" />
@@ -67,10 +72,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:fontFamily="@font/anta"
         android:text="Restore Purchase"
         android:textColor="@color/md_theme_onSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_purchase" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pro_benefits"
+        android:layout_margin="20dp"
+        android:textSize="20dp"
+        android:id="@+id/benefits"
+        app:layout_constraintTop_toBottomOf="@id/btn_restore"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

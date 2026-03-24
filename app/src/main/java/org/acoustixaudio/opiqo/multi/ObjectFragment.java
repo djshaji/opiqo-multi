@@ -41,6 +41,11 @@ public class ObjectFragment extends Fragment {
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (! MainActivity.proVersion && position > 1) {
+                    mainActivity.showUpgradeDialog();
+                    return;
+                }
+
                 addPluginDialog();
             }
         });
