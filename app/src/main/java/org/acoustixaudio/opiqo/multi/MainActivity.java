@@ -195,7 +195,8 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        proVersion = getSharedPreferences("core", MODE_PRIVATE).getBoolean("is_pro", false);
+        if (! proVersion)
+            proVersion = getSharedPreferences("core", MODE_PRIVATE).getBoolean("is_pro", false);
         // Must be registered before STARTED; chooseFile() only launches this instance.
         persistentPicker = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),
@@ -1176,5 +1177,9 @@ public class MainActivity extends AppCompatActivity {
             AudioEngine.deletePlugin(i);
         }
         deleteUIs();
+    }
+
+    void loadConfig () {
+        tips = sharedPreferences.getBoolean("tips", true);
     }
 }

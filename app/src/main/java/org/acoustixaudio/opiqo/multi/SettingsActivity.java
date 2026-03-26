@@ -1,5 +1,6 @@
 package org.acoustixaudio.opiqo.multi;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +11,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreference;
+import androidx.preference.SwitchPreferenceCompat;
 
 import org.json.JSONObject;
 
@@ -40,13 +43,25 @@ public class SettingsActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+        } else {
+            Log.e(TAG, "onCreate: actionbar is null" );
         }
+
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            SwitchPreferenceCompat tips = findPreference("tips");
+            if (tips != null) {
+                tips.setOnPreferenceChangeListener((preference, newValue) -> {
+                    boolean enabled = (boolean) newValue;
+                    ((MainActivity) MainActivity.getInstance()).tips = (boolean) newValue;
+                    return true;
+                });
+            }
 
             Preference export = findPreference("export");
             if (export != null) {
@@ -72,6 +87,43 @@ public class SettingsActivity extends AppCompatActivity {
                     startActivityForResult(intent, REQUEST_IMPORT_PRESETS);
                     return true;
                 });
+            }
+
+            Preference author = findPreference("contact");
+            if (author != null) {
+                author.setOnPreferenceClickListener(preference -> {
+                    Uri uri = Uri.parse("https://acoustixaudio.org");
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(intent);
+                    return false;
+                });
+            }
+
+            Preference github = findPreference("github");
+            if (github != null) {
+                github.setOnPreferenceClickListener(preference -> {
+                    Uri uri = Uri.parse("https://github.com/djshaji");
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(intent);
+                    return false;
+                });
+            }
+
+            Preference pro = findPreference("pro");
+            if (pro != null) {
+                pro.setOnPreferenceClickListener(preference -> {
+                    Intent intent = new Intent(getActivity(), Purchase.class);
+                    startActivity(intent);
+                    return true;
+                });
+            }
+
+            if (MainActivity.proVersion) {
+                if (pro != null) {
+                    pro.setEnabled(false);
+                    pro.setSummary("Pro version activated");
+                    pro.setTitle("Premium");
+                }
             }
         }
 

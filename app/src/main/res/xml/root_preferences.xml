@@ -2,7 +2,7 @@
 
     <PreferenceScreen
         app:key="general_settings"
-        app:summary="Version 1.0 Jag-Stang"
+        app:summary="Jag-Stang"
         app:icon="@mipmap/ic_launcher_round"
         app:title="@string/app_name">
 
@@ -11,6 +11,18 @@
             app:key="enable_notifications"
             app:title="Enable Notifications"/>
     </PreferenceScreen>
+    <PreferenceCategory app:title="Get Pro Version">
+        <Preference
+            app:key="pro"
+            app:title="Upgrade"
+            app:summary="Unlock all features and support development"/>
+    </PreferenceCategory>
+    <PreferenceCategory app:title="General Settings">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="tips"
+            app:title="Show tips"/>
+    </PreferenceCategory>
     <PreferenceCategory app:title="Audio Settings">
 
         <ListPreference
@@ -54,5 +66,15 @@
             app:key="import"
             app:title="Import"
             app:summary="Import presets from file"/>
+    </PreferenceCategory>
+    <PreferenceCategory app:title="About">
+        <Preference
+            app:key="contact"
+            app:title="Made with 💜 by Shaji"
+            app:summary="Rock and roll will never die"/>
+        <Preference
+            app:key="github"
+            app:title="GitHub"
+            app:summary="This app is completely open source. You are free to use the source code, even for commercial purposes."/>
     </PreferenceCategory>
 </PreferenceScreen>
