@@ -1,11 +1,22 @@
 package org.acoustixaudio.opiqo.multi;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -125,6 +136,52 @@ public class SettingsActivity extends AppCompatActivity {
                     pro.setTitle("Premium");
                 }
             }
+
+            Preference downloadPc = findPreference("download_pc");
+            if (downloadPc != null) {
+                downloadPc.setOnPreferenceClickListener(preference -> {
+                    Uri uri = Uri.parse("https://opiqo.acoustixaudio.org");
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    return true;
+                });
+            }
+
+            Preference serialKey = findPreference("bundle_key");
+            if (serialKey != null) {
+                serialKey.setOnPreferenceClickListener(preference -> {
+                    SharedPreferences prefs = requireActivity()
+                            .getSharedPreferences("core", Context.MODE_PRIVATE);
+                    /*
+                    if (!prefs.getBoolean("is_bundle", false)) {
+                        Toast.makeText(getActivity(),
+                                "Purchase the Bundle to get your PC version key",
+                                Toast.LENGTH_LONG).show();
+                        return true;
+                    }
+
+                     */
+                    String key = ((SettingsActivity) requireActivity()).getSerialKey();
+                    if (key == null) {
+                        Toast.makeText(getActivity(), "Failed to generate key",
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    new AlertDialog.Builder(requireActivity())
+                            .setTitle("PC Version Serial Key")
+                            .setMessage("Your key (valid for 10 minutes):\n\n" + key)
+                            .setPositiveButton("Copy", (d, w) -> {
+                                ClipboardManager cm = (ClipboardManager) requireActivity()
+                                        .getSystemService(Context.CLIPBOARD_SERVICE);
+                                cm.setPrimaryClip(ClipData.newPlainText("serial_key", key));
+                                Toast.makeText(getActivity(), "Key copied!",
+                                        Toast.LENGTH_SHORT).show();
+                            })
+                            .setNegativeButton("Close", null)
+                            .show();
+                    return true;
+                });
+            }
+
         }
 
         @Override
@@ -196,8 +253,8 @@ public class SettingsActivity extends AppCompatActivity {
             Iterator<String> keys = json.keys();
             while (keys.hasNext()) {
                 String fileName = keys.next();
-                String fileContent = json.optString(fileName, null);
-                if (fileContent == null) {
+                String fileContent = json.optString(fileName, "");
+                if (fileContent.isEmpty()) {
                     continue;
                 }
 
@@ -226,5 +283,68 @@ public class SettingsActivity extends AppCompatActivity {
             result.write(buffer, 0, read);
         }
         return result.toByteArray();
+    }
+
+    String getSerialKey() {
+        final String base32_key = "JBSWY3DPEHPK3PXP";
+        // step    — time step in seconds (default 30)
+        // digits  — code length (default 6)
+        // skew    — counter offset from current step (0 = now, -1 = previous, +1 = next)
+        final int step = 30;    // standard TOTP step — matches Microsoft/Google Authenticator
+        final int digits = 6;
+        final int skew = 0;
+
+        try {
+            byte[] key = base32Decode(base32_key);
+
+            // TOTP counter: floor(epoch_seconds / step) + skew
+            long counter = (System.currentTimeMillis() / 1000L) / step + skew;
+
+            // Encode counter as 8-byte big-endian
+            byte[] counterBytes = new byte[8];
+            long tmp = counter;
+            for (int i = 7; i >= 0; i--) {
+                counterBytes[i] = (byte) (tmp & 0xff);
+                tmp >>= 8;
+            }
+
+            // HMAC-SHA1
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(new SecretKeySpec(key, "HmacSHA1"));
+            byte[] hash = mac.doFinal(counterBytes);
+
+            // Dynamic truncation (RFC 4226)
+            int offset = hash[hash.length - 1] & 0x0f;
+            int binary = ((hash[offset]     & 0x7f) << 24)
+                       | ((hash[offset + 1] & 0xff) << 16)
+                       | ((hash[offset + 2] & 0xff) << 8)
+                       |  (hash[offset + 3] & 0xff);
+
+            int otp = binary % (int) Math.pow(10, digits);
+            return String.format(java.util.Locale.US, "%0" + digits + "d", otp);
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            Log.e(TAG, "getSerialKey error", e);
+            return null;
+        }
+    }
+
+    /** RFC 4648 Base32 decoder. */
+    private byte[] base32Decode(String base32) {
+        final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        base32 = base32.toUpperCase().replaceAll("[=\\s]", "");
+        byte[] result = new byte[base32.length() * 5 / 8];
+        int buffer = 0, bitsLeft = 0, index = 0;
+        for (char c : base32.toCharArray()) {
+            int val = ALPHABET.indexOf(c);
+            if (val < 0) throw new IllegalArgumentException("Invalid Base32 char: " + c);
+            buffer = (buffer << 5) | val;
+            bitsLeft += 5;
+            if (bitsLeft >= 8) {
+                result[index++] = (byte) ((buffer >> (bitsLeft - 8)) & 0xff);
+                bitsLeft -= 8;
+            }
+        }
+        return result;
     }
 }

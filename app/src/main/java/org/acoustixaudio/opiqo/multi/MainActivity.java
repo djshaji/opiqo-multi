@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private ToggleButton onOff, recordToggle;
     static Context context;
     public static boolean proVersion = false;
+    public static boolean proIsBundle = false;
 
     public JSONObject pluginInfo;
     ArrayList <String> pluginNames;
@@ -197,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (! proVersion)
             proVersion = getSharedPreferences("core", MODE_PRIVATE).getBoolean("is_pro", false);
+        if (! proIsBundle)
+            proIsBundle = getSharedPreferences("core", MODE_PRIVATE).getBoolean("is_bundle", false);
+
         // Must be registered before STARTED; chooseFile() only launches this instance.
         persistentPicker = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),

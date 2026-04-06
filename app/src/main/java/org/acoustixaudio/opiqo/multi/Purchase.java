@@ -24,18 +24,24 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
 
-import java.util.Collections;
+import com.android.billingclient.api.PendingPurchasesParams;
+
+import java.util.Arrays;
 
 public class Purchase extends AppCompatActivity {
 
     private static final String TAG = "Purchase";
     private static final String PRODUCT_ID = "org.acoustixaudio.opiqo.multi.pro";
+    private static final String PRODUCT_ID_BUNDLE = "org.acoustixaudio.opiqo.multi.bundle";
 
     private BillingClient billingClient;
     private ProductDetails proProductDetails;
+    private ProductDetails bundleProductDetails;
 
     private Button purchaseButton;
+    private Button bundlePurchaseButton;
     private TextView priceText;
+    private TextView bundlePriceText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +55,15 @@ public class Purchase extends AppCompatActivity {
         });
 
         purchaseButton = findViewById(R.id.btn_purchase);
+        bundlePurchaseButton = findViewById(R.id.btn_purchase_bundle);
         priceText = findViewById(R.id.tv_price);
+        bundlePriceText = findViewById(R.id.tv_price_bundle);
 
         purchaseButton.setEnabled(false);
+        bundlePurchaseButton.setEnabled(false);
+
         purchaseButton.setOnClickListener(v -> launchPurchaseFlow());
+        bundlePurchaseButton.setOnClickListener(v -> launchBundlePurchaseFlow());
         findViewById(R.id.btn_restore).setOnClickListener(v -> queryExistingPurchases());
 
         setupBillingClient();
@@ -75,7 +86,8 @@ public class Purchase extends AppCompatActivity {
 
         billingClient = BillingClient.newBuilder(this)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                        PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
                 .build();
 
         billingClient.startConnection(new BillingClientStateListener() {
@@ -100,28 +112,41 @@ public class Purchase extends AppCompatActivity {
 
     private void queryProductDetails() {
         QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
-                .setProductList(Collections.singletonList(
+                .setProductList(Arrays.asList(
                         QueryProductDetailsParams.Product.newBuilder()
                                 .setProductId(PRODUCT_ID)
+                                .setProductType(BillingClient.ProductType.INAPP)
+                                .build(),
+                        QueryProductDetailsParams.Product.newBuilder()
+                                .setProductId(PRODUCT_ID_BUNDLE)
                                 .setProductType(BillingClient.ProductType.INAPP)
                                 .build()
                 ))
                 .build();
 
         billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
-            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
-                    && !productDetailsList.isEmpty()) {
-                proProductDetails = productDetailsList.get(0);
-                runOnUiThread(() -> {
-                    ProductDetails.OneTimePurchaseOfferDetails offer =
-                            proProductDetails.getOneTimePurchaseOfferDetails();
-                    if (offer != null) {
-                        priceText.setText(offer.getFormattedPrice());
-                    }
-                    purchaseButton.setEnabled(true);
-                });
-            } else {
+            if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
                 Log.e(TAG, "Failed to get product details: " + billingResult.getDebugMessage());
+                return;
+            }
+            for (ProductDetails details : productDetailsList) {
+                if (PRODUCT_ID.equals(details.getProductId())) {
+                    proProductDetails = details;
+                    runOnUiThread(() -> {
+                        ProductDetails.OneTimePurchaseOfferDetails offer =
+                                details.getOneTimePurchaseOfferDetails();
+                        if (offer != null) priceText.setText(offer.getFormattedPrice());
+                        purchaseButton.setEnabled(true);
+                    });
+                } else if (PRODUCT_ID_BUNDLE.equals(details.getProductId())) {
+                    bundleProductDetails = details;
+                    runOnUiThread(() -> {
+                        ProductDetails.OneTimePurchaseOfferDetails offer =
+                                details.getOneTimePurchaseOfferDetails();
+                        if (offer != null) bundlePriceText.setText(offer.getFormattedPrice());
+                        bundlePurchaseButton.setEnabled(true);
+                    });
+                }
             }
         });
     }
@@ -130,9 +155,23 @@ public class Purchase extends AppCompatActivity {
         if (proProductDetails == null) return;
 
         BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(Collections.singletonList(
+                .setProductDetailsParamsList(Arrays.asList(
                         BillingFlowParams.ProductDetailsParams.newBuilder()
                                 .setProductDetails(proProductDetails)
+                                .build()
+                ))
+                .build();
+
+        billingClient.launchBillingFlow(this, billingFlowParams);
+    }
+
+    private void launchBundlePurchaseFlow() {
+        if (bundleProductDetails == null) return;
+
+        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(Arrays.asList(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                                .setProductDetails(bundleProductDetails)
                                 .build()
                 ))
                 .build();
@@ -150,9 +189,17 @@ public class Purchase extends AppCompatActivity {
                     .build();
             billingClient.acknowledgePurchase(params, billingResult -> {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                    grantProAccess();
+                    grantAccessForPurchase(purchase);
                 }
             });
+        } else {
+            grantAccessForPurchase(purchase);
+        }
+    }
+
+    private void grantAccessForPurchase(com.android.billingclient.api.Purchase purchase) {
+        if (purchase.getProducts().contains(PRODUCT_ID_BUNDLE)) {
+            grantBundleAccess();
         } else {
             grantProAccess();
         }
@@ -177,6 +224,20 @@ public class Purchase extends AppCompatActivity {
         prefs.edit().putBoolean("is_pro", true).apply();
         runOnUiThread(() -> {
             Toast.makeText(this, "Pro upgrade activated!", Toast.LENGTH_LONG).show();
+            setResult(RESULT_OK);
+            MainActivity.proVersion = true;
+            finish();
+        });
+    }
+
+    private void grantBundleAccess() {
+        SharedPreferences prefs = getSharedPreferences("core", MODE_PRIVATE);
+        prefs.edit()
+                .putBoolean("is_pro", true)
+                .putBoolean("is_bundle", true)
+                .apply();
+        runOnUiThread(() -> {
+            Toast.makeText(this, "Bundle activated!", Toast.LENGTH_LONG).show();
             setResult(RESULT_OK);
             MainActivity.proVersion = true;
             finish();

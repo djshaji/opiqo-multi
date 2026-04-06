@@ -27,4 +27,21 @@
     - Free upgrades forever\n
     - Support development of open source app
     </string>
+    <string name="bundle_benefits">
+    Bundle benefits include:\n
+    - Pro Version of Opiqo (All the Pro benefits)\n
+    - PC Version of Opiqo (Windows, Linux)\n
+    - One Time Purchase (No subscription)\n
+    - Free upgrades forever\n
+    - Support development of open source app
+    </string>
+
+    <!-- Purchase Screen Strings -->
+    <string name="purchase_title">Upgrade</string>
+    <string name="purchase_description">Unlock unlimited presets, all effects, and future updates.</string>
+    <string name="pro_title">Pro</string>
+    <string name="buy_pro">Buy Pro</string>
+    <string name="bundle_title">Bundle</string>
+    <string name="buy_bundle">Buy Bundle</string>
+    <string name="restore_purchase">Restore Purchase</string>
 </resources>
