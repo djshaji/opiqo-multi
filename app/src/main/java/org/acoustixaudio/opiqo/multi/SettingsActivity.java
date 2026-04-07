@@ -131,7 +131,8 @@ public class SettingsActivity extends AppCompatActivity {
 
             if (MainActivity.proVersion) {
                 if (pro != null) {
-                    pro.setEnabled(false);
+                    if (MainActivity.proIsBundle)
+                        pro.setEnabled(false);
                     pro.setSummary("Pro version activated");
                     pro.setTitle("Premium");
                 }
@@ -151,7 +152,6 @@ public class SettingsActivity extends AppCompatActivity {
                 serialKey.setOnPreferenceClickListener(preference -> {
                     SharedPreferences prefs = requireActivity()
                             .getSharedPreferences("core", Context.MODE_PRIVATE);
-                    /*
                     if (!prefs.getBoolean("is_bundle", false)) {
                         Toast.makeText(getActivity(),
                                 "Purchase the Bundle to get your PC version key",
@@ -159,7 +159,6 @@ public class SettingsActivity extends AppCompatActivity {
                         return true;
                     }
 
-                     */
                     String key = ((SettingsActivity) requireActivity()).getSerialKey();
                     if (key == null) {
                         Toast.makeText(getActivity(), "Failed to generate key",

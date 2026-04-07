@@ -3,6 +3,7 @@ package org.acoustixaudio.opiqo.multi;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +68,12 @@ public class Purchase extends AppCompatActivity {
         findViewById(R.id.btn_restore).setOnClickListener(v -> queryExistingPurchases());
 
         setupBillingClient();
+        ((Button) findViewById(R.id.close_purchase)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     private void setupBillingClient() {
