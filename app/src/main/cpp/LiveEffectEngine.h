@@ -22,6 +22,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <vector>
+#include <atomic>
 #include "FullDuplexPass.h"
 #include "json.hpp"
 #include "LockFreeQueue.h"
@@ -29,7 +31,7 @@
 
 using json = nlohmann::json;
 
-class LiveEffectEngine : public oboe::AudioStreamCallback {
+class LiveEffectEngine : public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback {
 public:
     LiveEffectEngine();
     void initLV2();
@@ -64,26 +66,25 @@ public:
 
     std::string cacheDir ;
     std::unique_ptr<FullDuplexPass> mDuplexStream;
-    std::mutex pluginMutex;  // Protects plugin1, plugin2, plugin3, plugin4 access
-    LV2Plugin * plugin1 = nullptr;
-    LV2Plugin * plugin2 = nullptr;
-    LV2Plugin * plugin3 = nullptr;
-    LV2Plugin * plugin4 = nullptr;
+    std::mutex pluginMutex;  // Protects plugin pointers access
+    std::vector<LV2Plugin*> plugins; ///< plugin slots (index 0 == plugin1)
     LilvInstance *instance = nullptr;
     LilvWorld * world = nullptr;
 
     LilvNode *audio_class_, *control_class_, *atom_class_, *input_class_, * toggle_class_,
         *patch_writable, *rsz_minimumSize_, *rdfs_label, *rdfs_range, *mod_filetypes, *enum_class_ ;
 
-    const LilvPlugins * plugins = nullptr;
+    const LilvPlugins * lv2Plugins = nullptr; // collection of available plugins
     json pluginInfo;
     std::shared_ptr<oboe::AudioStream> mRecordingStream;
     std::shared_ptr<oboe::AudioStream> mPlayStream;
     int32_t sampleRate = oboe::DefaultStreamValues::SampleRate ;
-    float * gain = nullptr ;
+    std::atomic<float> gain{1.0f};
     int pluginCount = 0 ;
-    bool bypass = false ;
-    int blockSize = 4096 ;
+    std::atomic<bool> bypass{false};
+    // Prefer using the stream's frames-per-burst by default to keep latency low.
+    // A value of 0 indicates "use frames-per-burst"; callers can override.
+    int blockSize = 0;
 
 private:
     bool              mIsEffectOn = false;

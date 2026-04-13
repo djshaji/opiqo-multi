@@ -21,11 +21,12 @@
 
 LiveEffectEngine::LiveEffectEngine() {
     assert(mOutputChannelCount == mInputChannelCount);
-    gain = static_cast<float *>(malloc(sizeof(float)));
-    *gain = 1.f ;
+    // LiveEffectEngine::gain is an std::atomic<float> and initialized in the header.
     queueManager.init(4096) ;
     fileWriter = new FileWriter(48000, mOutputChannelCount);
     queueManager.add_function(fileWriter->encode);
+    // Initialize plugin slots (4 slots to match previous plugin1..plugin4 usage)
+    plugins.assign(4, nullptr);
 }
 
 void LiveEffectEngine::initLV2 () {
@@ -141,14 +142,16 @@ oboe::Result  LiveEffectEngine::openStreams() {
     warnIfNotLowLatency(mRecordingStream);
 
     mDuplexStream = std::make_unique<FullDuplexPass>();
-    mDuplexStream-> queueManager = &queueManager ;
-    mDuplexStream -> plugin1 = plugin1 ;
-    mDuplexStream -> plugin2 = plugin2 ;
-    mDuplexStream -> plugin3 = plugin3 ;
-    mDuplexStream -> plugin4 = plugin4 ;
-    mDuplexStream->instance = instance ;
-    mDuplexStream -> gain = gain ;
-    mDuplexStream -> bypass = &bypass ;
+    mDuplexStream->queueManager = &queueManager;
+    // Copy plugin pointers into the duplex stream under lock to ensure consistent snapshot
+    {
+        std::lock_guard<std::mutex> lock(pluginMutex);
+        mDuplexStream->plugins = plugins;
+    }
+    mDuplexStream->instance = instance;
+    // Publish pointer to the engine's atomic gain so the audio thread can read it lock-free.
+    mDuplexStream->gain = &gain;
+    mDuplexStream->bypass = &bypass;
     mDuplexStream->pluginMutex = &pluginMutex;  // Share the engine's mutex with the duplex stream
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);

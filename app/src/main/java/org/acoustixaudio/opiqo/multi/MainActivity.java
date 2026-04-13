@@ -106,7 +106,8 @@ public class MainActivity extends AppCompatActivity {
             "Preset Load Test",
             "Plugins Stress Test",
             "Plugin UI Stress Test",
-            "GxAmp Test"
+            "GxAmp Test",
+            "SPSC Ring Buffer Test"
     };
     private Slider gainSlider;
     public boolean tips = true;
@@ -179,9 +180,28 @@ public class MainActivity extends AppCompatActivity {
             case 5:
                 new Test(this).gxAmpTest();
                 break;
+            case 6:
+                runSpscTest();
+                break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
         }
+    }
+
+    private void runSpscTest() {
+        // Run the native SPSC ring buffer test off the UI thread and show result in a dialog.
+        Toast.makeText(this, "Running SPSC ring buffer test...", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            // Default: 1_000_000 iterations, capacity 1024
+            final String res = AudioEngine.testSpscRingBuffer(1000000, 1024);
+            runOnUiThread(() -> {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("SPSC Ring Buffer Test")
+                        .setMessage(res)
+                        .setPositiveButton("OK", null)
+                        .show();
+            });
+        }).start();
     }
 
     @Override

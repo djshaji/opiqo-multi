@@ -25,6 +25,11 @@
 #include "jalv.h"
 #include "LV2Plugin.hpp"
 #include "utils.h"
+#include <thread>
+#include <chrono>
+#include <sstream>
+#include <string>
+#include <atomic>
 
 static const int kOboeApiAAudio = 0;
 static const int kOboeApiOpenSLES = 1;
@@ -207,7 +212,7 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_test(JNIEnv *env, jclass clazz, j
     LV2Plugin * lv2Plugin = new LV2Plugin(world, "http://guitarix.sourceforge.net/plugins/gx_sloopyblue_#_sloopyblue_", 48000., 4096);
     lv2Plugin->initialize();
     lv2Plugin->start();
-    engine -> plugin1 = lv2Plugin ;
+    engine->plugins[0] = lv2Plugin;
     lv2Plugin->getControl("GAIN")->setValue(0.f);
     lv2Plugin->getControl("VOLUME")->setValue(0.f);
     lv2Plugin->getControl("TONE")->setValue(0.f);
@@ -301,33 +306,17 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setValue(JNIEnv *env, jclass claz
 
     {
         std::lock_guard<std::mutex> lock(engine->pluginMutex);
-
-        LV2Plugin * plugin = nullptr ;
-        switch (p) {
-            case 1:
-                plugin = engine->plugin1;
-                break;
-            case 2:
-                plugin = engine->plugin2;
-                break;
-            case 3:
-                plugin = engine->plugin3;
-                break;
-            case 4:
-                plugin = engine->plugin4;
-                break;
-            default:
-                LOGE("Unknown plugin index %d", p);
-                return;
+        if (p < 1 || p > (int)engine->plugins.size()) {
+            LOGE("Unknown plugin index %d", p);
+            return;
         }
-
+        LV2Plugin* plugin = engine->plugins[p - 1];
         if (plugin == nullptr) {
             LOGE("Plugin %d is null", p);
             return;
         }
-
         LOGD("[setValue] Setting plugin %d port %d to value %f", p, index, value);
-        plugin->ports_.at (index).control = value;
+        plugin->ports_.at(index).control = value;
     }
 }
 
@@ -350,35 +339,17 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
         std::lock_guard<std::mutex> lock(engine->pluginMutex);
 
         LV2Plugin * plugin = nullptr ;
-        switch (position) {
-            case 1:
-                plugin = engine->plugin1;
-                engine ->plugin1 = nullptr;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin1 = nullptr;
-                break;
-            case 2:
-                plugin = engine->plugin2;
-                engine ->plugin2 = nullptr;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin2 = nullptr;
-                break;
-            case 3:
-                plugin = engine->plugin3;
-                engine ->plugin3 = nullptr;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin3 = nullptr;
-                break;
-            case 4:
-                plugin = engine->plugin4;
-                engine ->plugin4 = nullptr;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin4 = nullptr;
-                break;
-            default:
-                LOGE("Unknown plugin index %d", position);
-                engine -> bypass = false ;
-                return -1;
+        int idx = position - 1;
+        if (idx < 0 || idx >= (int)engine->plugins.size()) {
+            LOGE("Unknown plugin index %d", position);
+            engine->bypass = false;
+            return -1;
+        }
+        plugin = engine->plugins[idx];
+        engine->plugins[idx] = nullptr;
+        if (engine->mDuplexStream) {
+            if ((int)engine->mDuplexStream->plugins.size() <= idx) engine->mDuplexStream->plugins.resize(engine->plugins.size(), nullptr);
+            engine->mDuplexStream->plugins[idx] = nullptr;
         }
 
         if (plugin != nullptr) {
@@ -421,32 +392,14 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_addPlugin(JNIEnv *env, jclass cla
 //            LOGD("[debug] Plugin %s has [%d/%d] ports", env->GetStringUTFChars(uri, nullptr), plugin->ports_.size(), portsTotal);
         }
 
-        switch (position) {
-            case 1:
-                engine->plugin1 = plugin;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin1 = plugin;
-                break;
-            case 2:
-                engine->plugin2 = plugin;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin2 = plugin;
-                break;
-            case 3:
-                engine->plugin3 = plugin;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin3 = plugin;
-                break;
-            case 4:
-                engine->plugin4 = plugin;
-                if (engine -> mDuplexStream)
-                    engine -> mDuplexStream -> plugin4 = plugin;
-                break;
-            default:
-                LOGE("Unknown plugin index %d", position);
-                env->ReleaseStringUTFChars(uri, uriChars);
-                engine -> bypass = false ;
-                return -1;
+        // store plugin pointer in engine slots and publish to duplex stream
+        {
+            int idx = position - 1;
+            engine->plugins[idx] = plugin;
+            if (engine->mDuplexStream) {
+                if ((int)engine->mDuplexStream->plugins.size() <= idx) engine->mDuplexStream->plugins.resize(engine->plugins.size(), nullptr);
+                engine->mDuplexStream->plugins[idx] = plugin;
+            }
         }
     }
 
@@ -483,11 +436,11 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_initPlugins(JNIEnv *env, jclass c
 
     lilv_world_load_all(engine -> world);
 
-    engine -> plugins = lilv_world_get_all_plugins(engine -> world);
+    engine->lv2Plugins = lilv_world_get_all_plugins(engine->world);
     engine -> pluginInfo = {} ;
 
-    LILV_FOREACH (plugins, i, engine -> plugins) {
-        const LilvPlugin* p = lilv_plugins_get(engine -> plugins, i);
+    LILV_FOREACH (plugins, i, engine->lv2Plugins) {
+        const LilvPlugin* p = lilv_plugins_get(engine->lv2Plugins, i);
         if (isNoLoadPlugin(lilv_node_as_string(lilv_plugin_get_uri(p)))) {
             LOGD("[initPlugins] Skipping no-load plugin %s", lilv_node_as_uri(lilv_plugin_get_uri(p)));
             continue;
@@ -629,45 +582,18 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
     {
         std::lock_guard<std::mutex> lock(engine->pluginMutex);
 
-        switch (plugin) {
-            case 1:
-                if (engine->plugin1) {
-                    if (engine -> mDuplexStream)
-                        engine->mDuplexStream->plugin1 = nullptr;
-                    engine->plugin1->closePlugin();
-                    delete engine->plugin1;
-                    engine->plugin1 = nullptr;
+        int idx = plugin - 1;
+        if (idx < 0 || idx >= (int)engine->plugins.size()) {
+            LOGE("Unknown plugin index %d", plugin);
+        } else {
+            if (engine->plugins[idx]) {
+                if (engine->mDuplexStream) {
+                    if ((int)engine->mDuplexStream->plugins.size() > idx) engine->mDuplexStream->plugins[idx] = nullptr;
                 }
-                break;
-            case 2:
-                if (engine->plugin2) {
-                    if (engine -> mDuplexStream)
-                        engine->mDuplexStream->plugin2 = nullptr;
-                    engine->plugin2->closePlugin();
-                    delete engine->plugin2;
-                    engine->plugin2 = nullptr;
-                }
-                break ;
-            case 3:
-                if (engine->plugin3) {
-                    if (engine -> mDuplexStream)
-                        engine->mDuplexStream->plugin3 = nullptr;
-                    engine->plugin3->closePlugin();
-                    delete engine->plugin3;
-                    engine->plugin3 = nullptr;
-                }
-                break ;
-            case 4:
-                if (engine->plugin4) {
-                    if (engine -> mDuplexStream)
-                        engine->mDuplexStream->plugin4 = nullptr;
-                    engine->plugin4->closePlugin();
-                    delete engine->plugin4;
-                    engine->plugin4 = nullptr;
-                }
-                break;
-            default:
-                LOGE("Unknown plugin index %d", plugin);
+                engine->plugins[idx]->closePlugin();
+                delete engine->plugins[idx];
+                engine->plugins[idx] = nullptr;
+            }
         }
     }
 
@@ -677,7 +603,12 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_deletePlugin(JNIEnv *env, jclass 
 extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_setGain(JNIEnv *env, jclass clazz, jfloat gain) {
-    * engine -> gain = gain ;
+    if (engine == nullptr) {
+        LOGE("Engine is null, cannot set gain");
+        return;
+    }
+    // LiveEffectEngine::gain is an std::atomic<float>
+    engine->gain.store(static_cast<float>(gain), std::memory_order_relaxed);
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -686,29 +617,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginEnabled(JNIEnv *env, jcl
     {
         std::lock_guard<std::mutex> lock(engine->pluginMutex);
 
-        switch (plugin) {
-            case 1:
-                if (engine->plugin1) {
-                    engine->plugin1->enabled = is_enabled;
-                }
-                break;
-            case 2:
-                if (engine->plugin2) {
-                    engine->plugin2->enabled = is_enabled;
-                }
-                break ;
-            case 3:
-                if (engine->plugin3) {
-                    engine->plugin3->enabled = is_enabled;
-                }
-                break ;
-            case 4:
-                if (engine->plugin4) {
-                    engine->plugin4->enabled = is_enabled;
-                }
-                break;
-            default:
+        {
+            int idx = plugin - 1;
+            if (idx < 0 || idx >= (int)engine->plugins.size()) {
                 LOGE("Unknown plugin index %d", plugin);
+            } else if (engine->plugins[idx]) {
+                engine->plugins[idx]->enabled = is_enabled;
+            }
         }
     }
 }
@@ -721,27 +636,17 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_bypass(JNIEnv *env, jclass clazz,
 
 json getPreset (int plugin) {
     LV2Plugin * p = nullptr ;
-    switch (plugin) {
-        case 1:
-            p = engine->plugin1;
-            break;
-        case 2:
-            p = engine->plugin2;
-            break ;
-        case 3:
-            p = engine->plugin3;
-            break ;
-        case 4:
-            p = engine->plugin4;
-            break;
-        default:
+    {
+        int idx = plugin - 1;
+        if (idx < 0 || idx >= (int)engine->plugins.size()) {
             LOGE("Unknown plugin index %d", plugin);
             return "{}";
-    }
-
-    if (p == nullptr) {
-        LOGE("Plugin %d is null", plugin);
-        return "{}";
+        }
+        p = engine->plugins[idx];
+        if (p == nullptr) {
+            LOGE("Plugin %d is null", plugin);
+            return "{}";
+        }
     }
 
     json preset = {};
@@ -781,7 +686,7 @@ JNIEXPORT jstring JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPresetList(JNIEnv *env, jclass clazz) {
     json preset = {};
     preset ["app"] = "opiqo-android";
-    preset ["gain"] = *engine -> gain ;
+    preset ["gain"] = engine->gain.load(std::memory_order_relaxed);
 
     preset ["plugin1"] = getPreset(1);
     preset ["plugin2"] = getPreset(2);
@@ -791,28 +696,30 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_getPresetList(JNIEnv *env, jclass
     return env->NewStringUTF(preset.dump().c_str());
 }
 
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getDroppedProcessedBlocks(JNIEnv *env, jclass clazz) {
+    if (engine == nullptr || engine->mDuplexStream == nullptr) return 0;
+    return static_cast<jint>(engine->mDuplexStream->getDroppedProcessedBlocks());
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_setFilePath(JNIEnv *env, jclass clazz, jint plugin,
                                                            jstring uri, jstring path) {
     LV2Plugin * p = nullptr ;
-    switch (plugin) {
-        case 1:
-            p = engine->plugin1;
-            break;
-        case 2:
-            p = engine->plugin2;
-            break ;
-        case 3:
-            p = engine->plugin3;
-            break ;
-        case 4:
-            p = engine->plugin4;
-            break ;
-        default:
+    {
+        int idx = plugin - 1;
+        if (idx < 0 || idx >= (int)engine->plugins.size()) {
             LOGE("Unknown plugin index %d", plugin);
             return;
+        }
+        p = engine->plugins[idx];
+        if (!p) {
+            LOGE("Plugin %d is null", plugin);
+            return;
+        }
     }
 
     int port = -1 ;
@@ -872,22 +779,17 @@ JNIEXPORT jstring JNICALL
 Java_org_acoustixaudio_opiqo_multi_AudioEngine_getWritables(JNIEnv *env, jclass clazz,
                                                             jint plugin) {
     LV2Plugin * p = nullptr ;
-    switch (plugin) {
-        case 1:
-            p = engine->plugin1;
-            break;
-        case 2:
-            p = engine->plugin2;
-            break;
-        case 3:
-            p = engine->plugin3;
-            break;
-        case 4:
-            p = engine->plugin4;
-            break;
-        default:
+    {
+        int idx = plugin - 1;
+        if (idx < 0 || idx >= (int)engine->plugins.size()) {
             LOGE("Unknown plugin index %d", plugin);
             return env->NewStringUTF("{}");
+        }
+        p = engine->plugins[idx];
+        if (!p) {
+            LOGE("Plugin %d is null", plugin);
+            return env->NewStringUTF("{}");
+        }
     }
 
     return env->NewStringUTF(to_string(p->writables).c_str());
@@ -927,3 +829,77 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_stressTest(JNIEnv *env) {
     }
 
 }
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_testSpscRingBuffer(JNIEnv *env, jclass clazz,
+                                                                   jint iterations, jint capacity) {
+    using T = uint32_t;
+    const size_t iters = (iterations > 0) ? static_cast<size_t>(iterations) : 1000000u;
+    const size_t cap = (capacity > 0) ? static_cast<size_t>(capacity) : 1024u;
+
+    SpscRingBuffer<T> q;
+    q.init(cap);
+    std::vector<T> output;
+    output.reserve(iters);
+
+    std::atomic<size_t> produced{0};
+    std::atomic<size_t> consumed{0};
+
+    // Consumer thread: reads as soon as data is available
+    std::thread consumer([&]() {
+        std::vector<T> tmp(1024);
+        while (consumed.load(std::memory_order_acquire) < iters) {
+            size_t got = q.read(tmp.data(), tmp.size());
+            if (got == 0) {
+                std::this_thread::yield();
+                continue;
+            }
+            for (size_t i = 0; i < got; ++i) {
+                output.push_back(tmp[i]);
+                consumed.fetch_add(1, std::memory_order_release);
+            }
+        }
+    });
+
+    // Producer thread: push sequential values 1..iters
+    std::thread producer([&]() {
+        for (size_t i = 1; i <= iters; ++i) {
+            T v = static_cast<T>(i);
+            // Non-blocking push; spin until accepted to stress wrap-around
+            while (!q.push(&v, 1)) {
+                std::this_thread::yield();
+            }
+            produced.fetch_add(1, std::memory_order_release);
+        }
+    });
+
+    producer.join();
+    consumer.join();
+
+    // Validate output
+    std::ostringstream ss;
+    bool ok = true;
+    if (output.size() != iters) {
+        ok = false;
+        ss << "SIZE_MISMATCH got=" << output.size() << " expected=" << iters;
+    } else {
+        for (size_t i = 0; i < iters; ++i) {
+            if (output[i] != static_cast<T>(i + 1)) {
+                ok = false;
+                ss << "MISMATCH at " << i << " got=" << output[i] << " expected=" << (i + 1);
+                break;
+            }
+        }
+    }
+
+    if (ok) {
+        ss << "PASS produced=" << produced.load() << " consumed=" << consumed.load() << " capacity=" << cap;
+    }
+
+    std::string res = ss.str();
+    if (res.empty()) res = ok ? "PASS" : "FAIL";
+    LOGD("[SPSC test] %s", res.c_str());
+    return env->NewStringUTF(res.c_str());
+}
+

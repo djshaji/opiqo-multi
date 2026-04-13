@@ -28,7 +28,8 @@ public class AudioEngine {
 
     static native void test (String dir);
     static native void stressTest();
-    
+    static native String testSpscRingBuffer(int iterations, int capacity);
+
     static native boolean startRecording(int fd, int fileType, int quality);
     static native void stopRecording();
     static native void setCacheDir(String path);
