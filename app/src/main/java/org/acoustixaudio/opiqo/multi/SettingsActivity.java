@@ -24,6 +24,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreference;
 import androidx.preference.SwitchPreferenceCompat;
+import androidx.preference.DropDownPreference;
 
 import org.json.JSONObject;
 
@@ -180,6 +181,28 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 });
             }
+
+                            // Processed queue depth preference (controls number of processed blocks kept in the ring buffer)
+                            DropDownPreference processed = findPreference("processed_queue_blocks");
+                            if (processed != null) {
+                                String cur = processed.getValue();
+                                if (cur == null || cur.isEmpty()) cur = "2";
+                                processed.setSummary("Current: " + cur + " blocks — Lower = lower latency, higher = fewer dropped blocks");
+                                processed.setOnPreferenceChangeListener((preference, newValue) -> {
+                                    String val = (String) newValue;
+                                    int blocks = 2;
+                                    try {
+                                        blocks = Integer.parseInt(val);
+                                    } catch (NumberFormatException e) {
+                                        // use default
+                                    }
+                                    // Apply the new requested depth via native API. If the engine is not created yet
+                                    // the native layer will save the requested value and apply it when streams open.
+                                    AudioEngine.setProcessedQueueBlocks(blocks);
+                                    preference.setSummary("Current: " + val + " blocks — Lower = lower latency, higher = fewer dropped blocks");
+                                    return true;
+                                });
+                            }
 
         }
 

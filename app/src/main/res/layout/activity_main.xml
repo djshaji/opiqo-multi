@@ -225,6 +225,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/rec_bitrate"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:text="ProcQueue"
+                    android:textColor="@color/md_theme_onSurface"
+                    android:fontFamily="@font/anta"
+                    android:layout_gravity="center_vertical"/>
+                <Spinner
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/processed_queue_spinner"
+                    android:layout_marginLeft="4dp" />
             </LinearLayout>
         </LinearLayout>
 

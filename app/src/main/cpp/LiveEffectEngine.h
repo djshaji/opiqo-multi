@@ -63,6 +63,7 @@ public:
 
     LockFreeQueueManager queueManager;
     FileWriter * fileWriter ;
+    bool lowLatencyWarning = false;
 
     std::string cacheDir ;
     std::unique_ptr<FullDuplexPass> mDuplexStream;
@@ -85,6 +86,10 @@ public:
     // Prefer using the stream's frames-per-burst by default to keep latency low.
     // A value of 0 indicates "use frames-per-burst"; callers can override.
     int blockSize = 0;
+    // Preferred number of processed blocks to allocate for the duplex stream's ring buffer.
+    // Can be changed before starting the effect; defaults to 2 blocks for low latency.
+    int mRequestedProcessedBlocks = 2;
+    std::string printOboeStreamInfo(std::shared_ptr<oboe::AudioStream> stream);
 
 private:
     bool              mIsEffectOn = false;
@@ -93,8 +98,8 @@ private:
     const oboe::AudioFormat mFormat = oboe::AudioFormat::Float; // for easier processing
     oboe::AudioApi    mAudioApi = oboe::AudioApi::AAudio;
     int32_t           mSampleRate = oboe::kUnspecified;
-    const int32_t     mInputChannelCount = oboe::ChannelCount::Stereo;
-    const int32_t     mOutputChannelCount = oboe::ChannelCount::Stereo;
+    const int32_t     mInputChannelCount = oboe::ChannelCount::Unspecified;
+    const int32_t     mOutputChannelCount = oboe::ChannelCount::Unspecified;
     oboe::Result openStreams();
 
     void closeStreams();
@@ -108,6 +113,7 @@ private:
     oboe::AudioStreamBuilder *setupPlaybackStreamParameters(
         oboe::AudioStreamBuilder *builder);
     void warnIfNotLowLatency(std::shared_ptr<oboe::AudioStream> &stream);
+
 };
 
 #endif  // OBOE_LIVEEFFECTENGINE_H

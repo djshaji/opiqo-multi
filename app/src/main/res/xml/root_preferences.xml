@@ -67,6 +67,13 @@
             app:defaultValue="true"
             app:key="opus"
             app:title="OPUS Maximum Quality Recording"/>
+        <DropDownPreference
+            app:defaultValue="2"
+            app:entries="@array/processed_queue_entries"
+            app:entryValues="@array/processed_queue_entries"
+            app:key="processed_queue_blocks"
+            app:title="@string/processed_queue_title"
+            app:summary="@string/processed_queue_summary"/>
     </PreferenceCategory>
     <PreferenceCategory app:title="Presets">
         <Preference

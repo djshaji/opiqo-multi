@@ -35,6 +35,10 @@ public class AudioEngine {
     static native void setCacheDir(String path);
     static native void native_setDefaultStreamValues(int defaultSampleRate, int defaultFramesPerBurst);
     static native boolean setPluginBlockSize(int blockFrames);
+    static native void setProcessedQueueBlocks(int blocks);
+    static native boolean getLowLatencyWarning ();
+    static native void printStreamInfo();
+    static native String getStreamInfo();
 
     static void setDefaultStreamValues(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){

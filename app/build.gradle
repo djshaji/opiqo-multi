@@ -74,7 +74,7 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.preference
     testImplementation libs.junit
-    implementation 'com.google.oboe:oboe:1.10.0'
+    implementation libs.oboe
     implementation libs.billing
 
     androidTestImplementation libs.ext.junit

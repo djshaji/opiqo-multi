@@ -22,7 +22,10 @@
 LiveEffectEngine::LiveEffectEngine() {
     assert(mOutputChannelCount == mInputChannelCount);
     // LiveEffectEngine::gain is an std::atomic<float> and initialized in the header.
-    queueManager.init(4096) ;
+    // Use a smaller default buffer for the recording/encode queue to keep
+    // memory and queued latency low. This will be re-sized later if needed
+    // when streams are opened.
+    queueManager.init(1024) ;
     fileWriter = new FileWriter(48000, mOutputChannelCount);
     queueManager.add_function(fileWriter->encode);
     // Initialize plugin slots (4 slots to match previous plugin1..plugin4 usage)
@@ -118,7 +121,10 @@ oboe::Result  LiveEffectEngine::openStreams() {
     // stream first, then use properties from the playback stream
     // (e.g. sample rate) to create the recording stream. By matching the
     // properties we should get the lowest latency path
+    oboe::OboeExtensions::setMMapEnabled(true);
+
     oboe::AudioStreamBuilder inBuilder, outBuilder;
+    lowLatencyWarning = false; // reset warning flag when restarting streams
     setupPlaybackStreamParameters(&outBuilder);
     oboe::Result result = outBuilder.openStream(mPlayStream);
     if (result != oboe::Result::OK) {
@@ -155,6 +161,10 @@ oboe::Result  LiveEffectEngine::openStreams() {
     mDuplexStream->pluginMutex = &pluginMutex;  // Share the engine's mutex with the duplex stream
     mDuplexStream->setSharedInputStream(mRecordingStream);
     mDuplexStream->setSharedOutputStream(mPlayStream);
+    // Configure processed-queue capacity (can be changed before starting by
+    // setting LiveEffectEngine::mRequestedProcessedBlocks). Smaller values
+    // reduce latency at the cost of headroom.
+    mDuplexStream->setProcessedQueueBlocks(static_cast<size_t>(mRequestedProcessedBlocks));
     if (blockSize <= 0) {
         blockSize = mRecordingStream->getFramesPerBurst();
     }
@@ -191,6 +201,7 @@ oboe::AudioStreamBuilder *LiveEffectEngine::setupPlaybackStreamParameters(
     oboe::AudioStreamBuilder *builder) {
     builder->setDataCallback(this)
         ->setErrorCallback(this)
+        ->setUsage(oboe::Usage::Game)
         ->setDeviceId(mPlaybackDeviceId)
         ->setDirection(oboe::Direction::Output)
         ->setChannelCount(mOutputChannelCount);
@@ -211,7 +222,8 @@ oboe::AudioStreamBuilder *LiveEffectEngine::setupCommonStreamParameters(
     // mode.
     builder->setAudioApi(mAudioApi)
         ->setFormat(mFormat)
-        ->setFormatConversionAllowed(true)
+        ->setBufferCapacityInFrames(0) // Use default buffer size recommended by Oboe
+        ->setFormatConversionAllowed(false)
         ->setSharingMode(oboe::SharingMode::Exclusive)
         ->setPerformanceMode(oboe::PerformanceMode::LowLatency);
     return builder;
@@ -247,6 +259,7 @@ void LiveEffectEngine::closeStream(std::shared_ptr<oboe::AudioStream> &stream) {
  */
 void LiveEffectEngine::warnIfNotLowLatency(std::shared_ptr<oboe::AudioStream> &stream) {
     if (stream->getPerformanceMode() != oboe::PerformanceMode::LowLatency) {
+        lowLatencyWarning = true;
         LOGW(
             "Stream is NOT low latency."
             "Check your requested format, sample rate and channel count");
@@ -299,4 +312,29 @@ void LiveEffectEngine::onErrorAfterClose(oboe::AudioStream *oboeStream,
         LOGI("Restarting AudioStream");
         openStreams();
     }
+}
+
+std::string LiveEffectEngine::printOboeStreamInfo(std::shared_ptr<oboe::AudioStream> stream) {
+    if (stream) {
+        const oboe::ResultWithValue<double> &latency = stream->calculateLatencyMillis();
+        double latencyMs = latency ? latency.value() : -1.0;
+        LOGI("Stream : SampleRate %d, ChannelCount %d, Format %d, BufferCapacityInFrames %d, PerformanceMode %d, Latency %.2f ms, mmap %s",
+             stream->getSampleRate(),
+             stream->getChannelCount(),
+             stream->getFormat(),
+             stream->getBufferCapacityInFrames(),
+             stream->getPerformanceMode(),
+             latencyMs,
+             oboe::OboeExtensions::isMMapUsed(stream.get()) ? "true" : "false");
+        std::string info = "SampleRate: " + std::to_string(stream->getSampleRate()) +
+                           ", ChannelCount: " + std::to_string(stream->getChannelCount()) +
+                           ", Format: " + std::to_string(static_cast<double>(stream->getFormat())) +
+                           ", BufferCapacityInFrames: " + std::to_string(stream->getBufferCapacityInFrames()) +
+                           ", PerformanceMode: " + std::to_string(
+                static_cast<double>(stream->getPerformanceMode())) +
+                           ", Latency: " + std::to_string(latencyMs) + " ms";
+        return info;
+    }
+
+    return "Stream is null";
 }

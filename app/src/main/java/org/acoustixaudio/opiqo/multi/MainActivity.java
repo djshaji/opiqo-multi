@@ -57,6 +57,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
 import com.google.oboe.samples.audio_device.AudioDeviceListEntry;
 import com.google.oboe.samples.audio_device.AudioDeviceSpinner;
@@ -107,7 +108,8 @@ public class MainActivity extends AppCompatActivity {
             "Plugins Stress Test",
             "Plugin UI Stress Test",
             "GxAmp Test",
-            "SPSC Ring Buffer Test"
+            "SPSC Ring Buffer Test",
+            "Print Stream Info",
     };
     private Slider gainSlider;
     public boolean tips = true;
@@ -182,6 +184,13 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 6:
                 runSpscTest();
+                break;
+            case 7:
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                builder.setMessage(AudioEngine.getStreamInfo()).setTitle("Current Stream Info")
+                        .setPositiveButton("OK", null)
+                        .show();
+                AudioEngine.printStreamInfo();
                 break;
             default:
                 Log.w(TAG, "runTest: no such test: " + index);
@@ -281,6 +290,31 @@ public class MainActivity extends AppCompatActivity {
                 if (! proVersion && i != 0) {
                     recFormat.setSelection(0);
                     showUpgradeDialog();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        // Processed queue depth selector: lets user choose how many processed blocks
+        // the internal ring buffer will allocate (lower = lower latency, less headroom).
+        Spinner processedQueueSpinner = findViewById(R.id.processed_queue_spinner);
+        String[] pqOptions = new String[]{"2","3","4","5","6","7","8"};
+        SpinnerAdapter pqAdapter = new android.widget.ArrayAdapter<>(this, R.layout.spinner_item, pqOptions);
+        ((ArrayAdapter) pqAdapter).setDropDownViewResource(R.layout.audio_devices);
+        processedQueueSpinner.setAdapter(pqAdapter);
+        processedQueueSpinner.setSelection(0); // default to 2 blocks
+        processedQueueSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                int blocks = Integer.parseInt(pqOptions[i]);
+                // Set requested processed queue blocks via JNI. Prefer calling this before starting effect
+                AudioEngine.setProcessedQueueBlocks(blocks);
+                if (tips) {
+                    Toast.makeText(MainActivity.this, "Processed queue blocks: " + blocks, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -456,7 +490,14 @@ public class MainActivity extends AppCompatActivity {
                 else
                     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-
+                if (! b) {
+                    if (AudioEngine.getLowLatencyWarning()) {
+                        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
+                        builder.setMessage(R.string.low_latency_warning).setTitle("Low Latency Warning")
+                                .setPositiveButton("OK", null)
+                                .show();
+                    }
+                }
             }
         });
 

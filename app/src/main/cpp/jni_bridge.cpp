@@ -173,6 +173,29 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_setPluginBlockSize(
 
     return engine->setPluginBlockSize((int32_t) blockFrames) ? JNI_TRUE : JNI_FALSE;
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_setProcessedQueueBlocks(JNIEnv *env, jclass clazz, jint blocks) {
+    if (engine == nullptr) {
+        LOGE("Engine is null, you must call createEngine before calling this method");
+        return;
+    }
+    if (engine->mDuplexStream == nullptr) {
+        LOGW("setProcessedQueueBlocks: duplex stream is not created yet; storing requested value for next open");
+        int32_t b = blocks;
+        if (b < 1) b = 1;
+        if (b > 64) b = 64;
+        engine->mRequestedProcessedBlocks = b;
+        return;
+    }
+
+    // Clamp reasonable range (1..64 blocks) to avoid unbounded allocation from UI
+    int32_t b = blocks;
+    if (b < 1) b = 1;
+    if (b > 64) b = 64;
+    engine->mDuplexStream->setProcessedQueueBlocks(static_cast<size_t>(b));
+}
 } // extern "C"
 
 
@@ -703,6 +726,13 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_getDroppedProcessedBlocks(JNIEnv 
     return static_cast<jint>(engine->mDuplexStream->getDroppedProcessedBlocks());
 }
 
+extern "C"
+JNIEXPORT jdouble JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getEstimatedLatencyMs(JNIEnv *env, jclass clazz) {
+    if (engine == nullptr || engine->mDuplexStream == nullptr) return 0.0;
+    return static_cast<jdouble>(engine->mDuplexStream->getEstimatedLatencyMs());
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -903,3 +933,23 @@ Java_org_acoustixaudio_opiqo_multi_AudioEngine_testSpscRingBuffer(JNIEnv *env, j
     return env->NewStringUTF(res.c_str());
 }
 
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getLowLatencyWarning(JNIEnv *env, jclass clazz) {
+    LOGD ("Low latency warning: %s", engine ? (engine->lowLatencyWarning ? "YES" : "NO") : "N/A");
+    return engine -> lowLatencyWarning;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_printStreamInfo(JNIEnv *env, jclass clazz) {
+    engine ->printOboeStreamInfo(engine ->mRecordingStream);
+    engine ->printOboeStreamInfo(engine ->mPlayStream);
+}
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_org_acoustixaudio_opiqo_multi_AudioEngine_getStreamInfo(JNIEnv *env, jclass clazz) {
+    std::string info = "Recording Stream:\n" + engine->printOboeStreamInfo(engine->mRecordingStream) +
+                       "\n\nPlayback Stream:\n" + engine->printOboeStreamInfo(engine->mPlayStream);
+    return env->NewStringUTF(info.c_str());
+}

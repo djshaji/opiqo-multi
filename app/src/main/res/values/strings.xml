@@ -44,4 +44,17 @@
     <string name="bundle_title">Bundle</string>
     <string name="buy_bundle">Buy Bundle</string>
     <string name="restore_purchase">Restore Purchase</string>
+    <string name="processed_queue_title">Processed Queue Depth</string>
+    <string name="processed_queue_summary">Number of processed blocks to keep in buffer (lower = lower latency, higher = fewer dropped blocks)</string>
+    <string name="low_latency_warning">
+        The app was unable to open a low latency audio stream.\n
+        Your device may not support low latency audio, or there may be a conflict with another app that is using audio resources.\n
+        You can try closing other apps that may be using audio, or adjusting the
+        settings to reduce latency.\n\n
+
+        Some other apps that may cause conflicts include:\n
+        - AI assistants (e.g. Google Assistant, Gemini, Siri) running in the background\n
+        - Music streaming apps\n
+        - Communication apps (e.g. Zoom, Skype)
+    </string>
 </resources>

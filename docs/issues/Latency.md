@@ -85,5 +85,50 @@ Next steps I can apply for you (pick one or more)
 
 If you want me to make and test the minimal patch now, say "apply minimal latency patch" and I will implement the changes and run a build.
 
+
+Changes applied
+---------------
+The following low-risk, high-impact changes were implemented to reduce default latency and make the pipeline easier to tune:
+
+- Prefer stream frames-per-burst for processing block size (default)
+  - File: `LiveEffectEngine.h`
+  - Change: `blockSize` default was changed from `4096` to `0` to indicate "use frames-per-burst". In `openStreams()` the engine sets `blockSize` to the recording stream's `getFramesPerBurst()` when not explicitly configured.
+  - Effect: avoids large default block sizes (e.g. 4096 frames) that add many tens of milliseconds of latency.
+
+- Clamp requested plugin block frames to frames-per-burst
+  - File: `FullDuplexPass.h` (`initializeBlockAdapter()`)
+  - Change: when `mRequestedBlockFrames > 0` the effective `mFixedBlockFrames` is clamped to `getOutputStream()->getFramesPerBurst()` (if available). If `mRequestedBlockFrames == 0` the burst is used.
+  - Effect: prevents accidental large processing blocks from being used on low-burst devices.
+
+- Remove intra-callback processed -> ring -> read hop when possible
+  - File: `FullDuplexPass.h` (`onBothStreamsReady()`)
+  - Change: drain any previously-processed samples from `mProcessedQueue` into the start of the output buffer, then write newly-processed blocks directly into the output buffer while there is room. Only push to `mProcessedQueue` if the output buffer is already full.
+  - Effect: eliminates one buffering/copy hop in the common case and reduces end-to-end latency and CPU copies.
+
+- Avoid holding `pluginMutex` across plugin processing
+  - File: `FullDuplexPass.h` (`processPluginChain()`)
+  - Change: snapshot the `plugins` vector under the mutex, release the mutex, then call `process()` on the snapshot.
+  - Effect: avoids blocking plugin management or UI operations while plugin `process()` runs on the audio thread.
+
+- Make processed-queue capacity configurable and reduce default
+  - File: `FullDuplexPass.h`
+  - Change: added `setProcessedQueueBlocks(size_t blocks)` and `mRequestedProcessedBlocks` (default 4). The engine now requests 2 blocks by default when creating the duplex stream.
+  - Effect: reduces maximum queued latency; recommended defaults are 2–4 blocks (small). Use this setter before starting the effect to tune headroom vs latency.
+
+- Reduce recording/encode queue size default
+  - File: `LiveEffectEngine.cpp`
+  - Change: `queueManager.init(...)` default in constructor reduced from 4096 → 1024 and `mDuplexStream->setProcessedQueueBlocks(2)` is called before starting streams.
+  - Effect: smaller preallocated buffers and fewer per-callback copies by default.
+
+Notes and how to use the new knobs
+----------------------------------
+- Keep the default behavior (do not call `AudioEngine.setPluginBlockSize(...)`) to use the stream's frames-per-burst. If you must set a plugin block size, pick a small power-of-two (e.g., 32, 64, 128) and restart the effect (stop/start) to apply safely.
+- To change processed-queue depth at runtime: call the new C++ API `FullDuplexPass::setProcessedQueueBlocks(size_t)` before `setEffectOn(true)`. I can expose this via JNI if you want a Java API (recommended).
+- Monitor `getDroppedProcessedBlocks()` (already exposed via JNI) to detect if the processed queue is too small — this counter increments when a processed block cannot be pushed into the ring buffer.
+
+If you want, I will now:
+- Expose `setProcessedQueueBlocks()` via JNI and add a small UI control to adjust it, or
+- Add runtime logging (actual ring capacity after rounding to power-of-two) and lightweight timing instrumentation in `FullDuplexPass` to measure `processPluginChain()` and `queueManager->process()` latencies. 
+
 ```
 
