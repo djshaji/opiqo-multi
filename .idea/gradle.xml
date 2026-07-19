@@ -8,8 +8,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="/mnt/sda/djshaji/projects/opiqo-multi" />
+            <option value="/mnt/sda/djshaji/projects/opiqo-multi/app" />
           </set>
         </option>
       </GradleProjectSettings>

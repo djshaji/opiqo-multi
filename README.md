@@ -571,6 +571,8 @@ This project is licensed under the MIT License - see LICENSE file for details.
 ### Resources
 - [LV2 Plugin Specification](https://lv2plug.in/)
 - [LV2Plugin API Guide](app/src/main/cpp/LV2Plugin-Usage.md)
+- [LV2Plugin Reuse Guide](LV2Plugin-REUSE.md)
+- [LV2Plugin API Reference](LV2Plugin-API-REFERENCE.md)
 - [Google Oboe Documentation](https://github.com/google/oboe)
 - [Android NDK Guide](https://developer.android.com/ndk)
 - [Android Audio Documentation](https://developer.android.com/guide/topics/media)
